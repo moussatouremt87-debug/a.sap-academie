@@ -47,12 +47,12 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover blur-sm scale-105"
           data-testid="video-hero-background"
         >
           <source src={heroVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-dark-blue/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-dark-blue/95" />
         <div className="container relative mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl" data-testid="text-hero-title">
