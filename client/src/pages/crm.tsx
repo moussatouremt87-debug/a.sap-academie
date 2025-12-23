@@ -399,7 +399,7 @@ export default function CRM() {
                 <span className="font-bold text-xl text-primary">A.SAP</span>
               </Link>
               <Separator orientation="vertical" className="h-6" />
-              <span className="font-semibold text-lg hidden sm:inline">CRM</span>
+              <span className="font-semibold text-lg hidden sm:inline">SunuCRM</span>
             </div>
             
             <div className="flex items-center gap-3">
