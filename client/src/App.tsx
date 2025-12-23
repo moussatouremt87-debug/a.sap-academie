@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
@@ -36,7 +37,12 @@ function AppLayout() {
   const isCrmPage = location === "/crm";
 
   if (isCrmPage) {
-    return <Router />;
+    return (
+      <>
+        <Router />
+        <ScrollToTop />
+      </>
+    );
   }
 
   return (
@@ -46,6 +52,7 @@ function AppLayout() {
         <Router />
       </main>
       {!isAgentPage && <Footer />}
+      <ScrollToTop />
     </div>
   );
 }
