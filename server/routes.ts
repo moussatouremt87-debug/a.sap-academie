@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { storage } from "./storage";
 import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema } from "@shared/schema";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -52,6 +53,10 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Setup authentication (MUST be before other routes)
+  await setupAuth(app);
+  registerAuthRoutes(app);
   
   // AI Chat endpoint with streaming
   app.post("/api/chat", async (req: Request, res: Response) => {
@@ -306,10 +311,10 @@ export async function registerRoutes(
     }
   });
 
-  // ========== CRM ENDPOINTS ==========
+  // ========== CRM ENDPOINTS (Protected - requires authentication) ==========
   
   // Get all leads with optional filters
-  app.get("/api/crm/leads", async (req: Request, res: Response) => {
+  app.get("/api/crm/leads", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const leadsList = await storage.getAllLeads();
       res.json(leadsList);
@@ -320,7 +325,7 @@ export async function registerRoutes(
   });
 
   // Get leads that need follow-up
-  app.get("/api/crm/leads/follow-up", async (req: Request, res: Response) => {
+  app.get("/api/crm/leads/follow-up", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const leadsList = await storage.getLeadsToFollowUp();
       res.json(leadsList);
@@ -331,7 +336,7 @@ export async function registerRoutes(
   });
 
   // Get single lead with activities and conversations
-  app.get("/api/crm/leads/:id", async (req: Request, res: Response) => {
+  app.get("/api/crm/leads/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const lead = await storage.getLead(id);
@@ -362,7 +367,7 @@ export async function registerRoutes(
   });
 
   // Update lead
-  app.patch("/api/crm/leads/:id", async (req: Request, res: Response) => {
+  app.patch("/api/crm/leads/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const updatedLead = await storage.updateLead(id, req.body);
@@ -388,7 +393,7 @@ export async function registerRoutes(
   });
 
   // Add activity to lead
-  app.post("/api/crm/leads/:id/activities", async (req: Request, res: Response) => {
+  app.post("/api/crm/leads/:id/activities", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const leadId = parseInt(req.params.id);
       const result = insertLeadActivitySchema.safeParse({ ...req.body, leadId });
@@ -409,7 +414,7 @@ export async function registerRoutes(
   });
 
   // AI Follow-up suggestions
-  app.post("/api/crm/ai/suggestions", async (req: Request, res: Response) => {
+  app.post("/api/crm/ai/suggestions", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const { leadId } = req.body;
       

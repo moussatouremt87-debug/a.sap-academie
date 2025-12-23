@@ -1,22 +1,16 @@
 import {
-  type User, type InsertUser,
   type Conversation, type InsertConversation,
   type Message, type InsertMessage,
   type Formation, type InsertFormation,
   type Faq, type InsertFaq,
   type Lead, type InsertLead,
   type LeadActivity, type InsertLeadActivity,
-  users, conversations, messages, formations, faqs, leads, leadActivities,
+  conversations, messages, formations, faqs, leads, leadActivities,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, lte, gte, isNotNull, sql } from "drizzle-orm";
+import { eq, desc, and, lte, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // Users
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
   // Conversations
   getConversation(id: number): Promise<Conversation | undefined>;
   getAllConversations(): Promise<Conversation[]>;
@@ -58,22 +52,6 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Users
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-
   // Conversations
   async getConversation(id: number): Promise<Conversation | undefined> {
     const [conversation] = await db.select().from(conversations).where(eq(conversations.id, id));

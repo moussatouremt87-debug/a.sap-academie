@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
   Users, UserPlus, Calendar, Clock, Phone, Mail,
   Building2, AlertCircle, CheckCircle2, ArrowRight,
   Filter, Search, Sparkles, MessageSquare, FileText,
-  RefreshCw, ChevronDown, ChevronUp, ExternalLink
+  RefreshCw, ChevronDown, ChevronUp, ExternalLink, LogOut, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,8 +29,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import type { Lead, LeadActivity, Conversation, Message } from "@shared/schema";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -70,6 +72,7 @@ interface AISuggestions {
 
 export default function CRM() {
   const { toast } = useToast();
+  const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -78,8 +81,21 @@ export default function CRM() {
   const [newNote, setNewNote] = useState("");
   const [expandedConversation, setExpandedConversation] = useState<number | null>(null);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({ 
+        title: "Accès restreint", 
+        description: "Veuillez vous connecter pour accéder au CRM.",
+        variant: "destructive" 
+      });
+      setTimeout(() => { window.location.href = "/api/login"; }, 1000);
+    }
+  }, [authLoading, isAuthenticated, toast]);
+
   const { data: leads = [], isLoading: leadsLoading } = useQuery<Lead[]>({
     queryKey: ["/api/crm/leads"],
+    enabled: isAuthenticated,
   });
 
   const { data: followUpLeads = [] } = useQuery<Lead[]>({
@@ -158,16 +174,62 @@ export default function CRM() {
     setAiSuggestions(null);
   };
 
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render CRM if not authenticated (redirect is happening)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Redirection vers la connexion...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" data-testid="text-crm-title">
-            Tableau de bord CRM
-          </h1>
-          <p className="text-muted-foreground">
-            Gérez vos leads et suivez les relances avec l'aide de l'IA
-          </p>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2" data-testid="text-crm-title">
+              Tableau de bord CRM
+            </h1>
+            <p className="text-muted-foreground">
+              Gérez vos leads et suivez les relances avec l'aide de l'IA
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
+                <AvatarFallback>{user?.firstName?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {user?.firstName || user?.email?.split("@")[0] || "Admin"}
+              </span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => logout()}
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-5 mb-8">
