@@ -42,18 +42,22 @@ const suggestedPrompts = [
   "Comment fonctionne votre accompagnement ?",
 ];
 
-const SENEGALESE_NAMES = [
+const FEMALE_NAMES = [
   "Fatou", "Aminata", "Awa", "Mariama", "Khady", "Aissatou", "Ndéye", "Coumba", 
   "Rama", "Binta", "Sokhna", "Mame", "Astou", "Dieynaba", "Yacine", "Rokhaya",
-  "Seynabou", "Adja", "Ndeye Fatou", "Oumou", "Diary", "Khadija", "Aby", "Nabou",
-  "Thioro", "Moustapha", "Mamadou", "Ibrahima", "Ousmane", "Cheikh", "Abdoulaye",
+  "Seynabou", "Adja", "Ndeye Fatou", "Oumou", "Diary", "Khadija", "Aby", "Nabou", "Thioro"
+];
+
+const MALE_NAMES = [
+  "Moustapha", "Mamadou", "Ibrahima", "Ousmane", "Cheikh", "Abdoulaye",
   "Modou", "Papa", "Serigne", "Alioune", "Babacar", "Pape", "El Hadji", "Demba",
   "Malick", "Saliou", "Amadou", "Mbaye", "Lamine", "Youssou", "Daouda", "Samba",
   "Boubacar", "Djibril", "Thierno"
 ];
 
-function getRandomCommercialName(): string {
-  return SENEGALESE_NAMES[Math.floor(Math.random() * SENEGALESE_NAMES.length)];
+function getRandomCommercial(): { name: string; isFemale: boolean } {
+  const allNames = [...FEMALE_NAMES.map(n => ({ name: n, isFemale: true })), ...MALE_NAMES.map(n => ({ name: n, isFemale: false }))];
+  return allNames[Math.floor(Math.random() * allNames.length)];
 }
 
 const MEETING_KEYWORDS = [
@@ -231,7 +235,7 @@ export default function Agent() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [commercialName] = useState(() => getRandomCommercialName());
+  const [commercial] = useState(() => getRandomCommercial());
   const [booking, setBooking] = useState<BookingState>({
     step: "hidden",
     selectedDate: null,
@@ -584,8 +588,8 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-semibold" data-testid="text-agent-title">{commercialName} - Commercial A.SAP Consulting</h1>
-            <p className="text-sm text-muted-foreground">Votre conseiller dédié</p>
+            <h1 className="font-semibold" data-testid="text-agent-title">{commercial.name} - Commercial{commercial.isFemale ? 'e' : ''} A.SAP Consulting</h1>
+            <p className="text-sm text-muted-foreground">Votre conseill{commercial.isFemale ? 'ère dédiée' : 'er dédié'}</p>
           </div>
         </div>
       </div>
@@ -598,10 +602,10 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                 <MessageCircle className="h-8 w-8 text-primary" />
               </div>
               <h2 className="mb-2 text-xl font-semibold" data-testid="text-agent-welcome">
-                Bonjour, je m'appelle {commercialName}
+                Bonjour, je m'appelle {commercial.name}
               </h2>
               <p className="mb-8 max-w-md text-center text-muted-foreground">
-                Je suis votre conseiller commercial A.SAP Consulting. En quoi puis-je vous aider ?
+                Je suis votre conseill{commercial.isFemale ? 'ère commerciale' : 'er commercial'} A.SAP Consulting. En quoi puis-je vous aider ?
                 Décrivez-moi votre projet et je vous guiderai vers les meilleures solutions.
               </p>
               <div className="mb-6 flex flex-wrap justify-center gap-2">
