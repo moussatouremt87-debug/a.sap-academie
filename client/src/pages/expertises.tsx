@@ -310,41 +310,38 @@ export default function Expertises() {
         </div>
       </section>
 
-      <section className="py-16 md:py-20 border-b">
-        <div className="container mx-auto px-4">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="order-2 lg:order-1">
-              <Badge className="mb-4">Transformation Digitale</Badge>
-              <h2 className="mb-4 text-3xl font-bold">
-                De l'<span className="text-primary">industrie</span> au <span className="text-gold">digital</span>
-              </h2>
-              <p className="mb-6 text-muted-foreground leading-relaxed">
-                Nous accompagnons les entreprises dans leur transition vers le numérique, 
-                en préservant leur expertise métier tout en les dotant des outils 
-                et processus modernes pour rester compétitives.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Digitalisation des processus opérationnels</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Intégration SAP pour la gestion d'entreprise</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Formation et accompagnement au changement</span>
-                </div>
+      <section className="relative overflow-hidden py-16 md:py-24">
+        <img 
+          src={transformationImage} 
+          alt="Transformation digitale - de l'industrie au numérique" 
+          className="absolute inset-0 h-full w-full object-cover blur-[1px] scale-105"
+          data-testid="img-transformation"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-dark-blue/90 via-primary/85 to-primary/90" />
+        <div className="container relative mx-auto px-4">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge className="mb-4 bg-white/20 text-white border-white/30">Transformation Digitale</Badge>
+            <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
+              De l'<span className="text-gold">industrie</span> au <span className="text-gold">digital</span>
+            </h2>
+            <p className="mb-8 text-white/80 text-lg">
+              Nous accompagnons les entreprises dans leur transition vers le numérique, 
+              en préservant leur expertise métier tout en les dotant des outils 
+              et processus modernes pour rester compétitives.
+            </p>
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Digitalisation des processus</span>
               </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <img 
-                src={transformationImage} 
-                alt="Transformation digitale - de l'industrie au numérique" 
-                className="w-full h-auto rounded-lg shadow-lg"
-                data-testid="img-transformation"
-              />
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Intégration SAP</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Accompagnement au changement</span>
+              </div>
             </div>
           </div>
         </div>

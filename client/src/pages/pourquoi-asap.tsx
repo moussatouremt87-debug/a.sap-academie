@@ -77,31 +77,33 @@ export default function PourquoiAsap() {
         </div>
       </section>
 
+      <section className="relative overflow-hidden py-16 md:py-24">
+        <img 
+          src={teamImage} 
+          alt="Équipe A.SAP Consulting en réunion" 
+          className="absolute inset-0 h-full w-full object-cover blur-[1px] scale-105"
+          data-testid="img-team"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/85 to-dark-blue/90" />
+        <div className="container relative mx-auto px-4">
+          <div className="mx-auto max-w-3xl text-center mb-16">
+            <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">Notre <span className="text-gold">Vision</span></h2>
+            <p className="text-white/80 text-lg leading-relaxed mb-6">
+              A.SAP est né de la conviction que la transformation digitale doit être accessible,
+              pragmatique et centrée sur la valeur métier. Notre mission est d'accompagner
+              les entreprises africaines dans leur modernisation en combinant expertise
+              internationale et connaissance locale.
+            </p>
+            <p className="text-white/80 text-lg leading-relaxed">
+              Basés au Sénégal et présents dans toute l'Afrique de l'Ouest, nous sommes 
+              votre partenaire de confiance pour les projets SAP et de transformation digitale.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="mb-16 grid items-center gap-12 lg:grid-cols-2">
-            <div>
-              <h2 className="mb-4 text-3xl font-bold">Notre <span className="text-primary">Vision</span></h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                A.SAP est né de la conviction que la transformation digitale doit être accessible,
-                pragmatique et centrée sur la valeur métier. Notre mission est d'accompagner
-                les entreprises africaines dans leur modernisation en combinant expertise
-                internationale et connaissance locale.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Basés au Sénégal et présents dans toute l'Afrique de l'Ouest, nous sommes 
-                votre partenaire de confiance pour les projets SAP et de transformation digitale.
-              </p>
-            </div>
-            <div className="relative">
-              <img 
-                src={teamImage} 
-                alt="Équipe A.SAP Consulting en réunion" 
-                className="w-full h-auto rounded-lg shadow-lg"
-                data-testid="img-team"
-              />
-            </div>
-          </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {values.map((value, index) => (

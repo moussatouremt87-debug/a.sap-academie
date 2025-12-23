@@ -242,51 +242,45 @@ export default function Formations() {
         </div>
       </section>
 
-      <section className="border-t py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="relative overflow-hidden rounded-lg">
-              <img 
-                src={remoteWorkImage} 
-                alt="Formation SAP à distance depuis chez soi" 
-                className="w-full h-auto object-cover rounded-lg"
-                data-testid="img-remote-work"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                <p className="text-white font-medium">Formez-vous à votre rythme, depuis chez vous</p>
+      <section className="relative overflow-hidden py-16 md:py-24">
+        <img 
+          src={remoteWorkImage} 
+          alt="Formation SAP à distance depuis chez soi" 
+          className="absolute inset-0 h-full w-full object-cover blur-[1px] scale-105"
+          data-testid="img-remote-work"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/85 to-dark-blue/90" />
+        <div className="container relative mx-auto px-4">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge className="mb-4 bg-white/20 text-white border-white/30">Formation flexible</Badge>
+            <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
+              Conciliez <span className="text-gold">vie pro et perso</span>
+            </h2>
+            <p className="mb-8 text-white/80 text-lg">
+              Nos formations SAP en ligne s'adaptent à votre emploi du temps. 
+              Que vous soyez parent, salarié ou entrepreneur, apprenez à votre rythme 
+              sans sacrifier votre vie personnelle.
+            </p>
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Accès 24h/24</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Sessions en direct ou replay</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
+                <span>Accompagnement personnalisé</span>
               </div>
             </div>
-            <div>
-              <Badge className="mb-4">Formation flexible</Badge>
-              <h2 className="mb-4 text-3xl font-bold">
-                Conciliez <span className="text-gold">vie pro et perso</span>
-              </h2>
-              <p className="mb-6 text-muted-foreground">
-                Nos formations SAP en ligne s'adaptent à votre emploi du temps. 
-                Que vous soyez parent, salarié ou entrepreneur, apprenez à votre rythme 
-                sans sacrifier votre vie personnelle.
-              </p>
-              <div className="space-y-3 mb-8">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Accès 24h/24 aux cours et ressources</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Sessions en direct ou en replay</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Accompagnement personnalisé par nos experts</span>
-                </div>
-              </div>
-              <Link href="/agent">
-                <Button className="bg-gold text-gold-foreground" data-testid="button-cta-remote">
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  En savoir plus
-                </Button>
-              </Link>
-            </div>
+            <Link href="/agent">
+              <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-remote">
+                <PlayCircle className="mr-2 h-5 w-5" />
+                En savoir plus
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
