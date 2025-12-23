@@ -1,0 +1,663 @@
+# Prompt Complet pour Développement Site A.SAP
+
+## 🎯 CONTEXTE DU PROJET
+
+Tu es un développeur full-stack expert. Je veux que tu développes **A.SAP Platform**, une plateforme web moderne pour un cabinet de conseil spécialisé en transformation digitale, SAP et formation.
+
+---
+
+## 📋 SPÉCIFICATIONS TECHNIQUES
+
+### Stack Technologique (NON NÉGOCIABLE)
+
+**Frontend:**
+- Next.js 14 (App Router) + React 18 + TypeScript
+- Tailwind CSS + shadcn/ui (design system)
+- next-intl (i18n FR/EN)
+- PWA (next-pwa)
+- tRPC client
+
+**Backend:**
+- Next.js API Routes (serverless)
+- tRPC (type-safe API)
+- Prisma ORM + PostgreSQL (Supabase)
+- Upstash Redis (caching)
+
+**IA & Intégrations:**
+- OpenAI GPT-4 (Agent IA conversationnel)
+- Langchain.js (orchestration conversations)
+- Cal.com (booking système)
+- Google Meet API + Microsoft Graph (Teams)
+- Stripe (paiements)
+- Resend (emails transactionnels)
+
+**Infrastructure:**
+- Vercel (hosting Next.js)
+- Supabase (PostgreSQL + Storage)
+- GitHub Actions (CI/CD)
+
+**Architecture:**
+- Monorepo Turborepo avec structure:
+  - `apps/web` (site public)
+  - `apps/admin` (backoffice)
+  - `packages/database` (Prisma)
+  - `packages/ui` (composants partagés)
+  - `packages/api` (tRPC routes)
+  - `packages/ai` (Agent IA)
+
+---
+
+## 🎨 DESIGN SYSTEM
+
+### Palette de Couleurs (SAP)
+```css
+Primary Blue: #0070F3
+Gold Accent: #F4AB3A
+Dark Blue: #003366
+Light Blue: #E3F2FD
+Gray: #697386
+```
+
+### Logo
+- Lettre "A" stylisée dans un carré bleu avec accent or
+- Format: SVG responsive
+- Variantes: full-color, monochrome, favicon
+
+### Style Général
+- Design moderne, épuré, professionnel
+- Animations subtiles et micro-interactions
+- Mobile-first, PWA optimisé
+- Accessibilité WCAG 2.1 AA
+
+---
+
+## 📄 PAGES & FONCTIONNALITÉS
+
+### 1. HOME PAGE (/)
+**Objectif:** Orienter immédiatement vers l'Agent IA
+
+**Contenu:**
+- Hero section avec gradient bleu SAP + animations
+- Value proposition: "Conseil, Transformation & SAP pilotés par IA"
+- 4 cartes problématiques cliquables:
+  1. "Je veux transformer mon SI"
+  2. "Je veux déployer/optimiser SAP"
+  3. "Je veux former mes équipes"
+  4. "Je veux gérer un projet SI de bout en bout"
+- CTA principal: "Parler à l'Agent IA" (bouton or prominent)
+- CTA secondaire: "Découvrir nos expertises"
+
+### 2. AGENT IA (/agent)
+**Point d'entrée universel - PAGE CRITIQUE**
+
+**Fonctionnalités:**
+- Interface chat moderne (style ChatGPT)
+- Intégration OpenAI GPT-4 + Langchain
+- Avatar Agent IA (icône professionnelle)
+- Support texte + option voix (Web Speech API)
+- Quick actions: "📅 RDV", "💻 Google Meet", "💼 Teams"
+
+**Comportement Agent:**
+- Se présente comme consultant digital senior
+- Comprend et qualifie le besoin
+- Pose questions pour préciser (budget, timeline, ressources)
+- Propose solutions adaptées
+- Oriente vers service spécifique
+- Facilite prise de RDV directement dans le chat
+
+**Backend IA:**
+- System prompt détaillé (ton professionnel, pédagogue, orienté solution)
+- Mémoire conversation (BufferMemory Langchain)
+- Sauvegarde conversations en DB (table `conversations` + `messages`)
+- Rate limiting (Upstash Redis)
+- Streaming responses
+
+**Exemple System Prompt:**
+```
+Tu es l'Agent IA d'A.SAP, cabinet de conseil en transformation digitale et SAP.
+
+Expertises A.SAP:
+1. Conseil stratégique & transformation
+2. Transformation SI & digitale (AMOA, urbanisation, audit)
+3. SAP Consulting (intégration, paramétrage, support)
+4. Formation SAP (FI, MM, SD, ABAP, Analytics)
+5. Business Services (allocation ressources, recrutement IT)
+
+Ton rôle:
+- Comprendre le besoin client (questions ciblées)
+- Qualifier le projet (budget, urgence, maturité)
+- Proposer solution adaptée
+- Orienter vers service spécifique
+- Faciliter RDV (Google Meet ou Teams)
+
+Ton style:
+- Professionnel mais accessible
+- Questions courtes et précises
+- Reformule pour confirmer compréhension
+- Proactif dans la suggestion de RDV
+
+Réponds en français par défaut, anglais si demandé.
+```
+
+### 3. EXPERTISES (/expertises)
+**Vue d'ensemble des services**
+
+**5 Sections principales:**
+
+**3.1. Conseil, Stratégie & Transformation**
+- Conseil stratégique
+- Étude & veille stratégique
+- Pilotage transformation
+- Politiques publiques
+- Conduite du changement
+- Gestion de projet
+
+**3.2. Transformation SI & Digitale**
+- Schéma Directeur SI
+- Urbanisation SI
+- AMOA / AMOE
+- Transformation digitale
+- Dématérialisation
+- Audit SI
+- Sécurité systèmes et réseaux
+- Infogérance & TMA
+- Hébergement & infrastructures
+
+**3.3. SAP, ERP & Solutions**
+- SAP Consulting
+- SAP Integration
+- Vente solutions ERP
+- Paramétrage & personnalisation
+- Maintenance & support
+- SAP Training entreprises
+
+**3.4. Formation & Compétences**
+- Formation SAP Particuliers (reconversion, jeunes diplômés)
+- Formation SAP Entreprises
+- Coaching & accompagnement
+
+**3.5. Business Services**
+- Allocation ressources (consultants)
+- Recrutement IT
+- Représentation commerciale/administrative
+- Implantation entreprises au Sénégal
+- Mise en relation business
+- Achat/vente/location matériel IT
+
+**Design:**
+- Cards avec icônes, descriptions, liste services
+- CTA systématique: "Parler à l'Agent IA pour ce service"
+
+### 4. FORMATIONS SAP (/formations)
+**Catalogue formations avec système LMS**
+
+**Filtres:**
+- Catégorie (FI, MM, SD, ABAP, Analytics, etc.)
+- Niveau (Débutant, Intermédiaire, Avancé)
+- Format (Online, Présentiel, Hybride)
+- Durée
+
+**Carte Formation:**
+- Titre + badge (Certifiant, Nouveau, Populaire)
+- Durée (heures)
+- Niveau
+- Prix (EUR)
+- Brève description
+- CTA: "S'inscrire" → Checkout Stripe
+
+**Page Détail Formation:**
+- Description complète
+- Objectifs pédagogiques
+- Programme (modules)
+- Prérequis
+- Certification obtenue
+- Formateurs (si applicable)
+- Avis étudiants
+- CTA: "S'inscrire maintenant"
+
+**Système LMS (après paiement):**
+- Dashboard étudiant
+- Progression (barre %)
+- Accès modules (vidéos, PDF, quiz)
+- Certificat téléchargeable à 100%
+
+### 5. FAQ (/faq)
+**Réduire charge Agent IA + rassurer**
+
+**Catégories:**
+- Général (Qui est A.SAP, À qui s'adressent services)
+- Agent IA (Remplace-t-il humain ? Données sécurisées ?)
+- Services & Projets (PME/grandes entreprises, hors Sénégal)
+- SAP & SI (Intégrateur SAP, autres ERP)
+- Formation (Prérequis, certifications)
+- Pricing (Pourquoi pas de prix affichés, estimation)
+- RDV (Comment réserver Google Meet/Teams)
+
+**Design:**
+- Accordéon élégant
+- Recherche FAQ (full-text)
+- Feedback "Utile ?" (analytics)
+- CTA fin de page: "Pas de réponse ? Parlez à l'Agent IA"
+
+### 6. POURQUOI A.SAP (/pourquoi-asap)
+- Positionnement cabinet
+- Méthodologie & approche
+- Expertise multi-disciplinaire
+- Approche agile
+- Présence régionale (Afrique de l'Ouest)
+- Cas d'usage / références (si disponibles)
+
+---
+
+## 🔐 BACKOFFICE ADMIN (/admin)
+**Dashboard Next.js séparé (apps/admin)**
+
+**Fonctionnalités:**
+
+**1. Dashboard Principal**
+- KPIs: RDV ce mois, Conversations IA, Leads, Inscriptions
+- Graphiques (recharts): évolution temporelle
+- Prochains RDV
+- Conversations récentes IA
+- Leads à traiter
+
+**2. Gestion RDV**
+- Liste RDV (filtres: date, statut, type)
+- Détails RDV (contact, service, notes)
+- Actions: Confirmer, Annuler, Reprogrammer
+- Lien vers Google Meet/Teams
+
+**3. Conversations IA**
+- Liste conversations (pagination)
+- Filtre: date, converti/non converti, intent
+- Détail conversation (historique complet)
+- Export CSV
+- Stats: taux conversion, durée moyenne, intents populaires
+
+**4. Leads & CRM**
+- Kanban board (New → Contacted → Qualified → Converted)
+- Fiche lead: contact, notes, historique, scoring
+- Assigner lead à commercial
+- Actions: Envoyer email, Planifier rappel
+
+**5. Gestion FAQ**
+- CRUD FAQ (Create, Read, Update, Delete)
+- Éditeur WYSIWYG (TipTap)
+- Ordre, catégorie, FR/EN
+- Publier/dépublier
+
+**6. Analytics**
+- Google Analytics 4 intégré (dashboard widget)
+- Métriques custom: conversions IA, taux booking
+
+**Auth Admin:**
+- Simple login email/password (NextAuth.js)
+- Pas de signup public (admins créés manuellement en DB)
+
+---
+
+## 💳 SYSTÈME DE BOOKING
+
+**Workflow:**
+1. User parle à Agent IA → exprime besoin de RDV
+2. Agent propose: "Je peux vous réserver un RDV Google Meet ou Teams. Quelle est votre préférence ?"
+3. User choisit type + créneau souhaité
+4. Agent affiche calendrier disponibilités (Cal.com embed)
+5. User sélectionne créneau
+6. Formulaire: nom, email, phone, company (optionnel)
+7. Confirmation → création événement:
+   - Google Meet: via Google Calendar API (meeting link auto)
+   - Teams: via Microsoft Graph API (meeting link auto)
+8. Email confirmation (Resend) avec lien meeting + ics
+9. Reminders: 24h avant (email), 1h avant (email + SMS si phone fourni)
+
+**Backend Booking:**
+- Table `bookings` (Prisma schema fourni)
+- Intégration Cal.com (webhook événements)
+- Google Calendar API OAuth2
+- Microsoft Graph API OAuth2
+- Gestion timezone (Africa/Dakar par défaut, configurable)
+
+---
+
+## 💰 SYSTÈME DE PAIEMENT
+
+**Stripe Integration:**
+- Checkout Session pour formations
+- Webhook `/api/webhooks/stripe` (signature verification)
+- Événements:
+  - `checkout.session.completed` → créer Enrollment ACTIVE
+  - `payment_intent.succeeded` → envoyer email confirmation + accès LMS
+  - `payment_intent.failed` → notifier échec
+
+**Flow:**
+1. User clique "S'inscrire" sur formation
+2. Création Stripe Checkout Session
+3. Redirection vers Stripe hosted checkout
+4. Paiement → webhook → Enrollment créé
+5. Email confirmation avec lien accès LMS
+6. Dashboard étudiant accessible
+
+**Support Mobile Money Afrique:**
+- Stripe supporte Orange Money, MTN Money via partenaires
+- Configurer dans Stripe Dashboard
+
+---
+
+## 🗄️ SCHÉMA BASE DE DONNÉES (PRISMA)
+
+**Tables principales:**
+- `users` (User, email, role)
+- `conversations` (Conversation IA, sessionId, status)
+- `messages` (Messages chat, role, content, tokens)
+- `bookings` (RDV, meetingType, status, googleEventId, teamsEventId)
+- `formations` (Catalogue formations, prix, modules)
+- `enrollments` (Inscriptions, progress, status)
+- `payments` (Paiements Stripe, status)
+- `leads` (CRM, source, status, score)
+- `faqs` (FAQ FR/EN, category)
+- `analytics` (Tracking événements)
+
+**Relations:**
+- User → Conversations (1-N)
+- Conversation → Messages (1-N)
+- User → Bookings (1-N)
+- User → Enrollments (1-N)
+- Formation → Enrollments (1-N)
+- User → Payments (1-N)
+
+*Schéma Prisma complet fourni dans artifact D.*
+
+---
+
+## 🔒 SÉCURITÉ & PERFORMANCE
+
+**Sécurité:**
+- Variables env (jamais commit .env)
+- Rate limiting API (Upstash Redis)
+- CORS configuré strictement
+- Webhook signatures vérifiées (Stripe)
+- Input validation (Zod schemas)
+- Sanitization XSS (DOMPurify si WYSIWYG)
+
+**Performance:**
+- Images optimisées (next/image)
+- Lazy loading composants
+- React Query caching
+- Redis cache pour Agent IA (conversations récentes)
+- ISR (Incremental Static Regeneration) pour formations
+- CDN Vercel
+
+**SEO:**
+- Metadata Next.js 14 (generateMetadata)
+- Sitemap.xml dynamique
+- robots.txt
+- Open Graph tags
+- JSON-LD structured data
+
+---
+
+## 🌍 i18n (INTERNATIONALISATION)
+
+**Configuration next-intl:**
+- Routing: `/fr/*` et `/en/*`
+- Fichiers traduction: `locales/fr.json`, `locales/en.json`
+- Middleware Next.js pour détection locale
+- Switcher langue (header)
+
+**Contenu traduit:**
+- Toutes pages statiques
+- FAQ (questionFr/En, answerFr/En)
+- Formations (titleFr/En, descriptionFr/En)
+- Emails transactionnels
+- Agent IA (détecte langue user, répond en conséquence)
+
+---
+
+## 📱 PWA (PROGRESSIVE WEB APP)
+
+**Configuration next-pwa:**
+```javascript
+// next.config.js
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+});
+
+module.exports = withPWA({
+  // ... autres configs
+});
+```
+
+**Manifest.json:**
+- name: "A.SAP - Conseil & Transformation Digitale"
+- short_name: "A.SAP"
+- theme_color: "#0070F3"
+- background_color: "#ffffff"
+- icons: 192x192, 512x512
+
+**Offline fallback:**
+- Cache pages principales
+- Message gracieux si hors ligne
+
+---
+
+## 📧 EMAILS TRANSACTIONNELS (RESEND)
+
+**Templates requis:**
+
+1. **Confirmation Booking**
+   - Subject: "RDV confirmé - [Date] - A.SAP"
+   - Contenu: détails RDV, lien meeting, ics attaché, contact support
+
+2. **Reminder 24h**
+   - Subject: "Rappel: RDV demain avec A.SAP"
+
+3. **Reminder 1h**
+   - Subject: "Votre RDV A.SAP commence dans 1h"
+
+4. **Confirmation Paiement Formation**
+   - Subject: "Inscription confirmée - [Formation]"
+   - Contenu: récapitulatif, lien accès LMS, facture PDF
+
+5. **Welcome Email (premier contact)**
+   - Subject: "Bienvenue chez A.SAP"
+
+**Configuration:**
+- Resend API key dans .env
+- Sender: contact@asapconsulting.com
+- Templates React Email (react-email.dev)
+
+---
+
+## 📊 ANALYTICS & TRACKING
+
+**Google Analytics 4:**
+- Script dans `app/layout.tsx`
+- ID: NEXT_PUBLIC_GA_ID
+- Événements custom:
+  - `ai_chat_started`
+  - `booking_completed`
+  - `formation_enrolled`
+  - `lead_qualified`
+
+**Tracking interne (table `analytics`):**
+- Événements IA (intent détecté, conversion)
+- Pages vues
+- Temps sur page
+- Clicks CTA
+
+---
+
+## 🚀 DÉPLOIEMENT
+
+**Vercel:**
+1. Connecter GitHub repo
+2. Config env vars (Vercel dashboard)
+3. Deploy automatique sur push `main`
+4. Preview deployments sur PR
+
+**Supabase:**
+1. Créer projet
+2. Copier DATABASE_URL
+3. `npx prisma db push` (première fois)
+4. `npx prisma migrate deploy` (prod)
+
+**Domaine:**
+- Configurer asapconsulting.com dans Vercel
+- DNS: CNAME → cname.vercel-dns.com
+
+---
+
+## ✅ CHECKLIST AVANT LIVRAISON
+
+**Fonctionnel:**
+- [ ] Agent IA répond correctement (test 10+ scénarios)
+- [ ] Booking Google Meet fonctionne (end-to-end)
+- [ ] Booking Teams fonctionne
+- [ ] Paiement Stripe + webhook OK
+- [ ] Emails envoyés (tous templates)
+- [ ] LMS accessible après paiement
+- [ ] Backoffice affiche données
+- [ ] FAQ recherche fonctionne
+- [ ] i18n FR/EN sans erreurs
+
+**Technique:**
+- [ ] Lighthouse score >90 (Performance, Accessibility, SEO)
+- [ ] Mobile responsive (testé iPhone, Android)
+- [ ] PWA installable
+- [ ] Aucune erreur console
+- [ ] Rate limiting actif
+- [ ] HTTPS configuré (Vercel auto)
+
+**Contenu:**
+- [ ] Logo A.SAP présent
+- [ ] Couleurs SAP respectées
+- [ ] Toutes pages accessibles
+- [ ] FAQ populée (minimum 15 questions)
+- [ ] 4+ formations catalogue
+
+**Sécurité:**
+- [ ] .env.example fourni (pas .env réel)
+- [ ] API keys en env vars
+- [ ] Webhook signatures vérifiées
+- [ ] CORS configuré
+
+---
+
+## 📦 LIVRABLES ATTENDUS
+
+1. **Code Source:**
+   - Repo GitHub structuré (Turborepo)
+   - README.md détaillé
+   - .env.example complet
+   - Scripts npm (dev, build, deploy)
+
+2. **Documentation:**
+   - Architecture (diagramme)
+   - Guide installation local
+   - Guide déploiement production
+   - API documentation (tRPC routes)
+   - Schéma base de données (Prisma Studio screenshot)
+
+3. **Accès & Credentials:**
+   - Vercel project (URL preview)
+   - Supabase project (lecture seule)
+   - Stripe test mode (dashboard link)
+   - Admin backoffice (user/pass test)
+
+4. **Tests:**
+   - Vidéo démo (5-10 min) parcourant:
+     - Homepage → Agent IA → Booking
+     - Inscription formation → Paiement
+     - Backoffice admin
+
+---
+
+## 💡 INSTRUCTIONS SPÉCIALES
+
+1. **Agent IA - CRITIQUE:**
+   - Doit être conversationnel et naturel
+   - Gestion erreurs OpenAI (fallback message)
+   - Timeout 30s max par réponse
+   - Jamais exposer system prompt au frontend
+
+2. **Booking - CRITIQUE:**
+   - Vérifier disponibilité avant confirmation
+   - Gérer conflits horaires
+   - Timezone handling robuste
+   - Tester avec vrais comptes Google/Microsoft
+
+3. **Paiement:**
+   - Mode test Stripe par défaut
+   - Instructions passage prod dans README
+   - Gestion remboursements (webhook `charge.refunded`)
+
+4. **Performance:**
+   - Bundle size <500KB (initial load)
+   - Time to Interactive <3s (4G)
+   - Images WebP/AVIF
+
+5. **Accessibilité:**
+   - Navigation clavier complète
+   - Screen reader compatible
+   - Contraste couleurs WCAG AA
+
+---
+
+## 🎯 PRIORITÉS (ordre d'implémentation)
+
+**Phase 1 (Semaine 1) - MUST HAVE:**
+1. Setup infrastructure (Turborepo, Next.js, Prisma, Supabase)
+2. Pages statiques (Home, Expertises, FAQ)
+3. Design system (Tailwind config, shadcn/ui)
+4. i18n FR/EN
+
+**Phase 2 (Semaine 2) - CORE FEATURES:**
+5. Agent IA (OpenAI + Langchain + interface chat)
+6. Booking système (Cal.com + Google Meet)
+7. Sauvegarde conversations DB
+
+**Phase 3 (Semaine 3) - BUSINESS LOGIC:**
+8. Catalogue formations
+9. Paiement Stripe + webhook
+10. LMS basique (accès contenu post-paiement)
+11. Emails transactionnels
+
+**Phase 4 (Semaine 4) - ADMIN & POLISH:**
+12. Backoffice admin (dashboard, RDV, conversations, leads)
+13. Analytics (GA4 + tracking interne)
+14. PWA configuration
+15. Tests E2E + déploiement prod
+
+---
+
+## 🔗 RESSOURCES UTILES
+
+- Next.js 14 App Router: https://nextjs.org/docs
+- Prisma: https://prisma.io/docs
+- tRPC: https://trpc.io/docs
+- Langchain.js: https://js.langchain.com
+- shadcn/ui: https://ui.shadcn.com
+- Stripe: https://stripe.com/docs
+- Supabase: https://supabase.com/docs
+- Vercel: https://vercel.com/docs
+
+---
+
+## ❓ EN CAS DE BLOCAGE
+
+Si tu rencontres des difficultés:
+1. Consulte les artifacts fournis (Architecture, Boilerplate, Schema)
+2. Priorise les features MUST HAVE
+3. Simplifie si nécessaire (ex: booking sans Teams en Phase 1)
+4. Documente les choix techniques
+
+**Timeline absolue: 4 semaines (28 jours)**
+**Budget hosting: ~55€/mois**
+**Résultat attendu: MVP production-ready déployé sur asapconsulting.com**
+
+---
+
+Commence par créer la structure Turborepo et setup Next.js. Confirme quand prêt pour Phase 1.
