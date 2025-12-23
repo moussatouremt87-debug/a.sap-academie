@@ -68,7 +68,7 @@ export default function PourquoiAsap() {
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-pourquoi-title">
-            Pourquoi choisir A.SAP ?
+            Pourquoi choisir A.SAP Consulting ?
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/80">
             Un partenaire de confiance pour piloter votre transformation digitale
@@ -89,7 +89,7 @@ export default function PourquoiAsap() {
           <div className="mx-auto max-w-3xl text-center mb-16">
             <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">Notre <span className="text-gold">Vision</span></h2>
             <p className="text-white/80 text-lg leading-relaxed mb-6">
-              A.SAP est né de la conviction que la transformation digitale doit être accessible,
+              A.SAP Consulting est né de la conviction que la transformation digitale doit être accessible,
               pragmatique et centrée sur la valeur métier. Notre mission est d'accompagner
               les entreprises africaines dans leur modernisation en combinant expertise
               internationale et connaissance locale.

@@ -60,7 +60,7 @@ export default function Home() {
               <span className="block text-gold">pilotés par l'IA</span>
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-testid="text-hero-description">
-              A.SAP accompagne votre transformation digitale avec expertise et innovation.
+              A.SAP Consulting accompagne votre transformation digitale avec expertise et innovation.
               Nos commerciaux vous guident vers les solutions adaptées à vos besoins.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">

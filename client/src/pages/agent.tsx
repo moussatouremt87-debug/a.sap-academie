@@ -261,7 +261,7 @@ export default function Agent() {
 
 Votre créneau : **${booking.selectedSlot?.date} à ${booking.selectedSlot?.time}**
 
-Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vos besoins et vous présenterons les meilleures solutions A.SAP pour votre projet.
+Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vos besoins et vous présenterons les meilleures solutions A.SAP Consulting pour votre projet.
 
 À très bientôt !`
       };
@@ -584,7 +584,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-semibold" data-testid="text-agent-title">{commercialName} - Commercial A.SAP</h1>
+            <h1 className="font-semibold" data-testid="text-agent-title">{commercialName} - Commercial A.SAP Consulting</h1>
             <p className="text-sm text-muted-foreground">Votre conseiller dédié</p>
           </div>
         </div>
@@ -601,7 +601,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                 Bonjour, je m'appelle {commercialName}
               </h2>
               <p className="mb-8 max-w-md text-center text-muted-foreground">
-                Je suis votre conseiller commercial A.SAP. En quoi puis-je vous aider ?
+                Je suis votre conseiller commercial A.SAP Consulting. En quoi puis-je vous aider ?
                 Décrivez-moi votre projet et je vous guiderai vers les meilleures solutions.
               </p>
               <div className="mb-6 flex flex-wrap justify-center gap-2">

@@ -69,7 +69,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} A.SAP. Tous droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} A.SAP Consulting. Tous droits réservés.</p>
         </div>
       </div>
     </footer>
