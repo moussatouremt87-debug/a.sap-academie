@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { storage } from "./storage";
 import { insertFormationSchema, insertFaqSchema, insertLeadSchema } from "@shared/schema";
+import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -159,6 +160,52 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error creating lead:", error);
       res.status(500).json({ error: "Failed to create lead" });
+    }
+  });
+
+  // Google Calendar - Available slots
+  app.get("/api/calendar/slots", async (req: Request, res: Response) => {
+    try {
+      const slots = await getAvailableSlots(5);
+      res.json({ slots });
+    } catch (error) {
+      console.error("Error fetching calendar slots:", error);
+      res.status(500).json({ error: "Failed to fetch available slots" });
+    }
+  });
+
+  // Google Calendar - Create meeting
+  app.post("/api/calendar/book", async (req: Request, res: Response) => {
+    try {
+      const { email, datetime, duration } = req.body;
+      
+      if (!email || !datetime) {
+        return res.status(400).json({ error: "Email and datetime are required" });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+      }
+
+      const result = await createGoogleMeetEvent(email, datetime, duration || 30);
+      
+      await storage.createLead({
+        name: email.split('@')[0],
+        email,
+        source: "google_meet_booking",
+        notes: `Réservation Google Meet pour le ${new Date(datetime).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`
+      });
+
+      res.json({ 
+        success: true, 
+        meetLink: result.meetLink,
+        eventId: result.eventId,
+        message: "Votre réunion a été créée avec succès! Une invitation a été envoyée à votre email."
+      });
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+      res.status(500).json({ error: "Failed to create meeting" });
     }
   });
 
