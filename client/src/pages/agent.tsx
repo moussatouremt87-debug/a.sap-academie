@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, User, CalendarDays, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink, ChevronLeft, ChevronRight, MessageSquare, Clock } from "lucide-react";
+import { Send, MessageCircle, User, CalendarDays, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink, ChevronLeft, ChevronRight, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +41,20 @@ const suggestedPrompts = [
   "J'ai besoin d'un audit de mon SI",
   "Comment fonctionne votre accompagnement ?",
 ];
+
+const SENEGALESE_NAMES = [
+  "Fatou", "Aminata", "Awa", "Mariama", "Khady", "Aissatou", "Ndéye", "Coumba", 
+  "Rama", "Binta", "Sokhna", "Mame", "Astou", "Dieynaba", "Yacine", "Rokhaya",
+  "Seynabou", "Adja", "Ndeye Fatou", "Oumou", "Diary", "Khadija", "Aby", "Nabou",
+  "Thioro", "Moustapha", "Mamadou", "Ibrahima", "Ousmane", "Cheikh", "Abdoulaye",
+  "Modou", "Papa", "Serigne", "Alioune", "Babacar", "Pape", "El Hadji", "Demba",
+  "Malick", "Saliou", "Amadou", "Mbaye", "Lamine", "Youssou", "Daouda", "Samba",
+  "Boubacar", "Djibril", "Thierno"
+];
+
+function getRandomCommercialName(): string {
+  return SENEGALESE_NAMES[Math.floor(Math.random() * SENEGALESE_NAMES.length)];
+}
 
 const MEETING_KEYWORDS = [
   "google meet", "rendez-vous", "rdv", "réunion", "meeting", 
@@ -217,6 +231,7 @@ export default function Agent() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [commercialName] = useState(() => getRandomCommercialName());
   const [booking, setBooking] = useState<BookingState>({
     step: "hidden",
     selectedDate: null,
@@ -566,11 +581,11 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
       <div className="border-b bg-card px-4 py-3">
         <div className="container mx-auto flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
+            <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-semibold" data-testid="text-agent-title">Agent IA A.SAP</h1>
-            <p className="text-sm text-muted-foreground">Votre consultant digital senior</p>
+            <h1 className="font-semibold" data-testid="text-agent-title">{commercialName} - Commercial A.SAP</h1>
+            <p className="text-sm text-muted-foreground">Votre conseiller dédié</p>
           </div>
         </div>
       </div>
@@ -580,14 +595,14 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Sparkles className="h-8 w-8 text-primary" />
+                <MessageCircle className="h-8 w-8 text-primary" />
               </div>
               <h2 className="mb-2 text-xl font-semibold" data-testid="text-agent-welcome">
-                Bienvenue sur l'Agent IA A.SAP
+                Bonjour, je m'appelle {commercialName}
               </h2>
               <p className="mb-8 max-w-md text-center text-muted-foreground">
-                Je suis votre consultant digital. Décrivez-moi votre projet ou besoin,
-                et je vous guiderai vers les meilleures solutions.
+                Je suis votre conseiller commercial A.SAP. En quoi puis-je vous aider ?
+                Décrivez-moi votre projet et je vous guiderai vers les meilleures solutions.
               </p>
               <div className="mb-6 flex flex-wrap justify-center gap-2">
                 {quickActions.map((action, index) => (
@@ -635,7 +650,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                       {message.role === "user" ? (
                         <User className="h-4 w-4" />
                       ) : (
-                        <Sparkles className="h-4 w-4" />
+                        <MessageCircle className="h-4 w-4" />
                       )}
                     </div>
                     <Card
@@ -694,7 +709,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             </Button>
           </div>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            L'Agent IA peut faire des erreurs. Vérifiez les informations importantes.
+            Ce service utilise l'IA pour vous assister. Vérifiez les informations importantes.
           </p>
         </form>
       </div>

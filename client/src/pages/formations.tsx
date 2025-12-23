@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, Clock, BarChart3, Users, Award, Sparkles, Search, X, Home, Laptop, CheckCircle2, MessageCircle, Rocket, PlayCircle } from "lucide-react";
+import { Filter, Clock, BarChart3, Users, Award, Search, X, Home, Laptop, CheckCircle2, MessageCircle, Rocket, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -224,7 +224,7 @@ export default function Formations() {
               <h3 className="mb-2 text-lg font-semibold">Aucune formation trouvée</h3>
               <p className="mb-6 max-w-md text-muted-foreground">
                 Aucune formation ne correspond à vos critères.
-                Essayez de modifier vos filtres ou parlez à notre Agent IA.
+                Essayez de modifier vos filtres ou contactez un commercial.
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={clearFilters}>
@@ -232,8 +232,8 @@ export default function Formations() {
                 </Button>
                 <Link href="/agent">
                   <Button>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Parler à l'Agent IA
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Parler à un commercial
                   </Button>
                 </Link>
               </div>
@@ -292,7 +292,7 @@ export default function Formations() {
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
             Nous créons des programmes adaptés aux besoins spécifiques de votre entreprise.
-            Contactez notre Agent IA pour discuter de vos objectifs.
+            Contactez un commercial pour discuter de vos objectifs.
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-formations">

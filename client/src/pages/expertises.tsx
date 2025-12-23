@@ -388,7 +388,7 @@ export default function Expertises() {
                   <Link href="/agent">
                     <Button variant="outline" data-testid={`button-agent-${category.id}`}>
                       <MessageCircle className="mr-2 h-4 w-4" />
-                      Parler à l'Agent IA pour ce service
+                      Parler à un commercial
                     </Button>
                   </Link>
                 </div>
@@ -474,13 +474,13 @@ export default function Expertises() {
             Besoin d'un <span className="text-gold">accompagnement personnalisé</span> ?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Notre Agent IA analyse votre besoin et vous oriente vers l'expertise adaptée.
+            Nos commerciaux analysent votre besoin et vous orientent vers l'expertise adaptée.
             Commencez la conversation pour découvrir nos solutions.
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-expertises">
               <Rocket className="mr-2 h-5 w-5" />
-              Démarrer avec l'Agent IA
+              Contacter un commercial
             </Button>
           </Link>
         </div>

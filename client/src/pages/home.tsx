@@ -61,13 +61,13 @@ export default function Home() {
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-testid="text-hero-description">
               A.SAP accompagne votre transformation digitale avec expertise et innovation.
-              Notre Agent IA vous guide vers les solutions adaptées à vos besoins.
+              Nos commerciaux vous guident vers les solutions adaptées à vos besoins.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/agent">
                 <Button size="lg" className="bg-gold text-gold-foreground text-lg px-8" data-testid="button-hero-agent">
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Parler à l'Agent IA
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  Parler à un commercial
                 </Button>
               </Link>
               <Link href="/expertises">
@@ -135,13 +135,13 @@ export default function Home() {
               Prêt à <span className="text-gold">transformer</span> votre entreprise ?
             </h2>
             <p className="mb-8 text-muted-foreground">
-              Notre Agent IA est disponible 24/7 pour analyser votre besoin et vous proposer
+              Notre équipe commerciale est disponible pour analyser votre besoin et vous proposer
               les meilleures solutions. Commencez la conversation dès maintenant.
             </p>
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-bottom">
                 <Rocket className="mr-2 h-5 w-5" />
-                Démarrer avec l'Agent IA
+                Contacter un commercial
               </Button>
             </Link>
           </div>

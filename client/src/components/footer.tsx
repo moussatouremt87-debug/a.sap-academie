@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Mail, Linkedin, Twitter } from "lucide-react";
+import logoImage from "@assets/Gemini_Generated_Image_6otlwx6otlwx6otl_1766484949882.png";
 
 export function Footer() {
   return (
@@ -8,12 +9,11 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-                <span className="text-base font-bold text-primary-foreground">A</span>
-              </div>
-              <span className="text-lg font-bold tracking-tight">
-                A.<span className="text-primary">SAP</span>
-              </span>
+              <img 
+                src={logoImage} 
+                alt="A.SAP Consulting" 
+                className="h-10 w-auto object-contain"
+              />
             </Link>
             <p className="text-sm text-muted-foreground">
               Cabinet de conseil en transformation digitale, SAP et formation.
@@ -35,7 +35,7 @@ export function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">Ressources</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/agent" className="hover:text-foreground transition-colors">Agent IA</Link></li>
+              <li><Link href="/agent" className="hover:text-foreground transition-colors">Contact Commercial</Link></li>
               <li><Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
               <li><Link href="/pourquoi-asap" className="hover:text-foreground transition-colors">Pourquoi A.SAP</Link></li>
             </ul>

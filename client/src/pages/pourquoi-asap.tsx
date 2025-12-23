@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import {
   Target, Users, Zap, Globe, Award, CheckCircle2,
-  Building2, Lightbulb, TrendingUp, Sparkles, ArrowRight, Rocket, Compass
+  Building2, Lightbulb, TrendingUp, MessageCircle, ArrowRight, Rocket, Compass
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,7 +59,7 @@ const differentiators = [
   "Plus de 200 projets menés avec succès",
   "Équipe de 50+ consultants experts",
   "Présence dans 5 pays d'Afrique de l'Ouest",
-  "Agent IA disponible 24/7 pour vos questions",
+  "Équipe commerciale disponible pour vos questions",
 ];
 
 export default function PourquoiAsap() {
@@ -170,8 +170,8 @@ export default function PourquoiAsap() {
               <div className="mt-8">
                 <Link href="/agent">
                   <Button className="bg-gold text-gold-foreground" data-testid="button-differentiators-cta">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Discuter avec notre Agent IA
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Discuter avec un commercial
                   </Button>
                 </Link>
               </div>
@@ -213,14 +213,14 @@ export default function PourquoiAsap() {
             Prêt à <span className="text-gold">démarrer</span> votre projet ?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Notre Agent IA est disponible pour analyser votre besoin et vous proposer
+            Notre équipe commerciale est disponible pour analyser votre besoin et vous proposer
             les solutions les plus adaptées à votre contexte.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-pourquoi">
                 <Rocket className="mr-2 h-5 w-5" />
-                Parler à l'Agent IA
+                Parler à un commercial
               </Button>
             </Link>
             <Link href="/expertises">

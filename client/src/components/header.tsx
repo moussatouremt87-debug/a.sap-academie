@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Sparkles, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
+import { Menu, X, MessageCircle, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import logoImage from "@assets/Gemini_Generated_Image_6otlwx6otlwx6otl_1766484949882.png";
 
 const navItems = [
   { href: "/", label: "Accueil", icon: Home },
-  { href: "/agent", label: "Agent IA", icon: Sparkles },
+  { href: "/agent", label: "Commercial", icon: MessageCircle },
   { href: "/expertises", label: "Expertises", icon: Compass },
   { href: "/formations", label: "Formations", icon: GraduationCap },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
@@ -21,12 +22,11 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2" data-testid="link-home">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">A</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight">
-            A.<span className="text-primary">SAP</span>
-          </span>
+          <img 
+            src={logoImage} 
+            alt="A.SAP Consulting" 
+            className="h-10 w-auto object-contain"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -47,8 +47,8 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link href="/agent" className="hidden sm:block">
             <Button className="bg-gold text-gold-foreground" data-testid="button-cta-agent">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Parler à l'Agent IA
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Parler à un commercial
             </Button>
           </Link>
           <ThemeToggle />
@@ -86,8 +86,8 @@ export function Header() {
                 onClick={() => setIsOpen(false)}
                 data-testid="button-mobile-agent"
               >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Parler à l'Agent IA
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Parler à un commercial
               </Button>
             </Link>
           </nav>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Sparkles, HelpCircle, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { Search, HelpCircle, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -11,7 +11,7 @@ import type { Faq } from "@shared/schema";
 
 const categoryLabels: Record<string, string> = {
   General: "Général",
-  "Agent IA": "Agent IA",
+  "Agent IA": "Contact",
   Services: "Services & Projets",
   SAP: "SAP & SI",
   Formation: "Formation",
@@ -185,12 +185,12 @@ export default function FaqPage() {
                 <h3 className="mb-2 text-lg font-semibold">Aucune question trouvée</h3>
                 <p className="mb-6 max-w-md text-muted-foreground">
                   Votre question ne figure pas dans notre FAQ ?
-                  Notre Agent IA peut vous aider.
+                  Un commercial peut vous aider.
                 </p>
                 <Link href="/agent">
                   <Button>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Parler à l'Agent IA
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Parler à un commercial
                   </Button>
                 </Link>
               </div>
@@ -205,13 +205,13 @@ export default function FaqPage() {
             Vous n'avez pas trouvé de <span className="text-gold">réponse</span> ?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Notre Agent IA est disponible 24/7 pour répondre à toutes vos questions
+            Nos commerciaux sont disponibles pour répondre à toutes vos questions
             et vous accompagner dans vos démarches.
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-faq">
               <MessageCircle className="mr-2 h-5 w-5" />
-              Poser ma question à l'Agent IA
+              Poser ma question à un commercial
             </Button>
           </Link>
         </div>
