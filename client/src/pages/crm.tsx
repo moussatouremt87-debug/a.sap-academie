@@ -243,21 +243,23 @@ function KanbanColumn({
         <span className="font-semibold text-sm">{title}</span>
         <Badge variant="secondary" className="ml-auto">{leads.length}</Badge>
       </div>
-      <div className="space-y-3 pr-2 max-h-[60vh] sm:max-h-[calc(100vh-320px)] overflow-y-auto">
-        {leads.map((lead) => (
-          <LeadCard 
-            key={lead.id} 
-            lead={lead} 
-            onClick={() => onLeadClick(lead)}
-            compact
-          />
-        ))}
-        {leads.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            Aucun lead
-          </div>
-        )}
-      </div>
+      <ScrollArea className="h-[60vh] sm:h-[calc(100vh-320px)]">
+        <div className="space-y-3 pr-2">
+          {leads.map((lead) => (
+            <LeadCard 
+              key={lead.id} 
+              lead={lead} 
+              onClick={() => onLeadClick(lead)}
+              compact
+            />
+          ))}
+          {leads.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Aucun lead
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
