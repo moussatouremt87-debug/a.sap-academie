@@ -188,7 +188,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid email format" });
       }
 
-      const result = await createGoogleMeetEvent(email, datetime, duration || 30);
+      const result = await createGoogleMeetEvent(email, datetime, duration || 15);
       
       await storage.createLead({
         name: email.split('@')[0],

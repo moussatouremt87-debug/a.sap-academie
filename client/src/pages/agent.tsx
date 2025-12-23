@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Calendar, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink } from "lucide-react";
+import { Send, Bot, User, Calendar, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Message {
@@ -22,7 +22,8 @@ interface TimeSlot {
 }
 
 interface BookingState {
-  step: "hidden" | "slots" | "email" | "confirming" | "success";
+  step: "hidden" | "calendar" | "email" | "confirming" | "success";
+  selectedDate: Date | null;
   selectedSlot: TimeSlot | null;
   email: string;
   meetLink: string;
@@ -46,12 +47,179 @@ const MEETING_KEYWORDS = [
   "appel", "call", "visio", "visioconférence", "consultation"
 ];
 
+const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+function generateTimeSlots(): string[] {
+  const slots: string[] = [];
+  for (let hour = 9; hour <= 19; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    if (hour < 19) {
+      slots.push(`${hour.toString().padStart(2, '0')}:15`);
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+      slots.push(`${hour.toString().padStart(2, '0')}:45`);
+    }
+  }
+  return slots;
+}
+
+const TIME_SLOTS = generateTimeSlots();
+
+function CalendarPicker({ 
+  selectedDate, 
+  onSelectDate,
+  currentMonth,
+  onChangeMonth
+}: { 
+  selectedDate: Date | null;
+  onSelectDate: (date: Date) => void;
+  currentMonth: Date;
+  onChangeMonth: (date: Date) => void;
+}) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+  const startDay = firstDayOfMonth.getDay();
+  const daysInMonth = lastDayOfMonth.getDate();
+
+  const prevMonth = () => {
+    onChangeMonth(new Date(year, month - 1, 1));
+  };
+
+  const nextMonth = () => {
+    onChangeMonth(new Date(year, month + 1, 1));
+  };
+
+  const isDateSelectable = (day: number) => {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay();
+    return date >= today && dayOfWeek !== 0 && dayOfWeek !== 6;
+  };
+
+  const isSelectedDate = (day: number) => {
+    if (!selectedDate) return false;
+    return selectedDate.getDate() === day && 
+           selectedDate.getMonth() === month && 
+           selectedDate.getFullYear() === year;
+  };
+
+  const isToday = (day: number) => {
+    const now = new Date();
+    return day === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+  };
+
+  const days = [];
+  for (let i = 0; i < startDay; i++) {
+    days.push(<div key={`empty-${i}`} className="h-9 w-9" />);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const selectable = isDateSelectable(day);
+    const selected = isSelectedDate(day);
+    const todayClass = isToday(day);
+    
+    days.push(
+      <button
+        key={day}
+        onClick={() => selectable && onSelectDate(new Date(year, month, day))}
+        disabled={!selectable}
+        className={`h-9 w-9 rounded-md text-sm font-medium transition-colors
+          ${selected ? 'bg-primary text-primary-foreground' : ''}
+          ${!selected && selectable ? 'hover:bg-muted' : ''}
+          ${!selectable ? 'text-muted-foreground/40 cursor-not-allowed' : ''}
+          ${todayClass && !selected ? 'border border-primary' : ''}
+        `}
+        data-testid={`calendar-day-${day}`}
+      >
+        {day}
+      </button>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <Button variant="ghost" size="icon" onClick={prevMonth} data-testid="button-prev-month">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="font-semibold">
+          {MONTHS_FR[month]} {year}
+        </span>
+        <Button variant="ghost" size="icon" onClick={nextMonth} data-testid="button-next-month">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {DAYS_FR.map(day => (
+          <div key={day} className="h-9 w-9 flex items-center justify-center text-xs font-medium text-muted-foreground">
+            {day}
+          </div>
+        ))}
+        {days}
+      </div>
+    </div>
+  );
+}
+
+function TimeSlotPicker({
+  selectedDate,
+  selectedTime,
+  onSelectTime
+}: {
+  selectedDate: Date;
+  selectedTime: string | null;
+  onSelectTime: (time: string) => void;
+}) {
+  const now = new Date();
+  const isToday = selectedDate.toDateString() === now.toDateString();
+
+  const availableSlots = TIME_SLOTS.filter(time => {
+    if (!isToday) return true;
+    const [hours, minutes] = time.split(':').map(Number);
+    const slotTime = new Date(selectedDate);
+    slotTime.setHours(hours, minutes, 0, 0);
+    return slotTime > now;
+  });
+
+  return (
+    <div>
+      <p className="mb-3 text-sm font-medium">
+        Créneaux disponibles le {selectedDate.getDate()} {MONTHS_FR[selectedDate.getMonth()]} :
+      </p>
+      <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+        {availableSlots.map(time => (
+          <Button
+            key={time}
+            variant={selectedTime === time ? "default" : "outline"}
+            size="sm"
+            onClick={() => onSelectTime(time)}
+            className="text-xs"
+            data-testid={`button-time-${time.replace(':', '')}`}
+          >
+            {time}
+          </Button>
+        ))}
+      </div>
+      {availableSlots.length === 0 && (
+        <p className="text-sm text-muted-foreground">Aucun créneau disponible pour cette date.</p>
+      )}
+    </div>
+  );
+}
+
 export default function Agent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingState>({
     step: "hidden",
+    selectedDate: null,
     selectedSlot: null,
     email: "",
     meetLink: ""
@@ -59,14 +227,9 @@ export default function Agent() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: slotsData, isLoading: slotsLoading, refetch: refetchSlots } = useQuery<{ slots: TimeSlot[] }>({
-    queryKey: ['/api/calendar/slots'],
-    enabled: false
-  });
-
   const bookMutation = useMutation({
     mutationFn: async ({ email, datetime }: { email: string; datetime: string }) => {
-      const response = await apiRequest('POST', '/api/calendar/book', { email, datetime, duration: 30 });
+      const response = await apiRequest('POST', '/api/calendar/book', { email, datetime, duration: 15 });
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -96,7 +259,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
         content: "Désolé, une erreur s'est produite lors de la création de la réunion. Veuillez réessayer ou nous contacter directement."
       };
       setMessages(prev => [...prev, errorMessage]);
-      setBooking({ step: "hidden", selectedSlot: null, email: "", meetLink: "" });
+      setBooking({ step: "hidden", selectedDate: null, selectedSlot: null, email: "", meetLink: "" });
     }
   });
 
@@ -118,12 +281,34 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
     return MEETING_KEYWORDS.some(keyword => lowerText.includes(keyword));
   };
 
-  const showMeetingSlots = async () => {
-    setBooking(prev => ({ ...prev, step: "slots" }));
-    await refetchSlots();
+  const showCalendar = () => {
+    setBooking(prev => ({ ...prev, step: "calendar" }));
+    setCurrentMonth(new Date());
+    setSelectedTime(null);
   };
 
-  const handleSlotSelect = (slot: TimeSlot) => {
+  const handleDateSelect = (date: Date) => {
+    setBooking(prev => ({ ...prev, selectedDate: date }));
+    setSelectedTime(null);
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+  };
+
+  const handleConfirmSlot = () => {
+    if (!booking.selectedDate || !selectedTime) return;
+    
+    const [hours, minutes] = selectedTime.split(':').map(Number);
+    const datetime = new Date(booking.selectedDate);
+    datetime.setHours(hours, minutes, 0, 0);
+    
+    const slot: TimeSlot = {
+      date: `${DAYS_FR[datetime.getDay()]} ${datetime.getDate()} ${MONTHS_FR[datetime.getMonth()]}`,
+      time: selectedTime,
+      datetime: datetime.toISOString()
+    };
+    
     setBooking(prev => ({ ...prev, selectedSlot: slot, step: "email" }));
   };
 
@@ -157,13 +342,13 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Parfait ! Je vous propose de réserver un créneau pour une consultation Google Meet de 30 minutes avec notre équipe.
+        content: `Parfait ! Je vous propose de réserver un créneau pour une consultation Google Meet de 15 minutes avec notre équipe.
 
-Voici les créneaux disponibles cette semaine. **Cliquez sur le créneau qui vous convient** :`,
+**Choisissez votre date et heure** dans le calendrier ci-dessous :`,
       };
       setMessages((prev) => [...prev, assistantMessage]);
       setIsStreaming(false);
-      await showMeetingSlots();
+      showCalendar();
       return;
     }
 
@@ -244,48 +429,54 @@ Voici les créneaux disponibles cette semaine. **Cliquez sur le créneau qui vou
   const renderBookingUI = () => {
     if (booking.step === "hidden") return null;
 
-    if (booking.step === "slots") {
+    if (booking.step === "calendar") {
       return (
-        <Card className="mx-auto my-4 max-w-lg p-4">
+        <Card className="mx-auto my-4 max-w-md p-4">
           <div className="mb-4 flex items-center gap-2">
             <Video className="h-5 w-5 text-primary" />
-            <span className="font-semibold">Créneaux disponibles</span>
+            <span className="font-semibold">Réserver une consultation</span>
           </div>
-          {slotsLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Chargement des créneaux...</span>
-            </div>
-          ) : (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {slotsData?.slots?.map((slot, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-auto flex-col items-start p-3 text-left"
-                  onClick={() => handleSlotSelect(slot)}
-                  data-testid={`button-slot-${index}`}
-                >
-                  <span className="font-medium">{slot.date}</span>
-                  <span className="text-sm text-muted-foreground">{slot.time}</span>
-                </Button>
-              ))}
+          
+          <CalendarPicker
+            selectedDate={booking.selectedDate}
+            onSelectDate={handleDateSelect}
+            currentMonth={currentMonth}
+            onChangeMonth={setCurrentMonth}
+          />
+          
+          {booking.selectedDate && (
+            <div className="mt-4 border-t pt-4">
+              <TimeSlotPicker
+                selectedDate={booking.selectedDate}
+                selectedTime={selectedTime}
+                onSelectTime={handleTimeSelect}
+              />
             </div>
           )}
-          <Button 
-            variant="ghost" 
-            className="mt-4 w-full"
-            onClick={() => setBooking({ step: "hidden", selectedSlot: null, email: "", meetLink: "" })}
-          >
-            Annuler
-          </Button>
+          
+          <div className="mt-4 flex gap-2">
+            <Button
+              className="flex-1 bg-gold text-gold-foreground"
+              onClick={handleConfirmSlot}
+              disabled={!booking.selectedDate || !selectedTime}
+              data-testid="button-confirm-slot"
+            >
+              Confirmer ce créneau
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setBooking({ step: "hidden", selectedDate: null, selectedSlot: null, email: "", meetLink: "" })}
+            >
+              Annuler
+            </Button>
+          </div>
         </Card>
       );
     }
 
     if (booking.step === "email") {
       return (
-        <Card className="mx-auto my-4 max-w-lg p-4">
+        <Card className="mx-auto my-4 max-w-md p-4">
           <div className="mb-4">
             <div className="flex items-center gap-2 text-primary">
               <CheckCircle2 className="h-5 w-5" />
@@ -320,7 +511,7 @@ Voici les créneaux disponibles cette semaine. **Cliquez sur le créneau qui vou
             </Button>
             <Button 
               variant="outline"
-              onClick={() => setBooking(prev => ({ ...prev, step: "slots" }))}
+              onClick={() => setBooking(prev => ({ ...prev, step: "calendar" }))}
             >
               Retour
             </Button>
@@ -331,7 +522,7 @@ Voici les créneaux disponibles cette semaine. **Cliquez sur le créneau qui vou
 
     if (booking.step === "confirming") {
       return (
-        <Card className="mx-auto my-4 max-w-lg p-6">
+        <Card className="mx-auto my-4 max-w-md p-6">
           <div className="flex flex-col items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-4 text-muted-foreground">Création de votre réunion Google Meet...</p>
@@ -342,7 +533,7 @@ Voici les créneaux disponibles cette semaine. **Cliquez sur le créneau qui vou
 
     if (booking.step === "success" && booking.meetLink) {
       return (
-        <Card className="mx-auto my-4 max-w-lg border-primary/20 bg-primary/5 p-4">
+        <Card className="mx-auto my-4 max-w-md border-primary/20 bg-primary/5 p-4">
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="h-6 w-6" />
             <span className="font-semibold">Réunion confirmée</span>
