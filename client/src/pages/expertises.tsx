@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import transformationImage from "@assets/Gemini_Generated_Image_e2646ke2646ke264_(1)_1766483159475.png";
 
 interface Service {
   name: string;
@@ -306,6 +307,46 @@ export default function Expertises() {
             Un éventail complet de services pour accompagner votre transformation digitale,
             de la stratégie à l'implémentation.
           </p>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-20 border-b">
+        <div className="container mx-auto px-4">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="order-2 lg:order-1">
+              <Badge className="mb-4">Transformation Digitale</Badge>
+              <h2 className="mb-4 text-3xl font-bold">
+                De l'<span className="text-primary">industrie</span> au <span className="text-gold">digital</span>
+              </h2>
+              <p className="mb-6 text-muted-foreground leading-relaxed">
+                Nous accompagnons les entreprises dans leur transition vers le numérique, 
+                en préservant leur expertise métier tout en les dotant des outils 
+                et processus modernes pour rester compétitives.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Digitalisation des processus opérationnels</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Intégration SAP pour la gestion d'entreprise</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Formation et accompagnement au changement</span>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2">
+              <img 
+                src={transformationImage} 
+                alt="Transformation digitale - de l'industrie au numérique" 
+                className="w-full h-auto rounded-lg shadow-lg"
+                data-testid="img-transformation"
+              />
+            </div>
+          </div>
         </div>
       </section>
 

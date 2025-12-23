@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import teamImage from "@assets/Gemini_Generated_Image_nmk9wvnmk9wvnmk9_1766483159475.png";
 
 const values = [
   {
@@ -78,14 +79,28 @@ export default function PourquoiAsap() {
 
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold">Notre <span className="text-primary">Vision</span></h2>
-            <p className="mx-auto max-w-3xl text-muted-foreground leading-relaxed">
-              A.SAP est né de la conviction que la transformation digitale doit être accessible,
-              pragmatique et centrée sur la valeur métier. Notre mission est d'accompagner
-              les entreprises africaines dans leur modernisation en combinant expertise
-              internationale et connaissance locale.
-            </p>
+          <div className="mb-16 grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <h2 className="mb-4 text-3xl font-bold">Notre <span className="text-primary">Vision</span></h2>
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                A.SAP est né de la conviction que la transformation digitale doit être accessible,
+                pragmatique et centrée sur la valeur métier. Notre mission est d'accompagner
+                les entreprises africaines dans leur modernisation en combinant expertise
+                internationale et connaissance locale.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                Basés au Sénégal et présents dans toute l'Afrique de l'Ouest, nous sommes 
+                votre partenaire de confiance pour les projets SAP et de transformation digitale.
+              </p>
+            </div>
+            <div className="relative">
+              <img 
+                src={teamImage} 
+                alt="Équipe A.SAP Consulting en réunion" 
+                className="w-full h-auto rounded-lg shadow-lg"
+                data-testid="img-team"
+              />
+            </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, Clock, BarChart3, Users, Award, Bot, Search, X } from "lucide-react";
+import { Filter, Clock, BarChart3, Users, Award, Bot, Search, X, Home, Laptop, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Formation } from "@shared/schema";
+import remoteWorkImage from "@assets/Gemini_Generated_Image_ktbxeiktbxeiktbx_1766483159474.png";
 
 const categories = ["Tous", "FI", "MM", "SD", "ABAP", "Analytics", "Basis", "PP", "QM"];
 const levels = ["Tous", "Debutant", "Intermediaire", "Avance"];
@@ -238,6 +239,55 @@ export default function Formations() {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      <section className="border-t py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="relative overflow-hidden rounded-lg">
+              <img 
+                src={remoteWorkImage} 
+                alt="Formation SAP à distance depuis chez soi" 
+                className="w-full h-auto object-cover rounded-lg"
+                data-testid="img-remote-work"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                <p className="text-white font-medium">Formez-vous à votre rythme, depuis chez vous</p>
+              </div>
+            </div>
+            <div>
+              <Badge className="mb-4">Formation flexible</Badge>
+              <h2 className="mb-4 text-3xl font-bold">
+                Conciliez <span className="text-gold">vie pro et perso</span>
+              </h2>
+              <p className="mb-6 text-muted-foreground">
+                Nos formations SAP en ligne s'adaptent à votre emploi du temps. 
+                Que vous soyez parent, salarié ou entrepreneur, apprenez à votre rythme 
+                sans sacrifier votre vie personnelle.
+              </p>
+              <div className="space-y-3 mb-8">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Accès 24h/24 aux cours et ressources</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Sessions en direct ou en replay</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Accompagnement personnalisé par nos experts</span>
+                </div>
+              </div>
+              <Link href="/agent">
+                <Button className="bg-gold text-gold-foreground" data-testid="button-cta-remote">
+                  <Bot className="mr-2 h-4 w-4" />
+                  En savoir plus
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
