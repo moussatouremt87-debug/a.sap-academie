@@ -237,29 +237,27 @@ function KanbanColumn({
   onLeadClick: (lead: Lead) => void;
 }) {
   return (
-    <div className="flex-1 min-w-[280px] max-w-[320px]">
+    <div className="flex-1 min-w-[260px] sm:min-w-[280px] max-w-[320px]">
       <div className="flex items-center gap-2 mb-4 px-1">
         <Icon className={`h-4 w-4 ${color}`} />
         <span className="font-semibold text-sm">{title}</span>
         <Badge variant="secondary" className="ml-auto">{leads.length}</Badge>
       </div>
-      <ScrollArea className="h-[calc(100vh-380px)]">
-        <div className="space-y-3 pr-2">
-          {leads.map((lead) => (
-            <LeadCard 
-              key={lead.id} 
-              lead={lead} 
-              onClick={() => onLeadClick(lead)}
-              compact
-            />
-          ))}
-          {leads.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Aucun lead
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      <div className="space-y-3 pr-2 max-h-[60vh] sm:max-h-[calc(100vh-320px)] overflow-y-auto">
+        {leads.map((lead) => (
+          <LeadCard 
+            key={lead.id} 
+            lead={lead} 
+            onClick={() => onLeadClick(lead)}
+            compact
+          />
+        ))}
+        {leads.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            Aucun lead
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -431,6 +429,34 @@ export default function CRM() {
                   <Users className="h-4 w-4 mr-2" />
                   Liste
                 </Button>
+              </div>
+
+              <div className="md:hidden">
+                <Select value={view} onValueChange={(v) => setView(v as "dashboard" | "pipeline" | "list")}>
+                  <SelectTrigger className="w-[140px]" data-testid="select-mobile-view">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dashboard">
+                      <span className="flex items-center gap-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="pipeline">
+                      <span className="flex items-center gap-2">
+                        <Kanban className="h-4 w-4" />
+                        Pipeline
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="list">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Liste
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <Separator orientation="vertical" className="h-6 hidden md:block" />
