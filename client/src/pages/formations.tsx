@@ -153,17 +153,17 @@ export default function Formations() {
                   <div className="bg-muted/50 rounded-lg px-4 py-2">
                     <span className="font-semibold text-primary">Junior</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">150-250K FCFA/jour</span>
+                    <span className="font-bold">250-400€/jour</span>
                   </div>
                   <div className="bg-muted/50 rounded-lg px-4 py-2">
                     <span className="font-semibold text-primary">Confirmé</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">300-500K FCFA/jour</span>
+                    <span className="font-bold">450-650€/jour</span>
                   </div>
                   <div className="bg-gold/10 rounded-lg px-4 py-2">
                     <span className="font-semibold text-gold">Senior</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">600K+ FCFA/jour</span>
+                    <span className="font-bold">700€+/jour</span>
                   </div>
                 </div>
               </div>
