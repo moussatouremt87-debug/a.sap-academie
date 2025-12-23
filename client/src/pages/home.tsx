@@ -56,8 +56,7 @@ export default function Home() {
         <div className="container relative mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl" data-testid="text-hero-title">
-              Conseil, Transformation & SAP
-              <span className="block text-gold">pilotés par l'IA</span>
+              Conseil, Transformation <span className="text-gold">& SAP</span>
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-testid="text-hero-description">
               A.SAP Consulting accompagne votre transformation digitale avec expertise et innovation.
