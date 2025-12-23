@@ -47,7 +47,7 @@ export default function Home() {
           loop
           muted
           playsInline
-          className="absolute inset-0 h-full w-full object-cover blur-sm scale-105"
+          className="absolute inset-0 h-full w-full object-cover blur-[1px] scale-105"
           data-testid="video-hero-background"
         >
           <source src={heroVideo} type="video/mp4" />
