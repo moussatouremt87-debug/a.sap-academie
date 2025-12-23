@@ -133,6 +133,45 @@ export default function Formations() {
         </div>
       </section>
 
+      <section className="border-b bg-gradient-to-r from-gold/5 via-background to-gold/5 py-8">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-4xl">
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+              <div className="flex-shrink-0 text-center md:text-left">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold/20 mb-2">
+                  <Rocket className="h-8 w-8 text-gold" />
+                </div>
+              </div>
+              <div className="text-center md:text-left">
+                <h2 className="text-xl font-bold mb-2" data-testid="text-roi-title">
+                  Investissez dans votre avenir
+                </h2>
+                <p className="text-muted-foreground mb-3">
+                  Un consultant SAP est l'un des profils IT les mieux rémunérés. Le TJM moyen :
+                </p>
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
+                  <div className="bg-muted/50 rounded-lg px-4 py-2">
+                    <span className="font-semibold text-primary">Junior</span>
+                    <span className="text-muted-foreground mx-2">:</span>
+                    <span className="font-bold">150-250K FCFA/jour</span>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg px-4 py-2">
+                    <span className="font-semibold text-primary">Confirmé</span>
+                    <span className="text-muted-foreground mx-2">:</span>
+                    <span className="font-bold">300-500K FCFA/jour</span>
+                  </div>
+                  <div className="bg-gold/10 rounded-lg px-4 py-2">
+                    <span className="font-semibold text-gold">Senior</span>
+                    <span className="text-muted-foreground mx-2">:</span>
+                    <span className="font-bold">600K+ FCFA/jour</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
