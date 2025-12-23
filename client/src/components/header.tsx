@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { Menu, X, MessageCircle, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import logoImage from "@assets/Gemini_Generated_Image_6otlwx6otlwx6otl_1766484949882.png";
 
 const navItems = [
   { href: "/", label: "Accueil", icon: Home },
@@ -22,11 +21,9 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2" data-testid="link-home">
-          <img 
-            src={logoImage} 
-            alt="A.SAP Consulting" 
-            className="h-10 w-auto object-contain"
-          />
+          <span className="text-xl font-bold">
+            <span className="text-primary">A.</span><span className="text-gold">SAP</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
