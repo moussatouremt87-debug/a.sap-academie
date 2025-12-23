@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { ArrowRight, Bot, Building2, GraduationCap, Settings, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import heroVideo from "@assets/generated_videos/corporate_consulting_meeting_ambiance.mp4";
 
 const problemCards = [
   {
@@ -40,8 +41,18 @@ const stats = [
 export default function Home() {
   return (
     <div className="flex flex-col">
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-dark-blue py-20 md:py-32">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+      <section className="relative overflow-hidden py-20 md:py-32">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 h-full w-full object-cover"
+          data-testid="video-hero-background"
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-dark-blue/90" />
         <div className="container relative mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl" data-testid="text-hero-title">
