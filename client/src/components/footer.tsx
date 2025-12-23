@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Mail, Linkedin, Twitter } from "lucide-react";
+import logoImage from "@assets/image_1766486404362.png";
 
 export function Footer() {
   return (
@@ -8,9 +9,11 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <span className="text-xl font-bold">
-                <span className="text-primary">A.</span><span className="text-gold">SAP</span>
-              </span>
+              <img 
+                src={logoImage} 
+                alt="A.SAP Consulting" 
+                className="h-10 w-auto object-contain"
+              />
             </Link>
             <p className="text-sm text-muted-foreground">
               Cabinet de conseil en transformation digitale, SAP et formation.
