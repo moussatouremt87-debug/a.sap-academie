@@ -5,7 +5,10 @@ import {
   Users, UserPlus, Calendar, Clock, Phone, Mail,
   Building2, AlertCircle, CheckCircle2, ArrowRight,
   Filter, Search, Sparkles, MessageSquare, FileText,
-  RefreshCw, ChevronDown, ChevronUp, ExternalLink, LogOut, Loader2
+  RefreshCw, ChevronDown, ChevronUp, LogOut, Loader2,
+  LayoutDashboard, Kanban, BarChart3, Settings, X,
+  TrendingUp, Target, Zap, Copy, PhoneCall, MailOpen,
+  CalendarCheck, ChevronRight, MoreHorizontal, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,36 +22,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import type { Lead, LeadActivity, Conversation, Message } from "@shared/schema";
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  new: { label: "Nouveau", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
-  to_follow_up: { label: "A relancer", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-  in_progress: { label: "En cours", color: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" },
-  qualified: { label: "Qualifié", color: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  converted: { label: "Converti", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200" },
-  lost: { label: "Perdu", color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200" },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; iconColor: string }> = {
+  new: { 
+    label: "Nouveau", 
+    color: "text-blue-700 dark:text-blue-300",
+    bgColor: "bg-blue-50 dark:bg-blue-950/50",
+    iconColor: "text-blue-500"
+  },
+  to_follow_up: { 
+    label: "A relancer", 
+    color: "text-amber-700 dark:text-amber-300",
+    bgColor: "bg-amber-50 dark:bg-amber-950/50",
+    iconColor: "text-amber-500"
+  },
+  in_progress: { 
+    label: "En cours", 
+    color: "text-purple-700 dark:text-purple-300",
+    bgColor: "bg-purple-50 dark:bg-purple-950/50",
+    iconColor: "text-purple-500"
+  },
+  qualified: { 
+    label: "Qualifié", 
+    color: "text-emerald-700 dark:text-emerald-300",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
+    iconColor: "text-emerald-500"
+  },
+  converted: { 
+    label: "Converti", 
+    color: "text-green-700 dark:text-green-300",
+    bgColor: "bg-green-50 dark:bg-green-950/50",
+    iconColor: "text-green-500"
+  },
+  lost: { 
+    label: "Perdu", 
+    color: "text-gray-700 dark:text-gray-300",
+    bgColor: "bg-gray-50 dark:bg-gray-950/50",
+    iconColor: "text-gray-500"
+  },
 };
 
-const priorityLabels: Record<string, { label: string; color: string }> = {
-  low: { label: "Basse", color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" },
-  medium: { label: "Moyenne", color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300" },
-  high: { label: "Haute", color: "bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300" },
-  urgent: { label: "Urgente", color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300" },
+const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
+  low: { label: "Basse", color: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
+  medium: { label: "Moyenne", color: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+  high: { label: "Haute", color: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
+  urgent: { label: "Urgente", color: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
 };
 
 const sourceLabels: Record<string, string> = {
@@ -58,11 +85,6 @@ const sourceLabels: Record<string, string> = {
   "google_meet_booking": "RDV Google Meet",
 };
 
-interface LeadWithDetails extends Lead {
-  activities?: LeadActivity[];
-  conversations?: (Conversation & { messages: Message[] })[];
-}
-
 interface AISuggestions {
   summary: string;
   recommendation: string;
@@ -70,18 +92,192 @@ interface AISuggestions {
   script: string;
 }
 
+function StatCard({ 
+  title, 
+  value, 
+  subtitle, 
+  icon: Icon, 
+  trend, 
+  color = "primary" 
+}: { 
+  title: string; 
+  value: number; 
+  subtitle: string; 
+  icon: any;
+  trend?: number;
+  color?: "primary" | "blue" | "amber" | "emerald" | "purple";
+}) {
+  const colorClasses = {
+    primary: "from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10",
+    blue: "from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/10",
+    amber: "from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/10",
+    emerald: "from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/10",
+    purple: "from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/10",
+  };
+  
+  const iconColors = {
+    primary: "text-primary",
+    blue: "text-blue-600 dark:text-blue-400",
+    amber: "text-amber-600 dark:text-amber-400",
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    purple: "text-purple-600 dark:text-purple-400",
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
+            <div className="flex items-center gap-2 mt-2">
+              {trend !== undefined && (
+                <span className={`text-xs font-medium flex items-center gap-0.5 ${trend >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <TrendingUp className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
+                  {Math.abs(trend)}%
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground">{subtitle}</span>
+            </div>
+          </div>
+          <div className={`rounded-xl p-3 bg-gradient-to-br ${colorClasses[color]}`}>
+            <Icon className={`h-5 w-5 ${iconColors[color]}`} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LeadCard({ 
+  lead, 
+  onClick,
+  compact = false
+}: { 
+  lead: Lead; 
+  onClick: () => void;
+  compact?: boolean;
+}) {
+  const status = statusConfig[lead.status || "new"];
+  const priority = priorityConfig[lead.priority || "medium"];
+  
+  return (
+    <div 
+      className="group p-4 rounded-lg border bg-card hover-elevate cursor-pointer transition-all"
+      onClick={onClick}
+      data-testid={`card-lead-${lead.id}`}
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarFallback className="bg-primary/10 text-primary font-medium">
+              {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="font-semibold truncate">{lead.name}</p>
+            {lead.company && (
+              <p className="text-sm text-muted-foreground truncate">{lead.company}</p>
+            )}
+          </div>
+        </div>
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+        <Mail className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{lead.email}</span>
+      </div>
+      
+      {!compact && lead.phone && (
+        <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+          <Phone className="h-3.5 w-3.5 shrink-0" />
+          <span>{lead.phone}</span>
+        </div>
+      )}
+      
+      <div className="flex items-center justify-between gap-2 pt-3 border-t">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${status.bgColor} ${status.color}`}>
+            {status.label}
+          </span>
+          <span className="flex items-center gap-1.5 text-xs">
+            <span className={`h-2 w-2 rounded-full ${priority.dot}`} />
+            <span className={priority.color}>{priority.label}</span>
+          </span>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {lead.lastContactAt 
+            ? new Date(lead.lastContactAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })
+            : "Nouveau"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function KanbanColumn({ 
+  title, 
+  leads, 
+  icon: Icon, 
+  color,
+  onLeadClick 
+}: { 
+  title: string; 
+  leads: Lead[]; 
+  icon: any;
+  color: string;
+  onLeadClick: (lead: Lead) => void;
+}) {
+  return (
+    <div className="flex-1 min-w-[280px] max-w-[320px]">
+      <div className="flex items-center gap-2 mb-4 px-1">
+        <Icon className={`h-4 w-4 ${color}`} />
+        <span className="font-semibold text-sm">{title}</span>
+        <Badge variant="secondary" className="ml-auto">{leads.length}</Badge>
+      </div>
+      <ScrollArea className="h-[calc(100vh-380px)]">
+        <div className="space-y-3 pr-2">
+          {leads.map((lead) => (
+            <LeadCard 
+              key={lead.id} 
+              lead={lead} 
+              onClick={() => onLeadClick(lead)}
+              compact
+            />
+          ))}
+          {leads.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Aucun lead
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
 export default function CRM() {
   const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
+  const [view, setView] = useState<"dashboard" | "pipeline" | "list">("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [showLeadDetail, setShowLeadDetail] = useState(false);
+  const [showPanel, setShowPanel] = useState(false);
   const [newNote, setNewNote] = useState("");
   const [expandedConversation, setExpandedConversation] = useState<number | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({ 
@@ -100,6 +296,7 @@ export default function CRM() {
 
   const { data: followUpLeads = [] } = useQuery<Lead[]>({
     queryKey: ["/api/crm/leads/follow-up"],
+    enabled: isAuthenticated,
   });
 
   const { data: leadDetails, isLoading: detailsLoading } = useQuery<{ 
@@ -108,11 +305,8 @@ export default function CRM() {
     conversations: (Conversation & { messages: Message[] })[] 
   }>({
     queryKey: ["/api/crm/leads", selectedLead?.id],
-    enabled: !!selectedLead?.id,
+    enabled: !!selectedLead?.id && isAuthenticated,
   });
-
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
 
   const updateLeadMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Lead> }) => {
@@ -166,33 +360,30 @@ export default function CRM() {
     toFollowUp: followUpLeads.length,
     qualified: leads.filter(l => l.status === "qualified").length,
     converted: leads.filter(l => l.status === "converted").length,
+    inProgress: leads.filter(l => l.status === "in_progress").length,
   };
 
-  const openLeadDetail = (lead: Lead) => {
+  const conversionRate = stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0;
+
+  const openLeadPanel = (lead: Lead) => {
     setSelectedLead(lead);
-    setShowLeadDetail(true);
+    setShowPanel(true);
     setAiSuggestions(null);
   };
 
-  // Show loading state while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
+  const closePanel = () => {
+    setShowPanel(false);
+    setTimeout(() => setSelectedLead(null), 300);
+  };
 
-  // Don't render CRM if not authenticated (redirect is happening)
-  if (!isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Redirection vers la connexion...</p>
+          <p className="text-muted-foreground">
+            {authLoading ? "Chargement..." : "Redirection vers la connexion..."}
+          </p>
         </div>
       </div>
     );
@@ -200,356 +391,547 @@ export default function CRM() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2" data-testid="text-crm-title">
-              Tableau de bord CRM
-            </h1>
-            <p className="text-muted-foreground">
-              Gérez vos leads et suivez les relances avec l'aide de l'IA
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
-                <AvatarFallback>{user?.firstName?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user?.firstName || user?.email?.split("@")[0] || "Admin"}
-              </span>
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 lg:px-6">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <span className="font-bold text-xl text-primary">A.SAP</span>
+              </Link>
+              <Separator orientation="vertical" className="h-6" />
+              <span className="font-semibold text-lg hidden sm:inline">CRM</span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => logout()}
-              data-testid="button-logout"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Déconnexion
-            </Button>
+            
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-1 p-1 bg-muted rounded-lg">
+                <Button 
+                  variant={view === "dashboard" ? "secondary" : "ghost"} 
+                  size="sm"
+                  onClick={() => setView("dashboard")}
+                  data-testid="button-view-dashboard"
+                >
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  Tableau de bord
+                </Button>
+                <Button 
+                  variant={view === "pipeline" ? "secondary" : "ghost"} 
+                  size="sm"
+                  onClick={() => setView("pipeline")}
+                  data-testid="button-view-pipeline"
+                >
+                  <Kanban className="h-4 w-4 mr-2" />
+                  Pipeline
+                </Button>
+                <Button 
+                  variant={view === "list" ? "secondary" : "ghost"} 
+                  size="sm"
+                  onClick={() => setView("list")}
+                  data-testid="button-view-list"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Liste
+                </Button>
+              </div>
+              
+              <Separator orientation="vertical" className="h-6 hidden md:block" />
+              
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {user?.firstName?.[0] || user?.email?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium hidden lg:inline">
+                  {user?.firstName || user?.email?.split("@")[0] || "Admin"}
+                </span>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => logout()}
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
+      </header>
 
-        <div className="grid gap-4 md:grid-cols-5 mb-8">
-          <Card data-testid="stat-total-leads">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-lg bg-primary/10 p-3">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-muted-foreground">Total leads</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="stat-new-leads">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-lg bg-blue-100 dark:bg-blue-900/30 p-3">
-                <UserPlus className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.new}</p>
-                <p className="text-sm text-muted-foreground">Nouveaux</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="stat-followup-leads">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-lg bg-yellow-100 dark:bg-yellow-900/30 p-3">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.toFollowUp}</p>
-                <p className="text-sm text-muted-foreground">A relancer</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="stat-qualified-leads">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-lg bg-green-100 dark:bg-green-900/30 p-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.qualified}</p>
-                <p className="text-sm text-muted-foreground">Qualifiés</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card data-testid="stat-converted-leads">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/30 p-3">
-                <Calendar className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.converted}</p>
-                <p className="text-sm text-muted-foreground">Convertis</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <main className="container mx-auto px-4 lg:px-6 py-6">
+        {view === "dashboard" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold" data-testid="text-crm-title">
+                Tableau de bord
+              </h1>
+              <p className="text-muted-foreground">
+                Vue d'ensemble de vos prospects et performances commerciales
+              </p>
+            </div>
 
-        {followUpLeads.length > 0 && (
-          <Card className="mb-8 border-yellow-200 dark:border-yellow-800" data-testid="card-followup-alert">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-                Relances à faire aujourd'hui
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {followUpLeads.slice(0, 5).map((lead) => (
-                  <Button
-                    key={lead.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openLeadDetail(lead)}
-                    className="border-yellow-200 dark:border-yellow-800"
-                    data-testid={`button-followup-${lead.id}`}
-                  >
-                    {lead.name}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                ))}
-                {followUpLeads.length > 5 && (
-                  <Badge variant="secondary">+{followUpLeads.length - 5} autres</Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard 
+                title="Total Leads" 
+                value={stats.total} 
+                subtitle="contacts"
+                icon={Users}
+                color="primary"
+              />
+              <StatCard 
+                title="Nouveaux" 
+                value={stats.new} 
+                subtitle="cette semaine"
+                icon={UserPlus}
+                color="blue"
+              />
+              <StatCard 
+                title="A Relancer" 
+                value={stats.toFollowUp} 
+                subtitle="urgents"
+                icon={AlertCircle}
+                color="amber"
+              />
+              <StatCard 
+                title="Taux Conversion" 
+                value={conversionRate} 
+                subtitle="%"
+                icon={Target}
+                color="emerald"
+              />
+            </div>
+
+            {followUpLeads.length > 0 && (
+              <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                      </div>
+                      Relances prioritaires
+                    </CardTitle>
+                    <Badge variant="secondary">{followUpLeads.length} leads</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {followUpLeads.slice(0, 6).map((lead) => (
+                      <div 
+                        key={lead.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-background border hover-elevate cursor-pointer"
+                        onClick={() => openLeadPanel(lead)}
+                        data-testid={`button-followup-${lead.id}`}
+                      >
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                            {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{lead.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{lead.company || lead.email}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-6 lg:grid-cols-3">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-4">
+                    <CardTitle className="text-base">Leads récents</CardTitle>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setView("list")}
+                    >
+                      Voir tout
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {leadsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : leads.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Users className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                      <p>Aucun lead pour le moment</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {leads.slice(0, 5).map((lead) => (
+                        <div 
+                          key={lead.id}
+                          className="flex items-center gap-4 p-3 rounded-lg hover-elevate cursor-pointer"
+                          onClick={() => openLeadPanel(lead)}
+                          data-testid={`row-lead-${lead.id}`}
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                              {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{lead.name}</p>
+                              <span className={`h-2 w-2 rounded-full ${priorityConfig[lead.priority || "medium"].dot}`} />
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {lead.company || lead.email}
+                            </p>
+                          </div>
+                          <div className="hidden sm:block">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[lead.status || "new"].bgColor} ${statusConfig[lead.status || "new"].color}`}>
+                              {statusConfig[lead.status || "new"].label}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground hidden md:block">
+                            {lead.createdAt && new Date(lead.createdAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Pipeline</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { label: "Nouveaux", value: stats.new, color: "bg-blue-500" },
+                    { label: "En cours", value: stats.inProgress, color: "bg-purple-500" },
+                    { label: "Qualifiés", value: stats.qualified, color: "bg-emerald-500" },
+                    { label: "Convertis", value: stats.converted, color: "bg-green-500" },
+                  ].map((stage) => (
+                    <div key={stage.label} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{stage.label}</span>
+                        <span className="font-medium">{stage.value}</span>
+                      </div>
+                      <Progress 
+                        value={stats.total > 0 ? (stage.value / stats.total) * 100 : 0} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Liste des leads
-              </CardTitle>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                    data-testid="input-search-leads"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-status-filter">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Statut" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous statuts</SelectItem>
-                    {Object.entries(statusLabels).map(([key, { label }]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-priority-filter">
-                    <SelectValue placeholder="Priorité" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes priorités</SelectItem>
-                    {Object.entries(priorityLabels).map(([key, { label }]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {view === "pipeline" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold">Pipeline commercial</h1>
+              <p className="text-muted-foreground">
+                Visualisez et gérez vos leads par étape du parcours client
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            {leadsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredLeads.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>Aucun lead trouvé</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full" data-testid="table-leads">
-                  <thead>
-                    <tr className="border-b text-left text-sm text-muted-foreground">
-                      <th className="pb-3 font-medium">Lead</th>
-                      <th className="pb-3 font-medium">Source</th>
-                      <th className="pb-3 font-medium">Statut</th>
-                      <th className="pb-3 font-medium">Priorité</th>
-                      <th className="pb-3 font-medium">Dernier contact</th>
-                      <th className="pb-3 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              <KanbanColumn 
+                title="Nouveaux"
+                leads={leads.filter(l => l.status === "new")}
+                icon={UserPlus}
+                color="text-blue-500"
+                onLeadClick={openLeadPanel}
+              />
+              <KanbanColumn 
+                title="A relancer"
+                leads={leads.filter(l => l.status === "to_follow_up")}
+                icon={AlertCircle}
+                color="text-amber-500"
+                onLeadClick={openLeadPanel}
+              />
+              <KanbanColumn 
+                title="En cours"
+                leads={leads.filter(l => l.status === "in_progress")}
+                icon={Zap}
+                color="text-purple-500"
+                onLeadClick={openLeadPanel}
+              />
+              <KanbanColumn 
+                title="Qualifiés"
+                leads={leads.filter(l => l.status === "qualified")}
+                icon={CheckCircle2}
+                color="text-emerald-500"
+                onLeadClick={openLeadPanel}
+              />
+              <KanbanColumn 
+                title="Convertis"
+                leads={leads.filter(l => l.status === "converted")}
+                icon={Target}
+                color="text-green-500"
+                onLeadClick={openLeadPanel}
+              />
+            </div>
+          </div>
+        )}
+
+        {view === "list" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold">Tous les leads</h1>
+              <p className="text-muted-foreground">
+                Gérez et filtrez l'ensemble de vos contacts commerciaux
+              </p>
+            </div>
+
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Rechercher un lead..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                      data-testid="input-search-leads"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[150px]" data-testid="select-status-filter">
+                        <SelectValue placeholder="Statut" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tous statuts</SelectItem>
+                        {Object.entries(statusConfig).map(([key, { label }]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                      <SelectTrigger className="w-[150px]" data-testid="select-priority-filter">
+                        <SelectValue placeholder="Priorité" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Toutes</SelectItem>
+                        {Object.entries(priorityConfig).map(([key, { label }]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {leadsLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredLeads.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <Users className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                    <p>Aucun lead trouvé</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
                     {filteredLeads.map((lead) => (
-                      <tr 
-                        key={lead.id} 
-                        className="border-b last:border-0 hover-elevate cursor-pointer"
-                        onClick={() => openLeadDetail(lead)}
+                      <div 
+                        key={lead.id}
+                        className="flex items-center gap-4 p-4 hover-elevate cursor-pointer"
+                        onClick={() => openLeadPanel(lead)}
                         data-testid={`row-lead-${lead.id}`}
                       >
-                        <td className="py-4">
-                          <div>
-                            <p className="font-medium">{lead.name}</p>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Mail className="h-3 w-3" />
+                        <Avatar className="h-11 w-11 shrink-0">
+                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                            {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="font-semibold">{lead.name}</p>
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${priorityConfig[lead.priority || "medium"].dot}`} />
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1.5 truncate">
+                              <Mail className="h-3.5 w-3.5 shrink-0" />
                               {lead.email}
-                            </div>
+                            </span>
                             {lead.company && (
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Building2 className="h-3 w-3" />
+                              <span className="hidden lg:flex items-center gap-1.5">
+                                <Building2 className="h-3.5 w-3.5" />
                                 {lead.company}
-                              </div>
+                              </span>
                             )}
                           </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="text-sm">{sourceLabels[lead.source || ""] || lead.source}</span>
-                        </td>
-                        <td className="py-4">
-                          <Badge className={statusLabels[lead.status || "new"]?.color}>
-                            {statusLabels[lead.status || "new"]?.label}
-                          </Badge>
-                        </td>
-                        <td className="py-4">
-                          <Badge className={priorityLabels[lead.priority || "medium"]?.color}>
-                            {priorityLabels[lead.priority || "medium"]?.label}
-                          </Badge>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {lead.lastContactAt 
-                              ? new Date(lead.lastContactAt).toLocaleDateString("fr-FR")
-                              : "Jamais"}
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openLeadDetail(lead);
-                            }}
-                            data-testid={`button-view-${lead.id}`}
-                          >
-                            Voir fiche
-                            <ArrowRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
+                        </div>
+                        <div className="hidden md:block shrink-0">
+                          <span className="text-sm text-muted-foreground">
+                            {sourceLabels[lead.source || ""] || lead.source || "N/A"}
+                          </span>
+                        </div>
+                        <div className="hidden sm:block shrink-0">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[lead.status || "new"].bgColor} ${statusConfig[lead.status || "new"].color}`}>
+                            {statusConfig[lead.status || "new"].label}
+                          </span>
+                        </div>
+                        <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
+                          <Clock className="h-3.5 w-3.5" />
+                          {lead.lastContactAt 
+                            ? new Date(lead.lastContactAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })
+                            : "Jamais"}
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          className="shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openLeadPanel(lead);
+                          }}
+                          data-testid={`button-view-${lead.id}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </main>
+
+      <div 
+        className={`fixed inset-0 z-50 bg-black/50 transition-opacity ${showPanel ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={closePanel}
+      />
+      
+      <div className={`fixed right-0 top-0 z-50 h-full w-full max-w-xl bg-background border-l shadow-xl transition-transform duration-300 ${showPanel ? 'translate-x-0' : 'translate-x-full'}`}>
+        {selectedLead && (
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between gap-4 p-4 border-b bg-muted/30">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    {selectedLead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-lg truncate">{selectedLead.name}</h2>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {selectedLead.company || selectedLead.email}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              <Button size="icon" variant="ghost" onClick={closePanel}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
 
-      <Dialog open={showLeadDetail} onOpenChange={setShowLeadDetail}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center justify-between gap-4 flex-wrap">
-              <span>Fiche client: {selectedLead?.name}</span>
-              <div className="flex items-center gap-2">
-                <Badge className={statusLabels[selectedLead?.status || "new"]?.color}>
-                  {statusLabels[selectedLead?.status || "new"]?.label}
-                </Badge>
-                <Badge className={priorityLabels[selectedLead?.priority || "medium"]?.color}>
-                  {priorityLabels[selectedLead?.priority || "medium"]?.label}
-                </Badge>
-              </div>
-            </DialogTitle>
-            <DialogDescription>
-              {selectedLead?.email} {selectedLead?.phone && `| ${selectedLead.phone}`}
-              {selectedLead?.company && ` | ${selectedLead.company}`}
-            </DialogDescription>
-          </DialogHeader>
+            <div className="flex items-center gap-2 p-4 border-b">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[selectedLead.status || "new"].bgColor} ${statusConfig[selectedLead.status || "new"].color}`}>
+                {statusConfig[selectedLead.status || "new"].label}
+              </span>
+              <span className="flex items-center gap-1.5 text-xs">
+                <span className={`h-2 w-2 rounded-full ${priorityConfig[selectedLead.priority || "medium"].dot}`} />
+                <span className={priorityConfig[selectedLead.priority || "medium"].color}>
+                  Priorité {priorityConfig[selectedLead.priority || "medium"].label.toLowerCase()}
+                </span>
+              </span>
+              <span className="ml-auto text-xs text-muted-foreground">
+                Créé le {selectedLead.createdAt && new Date(selectedLead.createdAt).toLocaleDateString("fr-FR")}
+              </span>
+            </div>
 
-          <Tabs defaultValue="overview" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview" data-testid="tab-overview">
-                <FileText className="mr-2 h-4 w-4" />
-                Vue d'ensemble
-              </TabsTrigger>
-              <TabsTrigger value="conversations" data-testid="tab-conversations">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Conversations
-              </TabsTrigger>
-              <TabsTrigger value="ai" data-testid="tab-ai">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Suggestions IA
-              </TabsTrigger>
-              <TabsTrigger value="actions" data-testid="tab-actions">
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Actions
-              </TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto">
+                <TabsTrigger 
+                  value="info" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
+                >
+                  Infos
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="conversations"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
+                >
+                  Conversations
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="ai"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
+                >
+                  <Sparkles className="h-4 w-4 mr-1.5" />
+                  IA
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="actions"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
+                >
+                  Actions
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="overview" className="h-full mt-4">
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4 pr-4">
+              <ScrollArea className="flex-1">
+                <TabsContent value="info" className="m-0 p-4">
+                  <div className="space-y-6">
                     <div>
-                      <h4 className="font-medium mb-2">Informations</h4>
-                      <div className="grid gap-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          {selectedLead?.email}
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Contact</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                          <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm">{selectedLead.email}</span>
                         </div>
-                        {selectedLead?.phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            {selectedLead.phone}
+                        {selectedLead.phone && (
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm">{selectedLead.phone}</span>
                           </div>
                         )}
-                        {selectedLead?.company && (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            {selectedLead.company}
+                        {selectedLead.company && (
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm">{selectedLead.company}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          Créé le {selectedLead?.createdAt && new Date(selectedLead.createdAt).toLocaleDateString("fr-FR")}
-                        </div>
                       </div>
                     </div>
-                    
-                    {selectedLead?.notes && (
+
+                    {selectedLead.notes && (
                       <div>
-                        <h4 className="font-medium mb-2">Notes</h4>
-                        <p className="text-sm text-muted-foreground">{selectedLead.notes}</p>
+                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Notes</h4>
+                        <p className="text-sm p-3 rounded-lg bg-muted/50">{selectedLead.notes}</p>
                       </div>
                     )}
 
-                    <Separator />
-
                     <div>
-                      <h4 className="font-medium mb-2">Historique des activités</h4>
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Historique</h4>
                       {detailsLoading ? (
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                      ) : leadDetails?.activities?.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Aucune activité</p>
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : !leadDetails?.activities?.length ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">Aucune activité</p>
                       ) : (
-                        <div className="space-y-2">
-                          {leadDetails?.activities?.map((activity) => (
-                            <div key={activity.id} className="flex items-start gap-2 text-sm">
-                              <div className="mt-1 h-2 w-2 rounded-full bg-primary" />
-                              <div>
-                                <span className="font-medium capitalize">{activity.type.replace("_", " ")}</span>
-                                <span className="text-muted-foreground"> - {activity.content}</span>
-                                <p className="text-xs text-muted-foreground">
+                        <div className="space-y-3">
+                          {leadDetails.activities.map((activity) => (
+                            <div key={activity.id} className="flex gap-3">
+                              <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm">
+                                  <span className="font-medium capitalize">{activity.type.replace("_", " ")}</span>
+                                  {" - "}{activity.content}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                   {new Date(activity.createdAt).toLocaleString("fr-FR")}
                                 </p>
                               </div>
@@ -559,202 +941,175 @@ export default function CRM() {
                       )}
                     </div>
                   </div>
-                </ScrollArea>
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="conversations" className="h-full mt-4">
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4 pr-4">
-                    {detailsLoading ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : !leadDetails?.conversations?.length ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <MessageSquare className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                        <p>Aucune conversation avec ce lead</p>
-                      </div>
-                    ) : (
-                      leadDetails.conversations.map((conv) => (
-                        <Card key={conv.id} className="overflow-hidden">
-                          <CardHeader 
-                            className="cursor-pointer py-3"
+                <TabsContent value="conversations" className="m-0 p-4">
+                  {detailsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : !leadDetails?.conversations?.length ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <MessageSquare className="mx-auto h-10 w-10 mb-3 opacity-30" />
+                      <p className="text-sm">Aucune conversation</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {leadDetails.conversations.map((conv) => (
+                        <div key={conv.id} className="border rounded-lg overflow-hidden">
+                          <div 
+                            className="flex items-center gap-3 p-3 bg-muted/30 cursor-pointer hover-elevate"
                             onClick={() => setExpandedConversation(
                               expandedConversation === conv.id ? null : conv.id
                             )}
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-primary" />
-                                <span className="font-medium">{conv.title}</span>
-                                {conv.commercialName && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {conv.commercialName}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(conv.createdAt).toLocaleDateString("fr-FR")}
-                                </span>
-                                {expandedConversation === conv.id ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
+                            <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{conv.title}</p>
+                              {conv.commercialName && (
+                                <p className="text-xs text-muted-foreground">{conv.commercialName}</p>
+                              )}
                             </div>
-                          </CardHeader>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {new Date(conv.createdAt).toLocaleDateString("fr-FR")}
+                            </span>
+                            {expandedConversation === conv.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
                           {expandedConversation === conv.id && (
-                            <CardContent className="border-t bg-muted/30 pt-4">
-                              <div className="space-y-3 max-h-60 overflow-y-auto">
-                                {conv.messages.map((msg) => (
+                            <div className="p-3 space-y-2 max-h-60 overflow-y-auto border-t">
+                              {conv.messages.map((msg) => (
+                                <div 
+                                  key={msg.id}
+                                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                                >
                                   <div 
-                                    key={msg.id}
-                                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                                      msg.role === "user" 
+                                        ? "bg-primary text-primary-foreground" 
+                                        : "bg-muted"
+                                    }`}
                                   >
-                                    <div 
-                                      className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                                        msg.role === "user" 
-                                          ? "bg-primary text-primary-foreground" 
-                                          : "bg-muted"
-                                      }`}
-                                    >
-                                      {msg.content}
-                                    </div>
+                                    {msg.content}
                                   </div>
-                                ))}
-                              </div>
-                            </CardContent>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
-              <TabsContent value="ai" className="h-full mt-4">
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4 pr-4">
-                    {!aiSuggestions && !loadingAi && (
-                      <div className="text-center py-8">
-                        <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
-                        <p className="text-muted-foreground mb-4">
-                          L'IA va analyser ce lead et vous proposer des recommandations de suivi personnalisées
-                        </p>
-                        <Button 
-                          onClick={() => selectedLead && fetchAiSuggestions(selectedLead.id)}
-                          disabled={loadingAi}
-                          data-testid="button-get-ai-suggestions"
-                        >
-                          <Sparkles className="mr-2 h-4 w-4" />
-                          Obtenir des suggestions IA
-                        </Button>
+                <TabsContent value="ai" className="m-0 p-4">
+                  {!aiSuggestions && !loadingAi && (
+                    <div className="text-center py-12">
+                      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mb-4">
+                        <Sparkles className="h-8 w-8 text-primary" />
                       </div>
-                    )}
+                      <h3 className="font-semibold mb-2">Analyse IA</h3>
+                      <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
+                        Obtenez des recommandations personnalisées pour ce lead
+                      </p>
+                      <Button 
+                        onClick={() => fetchAiSuggestions(selectedLead.id)}
+                        disabled={loadingAi}
+                        data-testid="button-get-ai-suggestions"
+                      >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Analyser ce lead
+                      </Button>
+                    </div>
+                  )}
 
-                    {loadingAi && (
-                      <div className="text-center py-8">
-                        <RefreshCw className="mx-auto h-8 w-8 animate-spin text-primary mb-4" />
-                        <p className="text-muted-foreground">Analyse du lead en cours...</p>
+                  {loadingAi && (
+                    <div className="text-center py-12">
+                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary mb-4" />
+                      <p className="text-sm text-muted-foreground">Analyse en cours...</p>
+                    </div>
+                  )}
+
+                  {aiSuggestions && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg border bg-muted/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <h4 className="font-semibold text-sm">Résumé</h4>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{aiSuggestions.summary}</p>
                       </div>
-                    )}
 
-                    {aiSuggestions && (
-                      <div className="space-y-4">
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-primary" />
-                              Résumé du lead
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm">{aiSuggestions.summary}</p>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              Action recommandée
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm">{aiSuggestions.recommendation}</p>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-yellow-600" />
-                              Meilleur moment
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm">{aiSuggestions.timing}</p>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4 text-purple-600" />
-                              Script de relance
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm whitespace-pre-wrap">{aiSuggestions.script}</p>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="mt-3"
-                              onClick={() => {
-                                navigator.clipboard.writeText(aiSuggestions.script);
-                                toast({ title: "Script copié" });
-                              }}
-                              data-testid="button-copy-script"
-                            >
-                              Copier le script
-                            </Button>
-                          </CardContent>
-                        </Card>
-
-                        <Button 
-                          variant="outline" 
-                          onClick={() => selectedLead && fetchAiSuggestions(selectedLead.id)}
-                          className="w-full"
-                          data-testid="button-refresh-ai"
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Rafraîchir les suggestions
-                        </Button>
+                      <div className="p-4 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <h4 className="font-semibold text-sm">Action recommandée</h4>
+                        </div>
+                        <p className="text-sm">{aiSuggestions.recommendation}</p>
                       </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
 
-              <TabsContent value="actions" className="h-full mt-4">
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4 pr-4">
+                      <div className="p-4 rounded-lg border bg-amber-50/50 dark:bg-amber-950/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-4 w-4 text-amber-600" />
+                          <h4 className="font-semibold text-sm">Meilleur moment</h4>
+                        </div>
+                        <p className="text-sm">{aiSuggestions.timing}</p>
+                      </div>
+
+                      <div className="p-4 rounded-lg border">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4 text-purple-600" />
+                            <h4 className="font-semibold text-sm">Script de relance</h4>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(aiSuggestions.script);
+                              toast({ title: "Script copié" });
+                            }}
+                            data-testid="button-copy-script"
+                          >
+                            <Copy className="h-3.5 w-3.5 mr-1.5" />
+                            Copier
+                          </Button>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap">{aiSuggestions.script}</p>
+                      </div>
+
+                      <Button 
+                        variant="outline" 
+                        onClick={() => fetchAiSuggestions(selectedLead.id)}
+                        className="w-full"
+                        data-testid="button-refresh-ai"
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Rafraîchir
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="actions" className="m-0 p-4">
+                  <div className="space-y-6">
                     <div>
-                      <h4 className="font-medium mb-3">Changer le statut</h4>
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Statut</h4>
                       <Select 
-                        value={selectedLead?.status || "new"}
+                        value={selectedLead.status || "new"}
                         onValueChange={(value) => {
-                          if (selectedLead) {
-                            updateLeadMutation.mutate({ id: selectedLead.id, data: { status: value } });
-                            setSelectedLead({ ...selectedLead, status: value });
-                          }
+                          updateLeadMutation.mutate({ id: selectedLead.id, data: { status: value } });
+                          setSelectedLead({ ...selectedLead, status: value });
                         }}
                       >
                         <SelectTrigger data-testid="select-change-status">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(statusLabels).map(([key, { label }]) => (
+                          {Object.entries(statusConfig).map(([key, { label }]) => (
                             <SelectItem key={key} value={key}>{label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -762,21 +1117,19 @@ export default function CRM() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium mb-3">Changer la priorité</h4>
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Priorité</h4>
                       <Select 
-                        value={selectedLead?.priority || "medium"}
+                        value={selectedLead.priority || "medium"}
                         onValueChange={(value) => {
-                          if (selectedLead) {
-                            updateLeadMutation.mutate({ id: selectedLead.id, data: { priority: value } });
-                            setSelectedLead({ ...selectedLead, priority: value });
-                          }
+                          updateLeadMutation.mutate({ id: selectedLead.id, data: { priority: value } });
+                          setSelectedLead({ ...selectedLead, priority: value });
                         }}
                       >
                         <SelectTrigger data-testid="select-change-priority">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(priorityLabels).map(([key, { label }]) => (
+                          {Object.entries(priorityConfig).map(([key, { label }]) => (
                             <SelectItem key={key} value={key}>{label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -784,11 +1137,11 @@ export default function CRM() {
                     </div>
 
                     <div>
-                      <h4 className="font-medium mb-3">Planifier une relance</h4>
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Planifier relance</h4>
                       <Input 
                         type="datetime-local"
                         onChange={(e) => {
-                          if (selectedLead && e.target.value) {
+                          if (e.target.value) {
                             const date = new Date(e.target.value);
                             updateLeadMutation.mutate({ 
                               id: selectedLead.id, 
@@ -804,17 +1157,18 @@ export default function CRM() {
                     <Separator />
 
                     <div>
-                      <h4 className="font-medium mb-3">Ajouter une note</h4>
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Ajouter une note</h4>
                       <Textarea
-                        placeholder="Écrivez votre note..."
+                        placeholder="Votre note..."
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
-                        className="mb-2"
+                        className="mb-3"
+                        rows={3}
                         data-testid="textarea-note"
                       />
                       <Button 
                         onClick={() => {
-                          if (selectedLead && newNote.trim()) {
+                          if (newNote.trim()) {
                             addActivityMutation.mutate({
                               leadId: selectedLead.id,
                               type: "note",
@@ -823,77 +1177,72 @@ export default function CRM() {
                           }
                         }}
                         disabled={!newNote.trim() || addActivityMutation.isPending}
+                        className="w-full"
                         data-testid="button-add-note"
                       >
-                        Ajouter la note
+                        Ajouter
                       </Button>
                     </div>
 
                     <Separator />
 
                     <div>
-                      <h4 className="font-medium mb-3">Actions rapides</h4>
-                      <div className="flex flex-wrap gap-2">
+                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Actions rapides</h4>
+                      <div className="grid grid-cols-3 gap-2">
                         <Button
                           variant="outline"
-                          size="sm"
+                          className="flex-col h-auto py-4 gap-2"
                           onClick={() => {
-                            if (selectedLead) {
-                              addActivityMutation.mutate({
-                                leadId: selectedLead.id,
-                                type: "call",
-                                content: "Appel passé"
-                              });
-                            }
+                            addActivityMutation.mutate({
+                              leadId: selectedLead.id,
+                              type: "call",
+                              content: "Appel passé"
+                            });
                           }}
                           data-testid="button-log-call"
                         >
-                          <Phone className="mr-2 h-4 w-4" />
-                          Appel passé
+                          <PhoneCall className="h-5 w-5" />
+                          <span className="text-xs">Appel</span>
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
+                          className="flex-col h-auto py-4 gap-2"
                           onClick={() => {
-                            if (selectedLead) {
-                              addActivityMutation.mutate({
-                                leadId: selectedLead.id,
-                                type: "email",
-                                content: "Email envoyé"
-                              });
-                            }
+                            addActivityMutation.mutate({
+                              leadId: selectedLead.id,
+                              type: "email",
+                              content: "Email envoyé"
+                            });
                           }}
                           data-testid="button-log-email"
                         >
-                          <Mail className="mr-2 h-4 w-4" />
-                          Email envoyé
+                          <MailOpen className="h-5 w-5" />
+                          <span className="text-xs">Email</span>
                         </Button>
                         <Button
                           variant="outline"
-                          size="sm"
+                          className="flex-col h-auto py-4 gap-2"
                           onClick={() => {
-                            if (selectedLead) {
-                              addActivityMutation.mutate({
-                                leadId: selectedLead.id,
-                                type: "meeting",
-                                content: "RDV effectué"
-                              });
-                            }
+                            addActivityMutation.mutate({
+                              leadId: selectedLead.id,
+                              type: "meeting",
+                              content: "RDV effectué"
+                            });
                           }}
                           data-testid="button-log-meeting"
                         >
-                          <Calendar className="mr-2 h-4 w-4" />
-                          RDV effectué
+                          <CalendarCheck className="h-5 w-5" />
+                          <span className="text-xs">RDV</span>
                         </Button>
                       </div>
                     </div>
                   </div>
-                </ScrollArea>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
