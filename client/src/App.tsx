@@ -33,6 +33,11 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
+  const isCrmPage = location === "/crm";
+
+  if (isCrmPage) {
+    return <Router />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
