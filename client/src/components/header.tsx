@@ -7,7 +7,6 @@ import logoImage from "@assets/image_1766486404362.png";
 
 const navItems = [
   { href: "/", label: "Accueil", icon: Home },
-  { href: "/agent", label: "Commercial", icon: MessageCircle },
   { href: "/expertises", label: "Expertises", icon: Compass },
   { href: "/formations", label: "Formations", icon: GraduationCap },
   { href: "/faq", label: "FAQ", icon: HelpCircle },
