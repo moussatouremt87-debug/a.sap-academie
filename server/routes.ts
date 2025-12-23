@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { insertFormationSchema, insertFaqSchema, insertLeadSchema } from "@shared/schema";
+import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema } from "@shared/schema";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 
 const openai = new OpenAI({
@@ -190,10 +190,11 @@ export async function registerRoutes(
 
       const result = await createGoogleMeetEvent(email, datetime, duration || 15);
       
-      await storage.createLead({
+      const lead = await storage.createLead({
         name: email.split('@')[0],
         email,
         source: "google_meet_booking",
+        priority: "high",
         notes: `Réservation Google Meet pour le ${new Date(datetime).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`
       });
 
@@ -201,11 +202,174 @@ export async function registerRoutes(
         success: true, 
         meetLink: result.meetLink,
         eventId: result.eventId,
+        leadId: lead.id,
         message: "Votre réunion a été créée avec succès! Une invitation a été envoyée à votre email."
       });
     } catch (error) {
       console.error("Error creating meeting:", error);
       res.status(500).json({ error: "Failed to create meeting" });
+    }
+  });
+
+  // ========== CRM ENDPOINTS ==========
+  
+  // Get all leads with optional filters
+  app.get("/api/crm/leads", async (req: Request, res: Response) => {
+    try {
+      const leadsList = await storage.getAllLeads();
+      res.json(leadsList);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ error: "Failed to fetch leads" });
+    }
+  });
+
+  // Get leads that need follow-up
+  app.get("/api/crm/leads/follow-up", async (req: Request, res: Response) => {
+    try {
+      const leadsList = await storage.getLeadsToFollowUp();
+      res.json(leadsList);
+    } catch (error) {
+      console.error("Error fetching follow-up leads:", error);
+      res.status(500).json({ error: "Failed to fetch follow-up leads" });
+    }
+  });
+
+  // Get single lead with activities and conversations
+  app.get("/api/crm/leads/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lead = await storage.getLead(id);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      
+      const activities = await storage.getLeadActivities(id);
+      const leadConversations = await storage.getConversationsByLead(id);
+      
+      // Get messages for each conversation
+      const conversationsWithMessages = await Promise.all(
+        leadConversations.map(async (conv) => {
+          const msgs = await storage.getMessagesByConversation(conv.id);
+          return { ...conv, messages: msgs };
+        })
+      );
+      
+      res.json({ 
+        lead, 
+        activities, 
+        conversations: conversationsWithMessages 
+      });
+    } catch (error) {
+      console.error("Error fetching lead:", error);
+      res.status(500).json({ error: "Failed to fetch lead" });
+    }
+  });
+
+  // Update lead
+  app.patch("/api/crm/leads/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updatedLead = await storage.updateLead(id, req.body);
+      if (!updatedLead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      
+      // Create activity for status change if status was updated
+      if (req.body.status) {
+        await storage.createLeadActivity({
+          leadId: id,
+          type: "status_change",
+          content: `Statut changé en: ${req.body.status}`,
+          createdBy: "admin"
+        });
+      }
+      
+      res.json(updatedLead);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      res.status(500).json({ error: "Failed to update lead" });
+    }
+  });
+
+  // Add activity to lead
+  app.post("/api/crm/leads/:id/activities", async (req: Request, res: Response) => {
+    try {
+      const leadId = parseInt(req.params.id);
+      const result = insertLeadActivitySchema.safeParse({ ...req.body, leadId });
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid activity data", details: result.error.issues });
+      }
+      
+      const activity = await storage.createLeadActivity(result.data);
+      
+      // Update last contact date
+      await storage.updateLead(leadId, { lastContactAt: new Date() });
+      
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error("Error creating activity:", error);
+      res.status(500).json({ error: "Failed to create activity" });
+    }
+  });
+
+  // AI Follow-up suggestions
+  app.post("/api/crm/ai/suggestions", async (req: Request, res: Response) => {
+    try {
+      const { leadId } = req.body;
+      
+      const lead = await storage.getLead(leadId);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      
+      const activities = await storage.getLeadActivities(leadId);
+      const leadConversations = await storage.getConversationsByLead(leadId);
+      
+      // Get all messages from conversations
+      let allMessages: { role: string; content: string }[] = [];
+      for (const conv of leadConversations) {
+        const msgs = await storage.getMessagesByConversation(conv.id);
+        allMessages = allMessages.concat(msgs.map(m => ({ role: m.role, content: m.content })));
+      }
+      
+      const prompt = `Tu es un assistant CRM expert en suivi commercial. Analyse ce lead et donne des recommandations de suivi.
+
+Lead: ${lead.name}
+Email: ${lead.email}
+Entreprise: ${lead.company || 'Non renseignée'}
+Source: ${lead.source}
+Statut: ${lead.status}
+Priorité: ${lead.priority}
+Dernier contact: ${lead.lastContactAt ? new Date(lead.lastContactAt).toLocaleDateString('fr-FR') : 'Jamais'}
+Notes: ${lead.notes || 'Aucune'}
+
+Activités récentes:
+${activities.slice(0, 5).map(a => `- ${a.type}: ${a.content}`).join('\n') || 'Aucune activité'}
+
+Historique conversation:
+${allMessages.slice(-10).map(m => `${m.role}: ${m.content.substring(0, 200)}`).join('\n') || 'Pas de conversation'}
+
+Donne:
+1. Un résumé du lead (2-3 phrases)
+2. Une recommandation d'action immédiate
+3. Le meilleur moment pour relancer
+4. Un script d'appel/email personnalisé
+
+Réponds en JSON avec les clés: summary, recommendation, timing, script`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_completion_tokens: 1024,
+      });
+
+      const suggestions = JSON.parse(response.choices[0]?.message?.content || "{}");
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error getting AI suggestions:", error);
+      res.status(500).json({ error: "Failed to get AI suggestions" });
     }
   });
 

@@ -5,10 +5,11 @@ import {
   type Formation, type InsertFormation,
   type Faq, type InsertFaq,
   type Lead, type InsertLead,
-  users, conversations, messages, formations, faqs, leads,
+  type LeadActivity, type InsertLeadActivity,
+  users, conversations, messages, formations, faqs, leads, leadActivities,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, lte, gte, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -41,7 +42,17 @@ export interface IStorage {
   // Leads
   getLead(id: number): Promise<Lead | undefined>;
   getAllLeads(): Promise<Lead[]>;
+  getLeadsToFollowUp(): Promise<Lead[]>;
   createLead(data: InsertLead): Promise<Lead>;
+  updateLead(id: number, data: Partial<InsertLead>): Promise<Lead | undefined>;
+  
+  // Lead Activities
+  getLeadActivities(leadId: number): Promise<LeadActivity[]>;
+  createLeadActivity(data: InsertLeadActivity): Promise<LeadActivity>;
+  
+  // Conversations with Lead
+  getConversationsByLead(leadId: number): Promise<Conversation[]>;
+  updateConversation(id: number, data: Partial<InsertConversation>): Promise<Conversation | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -139,9 +150,54 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(leads).orderBy(desc(leads.createdAt));
   }
 
+  async getLeadsToFollowUp(): Promise<Lead[]> {
+    const now = new Date();
+    return db.select().from(leads)
+      .where(and(
+        isNotNull(leads.nextFollowUpAt),
+        lte(leads.nextFollowUpAt, now)
+      ))
+      .orderBy(leads.nextFollowUpAt);
+  }
+
   async createLead(data: InsertLead): Promise<Lead> {
     const [lead] = await db.insert(leads).values(data).returning();
     return lead;
+  }
+
+  async updateLead(id: number, data: Partial<InsertLead>): Promise<Lead | undefined> {
+    const [lead] = await db.update(leads)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return lead || undefined;
+  }
+
+  // Lead Activities
+  async getLeadActivities(leadId: number): Promise<LeadActivity[]> {
+    return db.select().from(leadActivities)
+      .where(eq(leadActivities.leadId, leadId))
+      .orderBy(desc(leadActivities.createdAt));
+  }
+
+  async createLeadActivity(data: InsertLeadActivity): Promise<LeadActivity> {
+    const [activity] = await db.insert(leadActivities).values(data).returning();
+    return activity;
+  }
+
+  // Conversations with Lead
+  async getConversationsByLead(leadId: number): Promise<Conversation[]> {
+    return db.select().from(conversations)
+      .where(eq(conversations.leadId, leadId))
+      .orderBy(desc(conversations.createdAt));
+  }
+
+  async updateConversation(id: number, data: Partial<InsertConversation>): Promise<Conversation | undefined> {
+    const [conversation] = await db.update(conversations)
+      .set(data)
+      .where(eq(conversations.id, id))
+      .returning();
+    return conversation || undefined;
   }
 }
 
