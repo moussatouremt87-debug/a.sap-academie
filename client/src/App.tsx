@@ -12,6 +12,7 @@ import Expertises from "@/pages/expertises";
 import Formations from "@/pages/formations";
 import FaqPage from "@/pages/faq";
 import PourquoiAsap from "@/pages/pourquoi-asap";
+import CRM from "@/pages/crm";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/formations" component={Formations} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
+      <Route path="/crm" component={CRM} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -236,6 +236,7 @@ export default function Agent() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [commercial] = useState(() => getRandomCommercial());
+  const [conversationId, setConversationId] = useState<number | null>(null);
   const [booking, setBooking] = useState<BookingState>({
     step: "hidden",
     selectedDate: null,
@@ -246,9 +247,40 @@ export default function Agent() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const createConversation = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/conversations', { 
+        title: `Conversation avec ${commercial.name}`,
+        commercialName: commercial.name 
+      });
+      const data = await response.json();
+      setConversationId(data.id);
+      return data.id;
+    } catch (error) {
+      console.error("Failed to create conversation:", error);
+      return null;
+    }
+  };
+
+  const saveMessage = async (convId: number, role: string, content: string) => {
+    if (!convId || !content) return;
+    try {
+      const response = await apiRequest('POST', `/api/conversations/${convId}/messages`, { role, content });
+      await response.json();
+    } catch (error) {
+      console.error("Failed to save message:", error);
+    }
+  };
+
   const bookMutation = useMutation({
     mutationFn: async ({ email, datetime }: { email: string; datetime: string }) => {
-      const response = await apiRequest('POST', '/api/calendar/book', { email, datetime, duration: 15 });
+      const response = await apiRequest('POST', '/api/calendar/book', { 
+        email, 
+        datetime, 
+        duration: 15,
+        conversationId,
+        commercialName: commercial.name
+      });
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -347,6 +379,12 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
   const sendMessage = async (content: string) => {
     if (!content.trim() || isStreaming) return;
 
+    // Create conversation on first message
+    let currentConvId = conversationId;
+    if (!currentConvId) {
+      currentConvId = await createConversation();
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -357,15 +395,28 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
     setInput("");
     setIsStreaming(true);
 
+    // Save user message to database
+    if (currentConvId) {
+      saveMessage(currentConvId, "user", content.trim());
+    }
+
     if (checkForMeetingRequest(content)) {
+      const assistantContent = `Parfait ! Je vous propose de réserver un créneau pour une consultation Google Meet de 15 minutes avec notre équipe.
+
+**Choisissez votre date et heure** dans le calendrier ci-dessous :`;
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Parfait ! Je vous propose de réserver un créneau pour une consultation Google Meet de 15 minutes avec notre équipe.
-
-**Choisissez votre date et heure** dans le calendrier ci-dessous :`,
+        content: assistantContent,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      
+      // Save assistant message
+      if (currentConvId) {
+        saveMessage(currentConvId, "assistant", assistantContent);
+      }
+      
       setIsStreaming(false);
       showCalendar();
       return;
@@ -377,6 +428,8 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
       content: "",
     };
     setMessages((prev) => [...prev, assistantMessage]);
+
+    let fullAssistantResponse = "";
 
     try {
       const response = await fetch("/api/chat", {
@@ -403,6 +456,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
               try {
                 const data = JSON.parse(line.slice(6));
                 if (data.content) {
+                  fullAssistantResponse += data.content;
                   setMessages((prev) => {
                     const updated = [...prev];
                     const lastMessage = updated[updated.length - 1];
@@ -417,6 +471,11 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             }
           }
         }
+      }
+
+      // Save assistant response to database
+      if (currentConvId && fullAssistantResponse) {
+        saveMessage(currentConvId, "assistant", fullAssistantResponse);
       }
     } catch (error) {
       console.error("Chat error:", error);

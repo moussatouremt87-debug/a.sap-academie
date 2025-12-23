@@ -41,10 +41,12 @@ export interface IStorage {
   
   // Leads
   getLead(id: number): Promise<Lead | undefined>;
+  getLeadByEmail(email: string): Promise<Lead | undefined>;
   getAllLeads(): Promise<Lead[]>;
   getLeadsToFollowUp(): Promise<Lead[]>;
   createLead(data: InsertLead): Promise<Lead>;
   updateLead(id: number, data: Partial<InsertLead>): Promise<Lead | undefined>;
+  upsertLeadByEmail(email: string, data: InsertLead): Promise<Lead>;
   
   // Lead Activities
   getLeadActivities(leadId: number): Promise<LeadActivity[]>;
@@ -146,6 +148,12 @@ export class DatabaseStorage implements IStorage {
     return lead || undefined;
   }
 
+  async getLeadByEmail(email: string): Promise<Lead | undefined> {
+    const [lead] = await db.select().from(leads)
+      .where(sql`LOWER(${leads.email}) = LOWER(${email})`);
+    return lead || undefined;
+  }
+
   async getAllLeads(): Promise<Lead[]> {
     return db.select().from(leads).orderBy(desc(leads.createdAt));
   }
@@ -171,6 +179,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(leads.id, id))
       .returning();
     return lead || undefined;
+  }
+
+  async upsertLeadByEmail(email: string, data: InsertLead): Promise<Lead> {
+    const existingLead = await this.getLeadByEmail(email);
+    if (existingLead) {
+      const updated = await this.updateLead(existingLead.id, data);
+      return updated || existingLead;
+    }
+    return this.createLead(data);
   }
 
   // Lead Activities

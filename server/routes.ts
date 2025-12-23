@@ -177,7 +177,7 @@ export async function registerRoutes(
   // Google Calendar - Create meeting
   app.post("/api/calendar/book", async (req: Request, res: Response) => {
     try {
-      const { email, datetime, duration } = req.body;
+      const { email, datetime, duration, conversationId, commercialName } = req.body;
       
       if (!email || !datetime) {
         return res.status(400).json({ error: "Email and datetime are required" });
@@ -190,13 +190,34 @@ export async function registerRoutes(
 
       const result = await createGoogleMeetEvent(email, datetime, duration || 15);
       
-      const lead = await storage.createLead({
-        name: email.split('@')[0],
-        email,
-        source: "google_meet_booking",
-        priority: "high",
-        notes: `Réservation Google Meet pour le ${new Date(datetime).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`
-      });
+      const bookingNote = `Réservation Google Meet pour le ${new Date(datetime).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}. Commercial IA: ${commercialName || 'Non spécifié'}`;
+      
+      // Use upsertLeadByEmail for proper deduplication
+      const existingLead = await storage.getLeadByEmail(email);
+      let lead;
+      
+      if (existingLead) {
+        // Update existing lead - append to notes
+        const updatedNotes = existingLead.notes ? `${existingLead.notes}\n\n${bookingNote}` : bookingNote;
+        lead = await storage.updateLead(existingLead.id, { 
+          notes: updatedNotes,
+          priority: "high",
+          lastContactAt: new Date()
+        }) || existingLead;
+      } else {
+        lead = await storage.createLead({
+          name: email.split('@')[0],
+          email,
+          source: "agent-ia",
+          priority: "high",
+          notes: bookingNote
+        });
+      }
+
+      // Link conversation to lead if provided
+      if (conversationId) {
+        await storage.updateConversation(conversationId, { leadId: lead.id });
+      }
 
       res.json({ 
         success: true, 
@@ -208,6 +229,80 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error creating meeting:", error);
       res.status(500).json({ error: "Failed to create meeting" });
+    }
+  });
+
+  // Conversations endpoints
+  app.post("/api/conversations", async (req: Request, res: Response) => {
+    try {
+      const { title, commercialName } = req.body;
+      const conversation = await storage.createConversation({ 
+        title: title || "Nouvelle conversation",
+        commercialName
+      });
+      res.status(201).json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ error: "Failed to create conversation" });
+    }
+  });
+
+  app.post("/api/conversations/:id/messages", async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.id);
+      const { role, content } = req.body;
+      
+      if (!role || !content) {
+        return res.status(400).json({ error: "Role and content are required" });
+      }
+
+      const message = await storage.createMessage({
+        conversationId,
+        role,
+        content
+      });
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error creating message:", error);
+      res.status(500).json({ error: "Failed to create message" });
+    }
+  });
+
+  app.patch("/api/conversations/:id/link-lead", async (req: Request, res: Response) => {
+    try {
+      const conversationId = parseInt(req.params.id);
+      const { email, name, company, phone } = req.body;
+
+      // Use getLeadByEmail for proper case-insensitive deduplication
+      let lead = await storage.getLeadByEmail(email);
+      
+      if (!lead) {
+        // Create new lead only if not found
+        lead = await storage.createLead({
+          name: name || email.split('@')[0],
+          email,
+          company,
+          phone,
+          source: "agent-ia"
+        });
+      } else {
+        // Update existing lead with new info if provided
+        if (company || phone) {
+          const updated = await storage.updateLead(lead.id, { 
+            ...(company && { company }),
+            ...(phone && { phone })
+          });
+          lead = updated || lead;
+        }
+      }
+
+      // Link conversation to lead
+      await storage.updateConversation(conversationId, { leadId: lead.id });
+
+      res.json({ lead });
+    } catch (error) {
+      console.error("Error linking conversation to lead:", error);
+      res.status(500).json({ error: "Failed to link conversation to lead" });
     }
   });
 
