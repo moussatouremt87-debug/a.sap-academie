@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Bot, HelpCircle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Search, Sparkles, HelpCircle, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -189,7 +189,7 @@ export default function FaqPage() {
                 </p>
                 <Link href="/agent">
                   <Button>
-                    <Bot className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     Parler à l'Agent IA
                   </Button>
                 </Link>
@@ -210,7 +210,7 @@ export default function FaqPage() {
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-faq">
-              <Bot className="mr-2 h-5 w-5" />
+              <MessageCircle className="mr-2 h-5 w-5" />
               Poser ma question à l'Agent IA
             </Button>
           </Link>

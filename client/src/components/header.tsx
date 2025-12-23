@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Bot } from "lucide-react";
+import { Menu, X, Sparkles, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
-  { href: "/", label: "Accueil" },
-  { href: "/agent", label: "Agent IA" },
-  { href: "/expertises", label: "Expertises" },
-  { href: "/formations", label: "Formations" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/pourquoi-asap", label: "Pourquoi A.SAP" },
+  { href: "/", label: "Accueil", icon: Home },
+  { href: "/agent", label: "Agent IA", icon: Sparkles },
+  { href: "/expertises", label: "Expertises", icon: Compass },
+  { href: "/formations", label: "Formations", icon: GraduationCap },
+  { href: "/faq", label: "FAQ", icon: HelpCircle },
+  { href: "/pourquoi-asap", label: "Pourquoi A.SAP", icon: Award },
 ];
 
 export function Header() {
@@ -47,7 +47,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <Link href="/agent" className="hidden sm:block">
             <Button className="bg-gold text-gold-foreground" data-testid="button-cta-agent">
-              <Bot className="mr-2 h-4 w-4" />
+              <Sparkles className="mr-2 h-4 w-4" />
               Parler à l'Agent IA
             </Button>
           </Link>
@@ -71,10 +71,11 @@ export function Header() {
               <Link key={item.href} href={item.href}>
                 <Button
                   variant={location === item.href ? "secondary" : "ghost"}
-                  className="w-full justify-start"
+                  className="w-full justify-start gap-3"
                   onClick={() => setIsOpen(false)}
                   data-testid={`link-mobile-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
+                  <item.icon className="h-4 w-4" />
                   {item.label}
                 </Button>
               </Link>
@@ -85,7 +86,7 @@ export function Header() {
                 onClick={() => setIsOpen(false)}
                 data-testid="button-mobile-agent"
               >
-                <Bot className="mr-2 h-4 w-4" />
+                <Sparkles className="mr-2 h-4 w-4" />
                 Parler à l'Agent IA
               </Button>
             </Link>

@@ -1,18 +1,18 @@
 import { Link } from "wouter";
-import { ArrowRight, Bot, Building2, GraduationCap, Settings, Briefcase } from "lucide-react";
+import { ArrowRight, Sparkles, Cpu, Database, GraduationCap, FolderKanban, Compass, MessageCircle, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import heroVideo from "@assets/generated_videos/corporate_consulting_meeting_ambiance.mp4";
 
 const problemCards = [
   {
-    icon: Building2,
+    icon: Cpu,
     title: "Je veux transformer mon SI",
     description: "Modernisez votre système d'information avec une approche structurée et agile.",
     color: "bg-primary/10 text-primary",
   },
   {
-    icon: Settings,
+    icon: Database,
     title: "Je veux déployer/optimiser SAP",
     description: "Intégration, paramétrage et optimisation de votre environnement SAP.",
     color: "bg-gold/20 text-gold-foreground dark:text-gold",
@@ -24,7 +24,7 @@ const problemCards = [
     color: "bg-primary/10 text-primary",
   },
   {
-    icon: Briefcase,
+    icon: FolderKanban,
     title: "Je veux gérer un projet SI",
     description: "Pilotage de bout en bout de vos projets de transformation digitale.",
     color: "bg-gold/20 text-gold-foreground dark:text-gold",
@@ -66,14 +66,14 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/agent">
                 <Button size="lg" className="bg-gold text-gold-foreground text-lg px-8" data-testid="button-hero-agent">
-                  <Bot className="mr-2 h-5 w-5" />
+                  <Sparkles className="mr-2 h-5 w-5" />
                   Parler à l'Agent IA
                 </Button>
               </Link>
               <Link href="/expertises">
                 <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white backdrop-blur-sm text-lg px-8" data-testid="button-hero-expertises">
+                  <Compass className="mr-2 h-5 w-5" />
                   Découvrir nos expertises
-                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -140,7 +140,7 @@ export default function Home() {
             </p>
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-bottom">
-                <Bot className="mr-2 h-5 w-5" />
+                <Rocket className="mr-2 h-5 w-5" />
                 Démarrer avec l'Agent IA
               </Button>
             </Link>

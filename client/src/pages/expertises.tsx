@@ -4,7 +4,7 @@ import {
   Lightbulb, Building, Monitor, GraduationCap, Briefcase,
   TrendingUp, Search, Users, FileText, Shield, Server, Database,
   Settings, Wrench, BookOpen, UserCheck, Handshake, MapPin, ShoppingCart,
-  Bot, ArrowRight, CheckCircle2, X
+  Sparkles, ArrowRight, CheckCircle2, X, MessageCircle, Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -390,9 +390,8 @@ export default function Expertises() {
                 <div className="mt-6">
                   <Link href="/agent">
                     <Button variant="outline" data-testid={`button-agent-${category.id}`}>
-                      <Bot className="mr-2 h-4 w-4" />
+                      <MessageCircle className="mr-2 h-4 w-4" />
                       Parler à l'Agent IA pour ce service
-                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -454,7 +453,7 @@ export default function Expertises() {
                 <div className="flex flex-col gap-3 pt-4 border-t sm:flex-row">
                   <Link href="/agent" className="flex-1">
                     <Button className="w-full bg-gold text-gold-foreground" data-testid="button-dialog-agent">
-                      <Bot className="mr-2 h-4 w-4" />
+                      <Sparkles className="mr-2 h-4 w-4" />
                       Discuter de ce service
                     </Button>
                   </Link>
@@ -483,7 +482,7 @@ export default function Expertises() {
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-expertises">
-              <Bot className="mr-2 h-5 w-5" />
+              <Rocket className="mr-2 h-5 w-5" />
               Démarrer avec l'Agent IA
             </Button>
           </Link>

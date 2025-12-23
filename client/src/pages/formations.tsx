@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, Clock, BarChart3, Users, Award, Bot, Search, X, Home, Laptop, CheckCircle2 } from "lucide-react";
+import { Filter, Clock, BarChart3, Users, Award, Sparkles, Search, X, Home, Laptop, CheckCircle2, MessageCircle, Rocket, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -232,7 +232,7 @@ export default function Formations() {
                 </Button>
                 <Link href="/agent">
                   <Button>
-                    <Bot className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     Parler à l'Agent IA
                   </Button>
                 </Link>
@@ -282,7 +282,7 @@ export default function Formations() {
               </div>
               <Link href="/agent">
                 <Button className="bg-gold text-gold-foreground" data-testid="button-cta-remote">
-                  <Bot className="mr-2 h-4 w-4" />
+                  <PlayCircle className="mr-2 h-4 w-4" />
                   En savoir plus
                 </Button>
               </Link>
@@ -302,7 +302,7 @@ export default function Formations() {
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-formations">
-              <Bot className="mr-2 h-5 w-5" />
+              <Rocket className="mr-2 h-5 w-5" />
               Demander un programme personnalisé
             </Button>
           </Link>

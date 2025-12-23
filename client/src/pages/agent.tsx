@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Calendar, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Send, Sparkles, User, CalendarDays, Video, Monitor, Loader2, Mail, CheckCircle2, ExternalLink, ChevronLeft, ChevronRight, MessageSquare, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,7 @@ interface BookingState {
 }
 
 const quickActions = [
-  { icon: Calendar, label: "Prendre RDV", prompt: "Je souhaite prendre un rendez-vous avec un consultant." },
+  { icon: CalendarDays, label: "Prendre RDV", prompt: "Je souhaite prendre un rendez-vous avec un consultant." },
   { icon: Video, label: "Google Meet", prompt: "Je voudrais organiser une réunion Google Meet." },
   { icon: Monitor, label: "Teams", prompt: "Je préfère une réunion Microsoft Teams." },
 ];
@@ -566,7 +566,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
       <div className="border-b bg-card px-4 py-3">
         <div className="container mx-auto flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-            <Bot className="h-5 w-5 text-primary-foreground" />
+            <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
             <h1 className="font-semibold" data-testid="text-agent-title">Agent IA A.SAP</h1>
@@ -580,7 +580,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-8 w-8 text-primary" />
+                <Sparkles className="h-8 w-8 text-primary" />
               </div>
               <h2 className="mb-2 text-xl font-semibold" data-testid="text-agent-welcome">
                 Bienvenue sur l'Agent IA A.SAP
@@ -635,7 +635,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                       {message.role === "user" ? (
                         <User className="h-4 w-4" />
                       ) : (
-                        <Bot className="h-4 w-4" />
+                        <Sparkles className="h-4 w-4" />
                       )}
                     </div>
                     <Card

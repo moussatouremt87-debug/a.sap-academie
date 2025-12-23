@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import {
   Target, Users, Zap, Globe, Award, CheckCircle2,
-  Building2, Lightbulb, TrendingUp, Bot, ArrowRight
+  Building2, Lightbulb, TrendingUp, Sparkles, ArrowRight, Rocket, Compass
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -168,9 +168,8 @@ export default function PourquoiAsap() {
               <div className="mt-8">
                 <Link href="/agent">
                   <Button className="bg-gold text-gold-foreground" data-testid="button-differentiators-cta">
-                    <Bot className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     Discuter avec notre Agent IA
-                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -218,14 +217,14 @@ export default function PourquoiAsap() {
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-pourquoi">
-                <Bot className="mr-2 h-5 w-5" />
+                <Rocket className="mr-2 h-5 w-5" />
                 Parler à l'Agent IA
               </Button>
             </Link>
             <Link href="/expertises">
               <Button size="lg" variant="outline" data-testid="button-expertises-pourquoi">
+                <Compass className="mr-2 h-5 w-5" />
                 Découvrir nos expertises
-                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
