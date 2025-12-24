@@ -1,8 +1,11 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Mail, Linkedin, Twitter } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import logoImage from "@assets/image_1766486404362.png";
 
 export function Footer() {
+  const { t } = useI18n();
+  
   return (
     <footer className="border-t bg-card">
       <div className="container mx-auto px-4 py-12">
@@ -16,34 +19,33 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-muted-foreground">
-              Cabinet de conseil en transformation digitale, SAP et formation.
-              Votre partenaire pour la modernisation de vos systèmes d'information.
+              {t("footer.description")}
             </p>
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">Services</h3>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.services")}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/expertises" className="hover:text-foreground transition-colors">Conseil & Stratégie</Link></li>
               <li><Link href="/expertises" className="hover:text-foreground transition-colors">Transformation SI</Link></li>
               <li><Link href="/expertises" className="hover:text-foreground transition-colors">SAP Consulting</Link></li>
-              <li><Link href="/formations" className="hover:text-foreground transition-colors">Formations SAP</Link></li>
+              <li><Link href="/formations" className="hover:text-foreground transition-colors">{t("nav.formations")}</Link></li>
               <li><Link href="/expertises" className="hover:text-foreground transition-colors">Business Services</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">Ressources</h3>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.resources")}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/agent" className="hover:text-foreground transition-colors">Contact Commercial</Link></li>
-              <li><Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
-              <li><Link href="/pourquoi-asap" className="hover:text-foreground transition-colors">Pourquoi A.SAP</Link></li>
-              <li><Link href="/mentions-legales" className="hover:text-foreground transition-colors">Mentions Légales & RGPD</Link></li>
+              <li><Link href="/agent" className="hover:text-foreground transition-colors">{t("nav.contact")}</Link></li>
+              <li><Link href="/faq" className="hover:text-foreground transition-colors">{t("nav.faq")}</Link></li>
+              <li><Link href="/pourquoi-asap" className="hover:text-foreground transition-colors">{t("nav.whyAsap")}</Link></li>
+              <li><Link href="/mentions-legales" className="hover:text-foreground transition-colors">{t("nav.legal")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">Contact</h3>
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.contact")}</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 flex-shrink-0" />
@@ -70,7 +72,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} A.SAP Consulting. Tous droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} A.SAP Consulting. {t("footer.rights")}</p>
         </div>
       </div>
     </footer>

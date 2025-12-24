@@ -3,19 +3,22 @@ import { Link, useLocation } from "wouter";
 import { Menu, X, MessageCircle, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSelector } from "@/components/language-selector";
+import { useI18n } from "@/lib/i18n";
 import logoImage from "@assets/image_1766486404362.png";
-
-const navItems = [
-  { href: "/", label: "Accueil", icon: Home },
-  { href: "/expertises", label: "Expertises", icon: Compass },
-  { href: "/formations", label: "Formations", icon: GraduationCap },
-  { href: "/faq", label: "FAQ", icon: HelpCircle },
-  { href: "/pourquoi-asap", label: "Pourquoi A.SAP", icon: Award },
-];
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
+  const { t } = useI18n();
+
+  const navItems = [
+    { href: "/", label: t("nav.home"), icon: Home },
+    { href: "/expertises", label: t("nav.expertises"), icon: Compass },
+    { href: "/formations", label: t("nav.formations"), icon: GraduationCap },
+    { href: "/faq", label: t("nav.faq"), icon: HelpCircle },
+    { href: "/pourquoi-asap", label: t("nav.whyAsap"), icon: Award },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,7 +38,7 @@ export function Header() {
                 variant={location === item.href ? "secondary" : "ghost"}
                 size="sm"
                 className="text-sm"
-                data-testid={`link-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`link-nav-${item.href.replace('/', '') || 'home'}`}
               >
                 {item.label}
               </Button>
@@ -47,9 +50,10 @@ export function Header() {
           <Link href="/agent" className="hidden sm:block">
             <Button className="bg-gold text-gold-foreground" data-testid="button-cta-agent">
               <MessageCircle className="mr-2 h-4 w-4" />
-              Parler à un commercial
+              {t("nav.contact")}
             </Button>
           </Link>
+          <LanguageSelector />
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -72,7 +76,7 @@ export function Header() {
                   variant={location === item.href ? "secondary" : "ghost"}
                   className="w-full justify-start gap-3"
                   onClick={() => setIsOpen(false)}
-                  data-testid={`link-mobile-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  data-testid={`link-mobile-${item.href.replace('/', '') || 'home'}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -86,7 +90,7 @@ export function Header() {
                 data-testid="button-mobile-agent"
               >
                 <MessageCircle className="mr-2 h-4 w-4" />
-                Parler à un commercial
+                {t("nav.contact")}
               </Button>
             </Link>
           </nav>
