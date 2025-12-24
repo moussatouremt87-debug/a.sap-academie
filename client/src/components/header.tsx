@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
-import logoImage from "@assets/image_1766486404362.png";
+import logoImage from "@assets/Gemini_Generated_Image_9c70nt9c70nt9c70_1766576410690.png";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);

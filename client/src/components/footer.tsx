@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { MapPin, Phone, Mail, Linkedin, Twitter } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import logoImage from "@assets/image_1766486404362.png";
+import logoImage from "@assets/Gemini_Generated_Image_9c70nt9c70nt9c70_1766576410690.png";
 
 export function Footer() {
   const { t } = useI18n();
