@@ -16,6 +16,7 @@ import FaqPage from "@/pages/faq";
 import PourquoiAsap from "@/pages/pourquoi-asap";
 import CRM from "@/pages/crm";
 import MentionsLegales from "@/pages/mentions-legales";
+import StudentPortal from "@/pages/student-portal";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
       <Route path="/crm" component={CRM} />
       <Route path="/mentions-legales" component={MentionsLegales} />
+      <Route path="/espace-apprenant" component={StudentPortal} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -38,8 +40,9 @@ function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
   const isCrmPage = location === "/crm";
+  const isStudentPortal = location === "/espace-apprenant";
 
-  if (isCrmPage) {
+  if (isCrmPage || isStudentPortal) {
     return (
       <>
         <Router />

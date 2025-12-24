@@ -2,7 +2,8 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema } from "@shared/schema";
+import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema, insertEnrollmentSchema, insertModuleProgressSchema } from "@shared/schema";
+import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
@@ -470,6 +471,177 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     } catch (error) {
       console.error("Error getting AI suggestions:", error);
       res.status(500).json({ error: "Failed to get AI suggestions" });
+    }
+  });
+
+  // ========== E-LEARNING ROUTES ==========
+  
+  // Get course modules for a formation
+  app.get("/api/formations/:id/modules", async (req: Request, res: Response) => {
+    try {
+      const formationId = parseInt(req.params.id);
+      const modules = await storage.getCourseModules(formationId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      res.status(500).json({ error: "Failed to fetch modules" });
+    }
+  });
+  
+  // Get user's enrollments (protected)
+  app.get("/api/student/enrollments", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const userEnrollments = await storage.getUserEnrollments(userId);
+      
+      // Get formation details for each enrollment
+      const enrichedEnrollments = await Promise.all(
+        userEnrollments.map(async (enrollment) => {
+          const formation = await storage.getFormation(enrollment.formationId);
+          const modules = await storage.getCourseModules(enrollment.formationId);
+          const progress = await storage.getUserProgressForFormation(userId, enrollment.formationId);
+          
+          const completedModules = progress.filter(p => p.completed).length;
+          const totalModules = modules.length;
+          const progressPercent = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+          
+          return {
+            ...enrollment,
+            formation,
+            modules,
+            progress: {
+              completed: completedModules,
+              total: totalModules,
+              percent: progressPercent
+            }
+          };
+        })
+      );
+      
+      res.json(enrichedEnrollments);
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      res.status(500).json({ error: "Failed to fetch enrollments" });
+    }
+  });
+  
+  // Enroll user in a formation (for testing - will be replaced by Stripe checkout)
+  const enrollRequestSchema = z.object({
+    formationId: z.number().int().positive()
+  });
+  
+  app.post("/api/student/enroll", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const validation = enrollRequestSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ error: "Invalid request", details: validation.error.issues });
+      }
+      
+      const { formationId } = validation.data;
+      
+      // Check if already enrolled
+      const existing = await storage.getEnrollment(userId, formationId);
+      if (existing) {
+        return res.status(400).json({ error: "Already enrolled in this formation" });
+      }
+      
+      const enrollment = await storage.createEnrollment({
+        userId,
+        formationId,
+        status: "active"
+      });
+      
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error enrolling:", error);
+      res.status(500).json({ error: "Failed to enroll" });
+    }
+  });
+  
+  // Get course content (protected - must be enrolled or free preview)
+  app.get("/api/student/courses/:formationId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const formationId = parseInt(req.params.formationId);
+      const formation = await storage.getFormation(formationId);
+      
+      if (!formation) {
+        return res.status(404).json({ error: "Formation not found" });
+      }
+      
+      const enrollment = await storage.getEnrollment(userId, formationId);
+      const modules = await storage.getCourseModules(formationId);
+      const progress = await storage.getUserProgressForFormation(userId, formationId);
+      
+      // Create progress map
+      const progressMap = new Map(progress.map(p => [p.moduleId, p]));
+      
+      // Add progress and access info to each module
+      const enrichedModules = modules.map(module => ({
+        ...module,
+        hasAccess: enrollment !== undefined || module.isFree,
+        progress: progressMap.get(module.id) || null,
+        videoUrl: (enrollment !== undefined || module.isFree) ? module.videoUrl : null
+      }));
+      
+      res.json({
+        formation,
+        enrollment,
+        modules: enrichedModules,
+        isEnrolled: enrollment !== undefined
+      });
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+  
+  // Update module progress
+  const progressRequestSchema = z.object({
+    moduleId: z.number().int().positive(),
+    watchedSeconds: z.number().int().min(0).optional(),
+    completed: z.boolean().optional()
+  });
+  
+  app.post("/api/student/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      
+      const validation = progressRequestSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ error: "Invalid request", details: validation.error.issues });
+      }
+      
+      const { moduleId, watchedSeconds, completed } = validation.data;
+      
+      const progressData: any = {};
+      if (watchedSeconds !== undefined) progressData.watchedSeconds = watchedSeconds;
+      if (completed !== undefined) {
+        progressData.completed = completed;
+        if (completed) progressData.completedAt = new Date();
+      }
+      
+      const progress = await storage.updateModuleProgress(userId, moduleId, progressData);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error updating progress:", error);
+      res.status(500).json({ error: "Failed to update progress" });
     }
   });
 

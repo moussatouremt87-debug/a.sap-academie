@@ -5,7 +5,11 @@ import {
   type Faq, type InsertFaq,
   type Lead, type InsertLead,
   type LeadActivity, type InsertLeadActivity,
+  type CourseModule, type InsertCourseModule,
+  type Enrollment, type InsertEnrollment,
+  type ModuleProgress, type InsertModuleProgress,
   conversations, messages, formations, faqs, leads, leadActivities,
+  courseModules, enrollments, moduleProgress,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte, isNotNull, sql } from "drizzle-orm";
@@ -49,6 +53,22 @@ export interface IStorage {
   // Conversations with Lead
   getConversationsByLead(leadId: number): Promise<Conversation[]>;
   updateConversation(id: number, data: Partial<InsertConversation>): Promise<Conversation | undefined>;
+  
+  // Course Modules
+  getCourseModules(formationId: number): Promise<CourseModule[]>;
+  getCourseModule(id: number): Promise<CourseModule | undefined>;
+  createCourseModule(data: InsertCourseModule): Promise<CourseModule>;
+  
+  // Enrollments
+  getEnrollment(userId: string, formationId: number): Promise<Enrollment | undefined>;
+  getUserEnrollments(userId: string): Promise<Enrollment[]>;
+  createEnrollment(data: InsertEnrollment): Promise<Enrollment>;
+  updateEnrollment(id: number, data: Partial<InsertEnrollment>): Promise<Enrollment | undefined>;
+  
+  // Module Progress
+  getModuleProgress(userId: string, moduleId: number): Promise<ModuleProgress | undefined>;
+  getUserProgressForFormation(userId: string, formationId: number): Promise<ModuleProgress[]>;
+  updateModuleProgress(userId: string, moduleId: number, data: Partial<InsertModuleProgress>): Promise<ModuleProgress>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -193,6 +213,94 @@ export class DatabaseStorage implements IStorage {
       .where(eq(conversations.id, id))
       .returning();
     return conversation || undefined;
+  }
+  
+  // Course Modules
+  async getCourseModules(formationId: number): Promise<CourseModule[]> {
+    return db.select().from(courseModules)
+      .where(eq(courseModules.formationId, formationId))
+      .orderBy(courseModules.order);
+  }
+  
+  async getCourseModule(id: number): Promise<CourseModule | undefined> {
+    const [module] = await db.select().from(courseModules).where(eq(courseModules.id, id));
+    return module || undefined;
+  }
+  
+  async createCourseModule(data: InsertCourseModule): Promise<CourseModule> {
+    const [module] = await db.insert(courseModules).values(data).returning();
+    return module;
+  }
+  
+  // Enrollments
+  async getEnrollment(userId: string, formationId: number): Promise<Enrollment | undefined> {
+    const [enrollment] = await db.select().from(enrollments)
+      .where(and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.formationId, formationId)
+      ));
+    return enrollment || undefined;
+  }
+  
+  async getUserEnrollments(userId: string): Promise<Enrollment[]> {
+    return db.select().from(enrollments)
+      .where(eq(enrollments.userId, userId))
+      .orderBy(desc(enrollments.enrolledAt));
+  }
+  
+  async createEnrollment(data: InsertEnrollment): Promise<Enrollment> {
+    const [enrollment] = await db.insert(enrollments).values(data).returning();
+    return enrollment;
+  }
+  
+  async updateEnrollment(id: number, data: Partial<InsertEnrollment>): Promise<Enrollment | undefined> {
+    const [enrollment] = await db.update(enrollments)
+      .set(data)
+      .where(eq(enrollments.id, id))
+      .returning();
+    return enrollment || undefined;
+  }
+  
+  // Module Progress
+  async getModuleProgress(userId: string, moduleId: number): Promise<ModuleProgress | undefined> {
+    const [progress] = await db.select().from(moduleProgress)
+      .where(and(
+        eq(moduleProgress.userId, userId),
+        eq(moduleProgress.moduleId, moduleId)
+      ));
+    return progress || undefined;
+  }
+  
+  async getUserProgressForFormation(userId: string, formationId: number): Promise<ModuleProgress[]> {
+    const modules = await this.getCourseModules(formationId);
+    const moduleIds = modules.map(m => m.id);
+    if (moduleIds.length === 0) return [];
+    
+    return db.select().from(moduleProgress)
+      .where(and(
+        eq(moduleProgress.userId, userId),
+        sql`${moduleProgress.moduleId} IN (${sql.join(moduleIds.map(id => sql`${id}`), sql`, `)})`
+      ));
+  }
+  
+  async updateModuleProgress(userId: string, moduleId: number, data: Partial<InsertModuleProgress>): Promise<ModuleProgress> {
+    const existing = await this.getModuleProgress(userId, moduleId);
+    
+    if (existing) {
+      const [updated] = await db.update(moduleProgress)
+        .set({ ...data, lastWatchedAt: new Date() })
+        .where(eq(moduleProgress.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(moduleProgress).values({
+      userId,
+      moduleId,
+      ...data,
+      lastWatchedAt: new Date(),
+    }).returning();
+    return created;
   }
 }
 

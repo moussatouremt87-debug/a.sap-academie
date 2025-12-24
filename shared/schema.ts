@@ -134,3 +134,61 @@ export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit(
 
 export type InsertLeadActivity = z.infer<typeof insertLeadActivitySchema>;
 export type LeadActivity = typeof leadActivities.$inferSelect;
+
+// Course modules (video content for each formation)
+export const courseModules = pgTable("course_modules", {
+  id: serial("id").primaryKey(),
+  formationId: integer("formation_id").notNull().references(() => formations.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  videoUrl: text("video_url"), // YouTube, Vimeo URL or direct video link
+  duration: integer("duration"), // minutes
+  order: integer("order").default(0),
+  isFree: boolean("is_free").default(false), // Preview module
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+export type CourseModule = typeof courseModules.$inferSelect;
+
+// Student enrollments
+export const enrollments = pgTable("enrollments", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  formationId: integer("formation_id").notNull().references(() => formations.id, { onDelete: "cascade" }),
+  status: text("status").default("active"), // active, completed, expired
+  enrolledAt: timestamp("enrolled_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  completedAt: timestamp("completed_at"),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
+  id: true,
+  enrolledAt: true,
+});
+
+export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
+export type Enrollment = typeof enrollments.$inferSelect;
+
+// Progress tracking per module
+export const moduleProgress = pgTable("module_progress", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  moduleId: integer("module_id").notNull().references(() => courseModules.id, { onDelete: "cascade" }),
+  completed: boolean("completed").default(false),
+  watchedSeconds: integer("watched_seconds").default(0),
+  lastWatchedAt: timestamp("last_watched_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertModuleProgressSchema = createInsertSchema(moduleProgress).omit({
+  id: true,
+});
+
+export type InsertModuleProgress = z.infer<typeof insertModuleProgressSchema>;
+export type ModuleProgress = typeof moduleProgress.$inferSelect;
