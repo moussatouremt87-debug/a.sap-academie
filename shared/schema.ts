@@ -203,3 +203,88 @@ export const insertModuleProgressSchema = createInsertSchema(moduleProgress).omi
 
 export type InsertModuleProgress = z.infer<typeof insertModuleProgressSchema>;
 export type ModuleProgress = typeof moduleProgress.$inferSelect;
+
+// Nurturing sequences for automated lead follow-up
+export const nurturingSequences = pgTable("nurturing_sequences", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  triggerEvent: text("trigger_event").notNull(), // new_lead, form_submission, chat_interaction, meeting_booked, enrollment
+  targetSource: text("target_source"), // agent-ia, formation, contact, google_meet_booking - null means all
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertNurturingSequenceSchema = createInsertSchema(nurturingSequences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertNurturingSequence = z.infer<typeof insertNurturingSequenceSchema>;
+export type NurturingSequence = typeof nurturingSequences.$inferSelect;
+
+// Steps within a nurturing sequence
+export const nurturingSteps = pgTable("nurturing_steps", {
+  id: serial("id").primaryKey(),
+  sequenceId: integer("sequence_id").notNull().references(() => nurturingSequences.id, { onDelete: "cascade" }),
+  stepOrder: integer("step_order").notNull(),
+  delayDays: integer("delay_days").default(0), // Days to wait after previous step
+  delayHours: integer("delay_hours").default(0), // Additional hours to wait
+  actionType: text("action_type").notNull(), // email, task, status_change, notification
+  subject: text("subject"), // Email subject
+  content: text("content").notNull(), // Email body or task description
+  templateVars: text("template_vars"), // JSON string of available variables
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertNurturingStepSchema = createInsertSchema(nurturingSteps).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNurturingStep = z.infer<typeof insertNurturingStepSchema>;
+export type NurturingStep = typeof nurturingSteps.$inferSelect;
+
+// Lead enrollment in nurturing sequences
+export const leadNurturing = pgTable("lead_nurturing", {
+  id: serial("id").primaryKey(),
+  leadId: integer("lead_id").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  sequenceId: integer("sequence_id").notNull().references(() => nurturingSequences.id, { onDelete: "cascade" }),
+  currentStepId: integer("current_step_id"),
+  status: text("status").default("active"), // active, paused, completed, cancelled
+  startedAt: timestamp("started_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  nextActionAt: timestamp("next_action_at"),
+  completedAt: timestamp("completed_at"),
+  pausedAt: timestamp("paused_at"),
+});
+
+export const insertLeadNurturingSchema = createInsertSchema(leadNurturing).omit({
+  id: true,
+  startedAt: true,
+});
+
+export type InsertLeadNurturing = z.infer<typeof insertLeadNurturingSchema>;
+export type LeadNurturing = typeof leadNurturing.$inferSelect;
+
+// Nurturing action log - track what actions were taken
+export const nurturingActions = pgTable("nurturing_actions", {
+  id: serial("id").primaryKey(),
+  leadNurturingId: integer("lead_nurturing_id").notNull().references(() => leadNurturing.id, { onDelete: "cascade" }),
+  stepId: integer("step_id").notNull().references(() => nurturingSteps.id, { onDelete: "cascade" }),
+  actionType: text("action_type").notNull(),
+  status: text("status").default("pending"), // pending, sent, failed, skipped
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  executedAt: timestamp("executed_at"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertNurturingActionSchema = createInsertSchema(nurturingActions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNurturingAction = z.infer<typeof insertNurturingActionSchema>;
+export type NurturingAction = typeof nurturingActions.$inferSelect;
