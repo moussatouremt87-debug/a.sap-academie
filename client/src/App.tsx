@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -37,6 +37,7 @@ function Router() {
       <Route path="/nurturing" component={Nurturing} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/espace-apprenant" component={StudentPortal} />
+      <Route path="/e-learning">{() => <Redirect to="/espace-apprenant" />}</Route>
       <Route path="/inscription" component={Inscription} />
       <Route path="/documents" component={Documents} />
       <Route path="/shared/:token" component={SharedDocument} />
@@ -49,7 +50,7 @@ function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
   const isCrmPage = location === "/crm" || location === "/nurturing" || location === "/documents";
-  const isStudentPortal = location === "/espace-apprenant";
+  const isStudentPortal = location === "/espace-apprenant" || location === "/e-learning";
   const isInscriptionPage = location.startsWith("/inscription");
 
   if (isCrmPage || isStudentPortal || isInscriptionPage) {
