@@ -8,6 +8,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { BackToTop } from "@/components/back-to-top";
 import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
@@ -75,6 +76,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <AppLayout />
+            <BackToTop />
             <Toaster />
           </TooltipProvider>
         </QueryClientProvider>
