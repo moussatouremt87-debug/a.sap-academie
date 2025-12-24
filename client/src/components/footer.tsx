@@ -47,17 +47,17 @@ export function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.contact")}</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 flex-shrink-0" />
-                <span>Dakar, Sénégal</span>
+              <li className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>SICAP Liberté 2, Villa N°1690<br />Dakar, Sénégal</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 flex-shrink-0" />
-                <span>+221 XX XXX XX XX</span>
+                <span>+221 77 000 00 00</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 flex-shrink-0" />
-                <span>contact@asap.sn</span>
+                <span>contact@asap-academie.sn</span>
               </li>
             </ul>
             <div className="mt-4 flex gap-3">
@@ -72,7 +72,8 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} A.SAP Consulting. {t("footer.rights")}</p>
+          <p>&copy; {new Date().getFullYear()} A.SAP SARL - Académie Internationale SAP. {t("footer.rights")}</p>
+          <p className="mt-1 text-xs">RCCM: SN-DKR-XXXX-XXXX | Capital: 1 000 000 FCFA</p>
         </div>
       </div>
     </footer>

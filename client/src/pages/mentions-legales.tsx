@@ -28,15 +28,27 @@ export default function MentionsLegales() {
             <CardContent className="space-y-4 text-muted-foreground">
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Raison Sociale</h3>
-                <p>A.SAP Consulting</p>
+                <p>A.SAP SARL (Académie Internationale SAP)</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Forme Juridique</h3>
+                <p>Société à Responsabilité Limitée (SARL) - OHADA</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Capital Social</h3>
+                <p>1 000 000 Francs CFA</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Siège Social</h3>
-                <p>Dakar, Sénégal</p>
+                <p>SICAP Liberté 2, Villa N°1690<br />Dakar, Sénégal</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Co-gérantes</h3>
+                <p>Mme SALL Mame Marieme & Mme SYLLA Khadidiatou</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Activité</h3>
-                <p>Conseil en transformation digitale, intégration SAP et formation professionnelle</p>
+                <p>Ingénierie informatique, conseil en transformation digitale, intégration SAP, formation professionnelle, tierce maintenance applicative</p>
               </div>
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Hébergement</h3>
@@ -186,13 +198,13 @@ export default function MentionsLegales() {
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-gold" />
-                  <a href="mailto:contact@asap-consulting.sn" className="text-primary hover:underline">
-                    contact@asap-consulting.sn
+                  <a href="mailto:contact@asap-academie.sn" className="text-primary hover:underline">
+                    contact@asap-academie.sn
                   </a>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-gold" />
-                  <span>+221 XX XXX XX XX</span>
+                  <span>+221 77 000 00 00</span>
                 </div>
               </div>
             </CardContent>

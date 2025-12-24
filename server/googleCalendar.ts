@@ -150,17 +150,19 @@ export async function createGoogleMeetEvent(
     conferenceDataVersion: 1,
     sendUpdates: 'all',
     requestBody: {
-      summary: 'Consultation A.SAP - Transformation Digitale & SAP',
+      summary: 'Consultation A.SAP - Académie Internationale SAP',
       description: `Bonjour,
 
-Merci pour votre intérêt pour les services A.SAP !
+Merci pour votre intérêt pour A.SAP SARL !
 
 Cette réunion vous permettra de:
-- Discuter de vos besoins en transformation digitale
-- Explorer nos solutions SAP adaptées à votre contexte
-- Obtenir des conseils personnalisés de nos experts
+- Discuter de vos besoins en transformation digitale et SAP
+- Explorer nos formations SAP (courtes et longues durées)
+- Obtenir des conseils personnalisés de nos experts certifiés
 
-A.SAP - Votre partenaire de confiance pour la transformation digitale en Afrique de l'Ouest.
+A.SAP - Académie Internationale SAP
+SICAP Liberté 2, Villa N°1690 - Dakar, Sénégal
+Votre partenaire de confiance pour la transformation digitale en Afrique de l'Ouest.
 
 Cordialement,
 L'équipe A.SAP`,
