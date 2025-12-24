@@ -14,6 +14,7 @@ import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes, objectStorageClient } from "./replit_integrations/object_storage";
+import { sendEnrollmentConfirmation, sendMeetingConfirmation } from "./email";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -212,6 +213,18 @@ export async function registerRoutes(
         notes: `Inscription formation #${result.data.formationId}. Niveau: ${result.data.educationLevel}. Motivation: ${result.data.motivation || 'Non renseignée'}`
       });
       
+      // Send confirmation email (fire and forget)
+      const formation = await storage.getFormation(result.data.formationId);
+      if (formation) {
+        sendEnrollmentConfirmation(result.data.email, {
+          firstName: result.data.firstName,
+          lastName: result.data.lastName,
+          formationTitle: formation.title,
+          formationCategory: formation.category,
+          enrollmentDate: new Date()
+        }).catch(err => console.error("Email sending failed:", err));
+      }
+      
       res.status(201).json(enrollment);
     } catch (error) {
       console.error("Error creating enrollment:", error);
@@ -274,6 +287,14 @@ export async function registerRoutes(
       if (conversationId) {
         await storage.updateConversation(conversationId, { leadId: lead.id });
       }
+
+      // Send meeting confirmation email (fire and forget)
+      sendMeetingConfirmation(email, {
+        datetime: new Date(datetime),
+        duration: duration || 15,
+        meetLink: result.meetLink,
+        commercialName
+      }).catch(err => console.error("Meeting email failed:", err));
 
       res.json({ 
         success: true, 
