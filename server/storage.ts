@@ -8,8 +8,13 @@ import {
   type CourseModule, type InsertCourseModule,
   type Enrollment, type InsertEnrollment,
   type ModuleProgress, type InsertModuleProgress,
+  type NurturingSequence, type InsertNurturingSequence,
+  type NurturingStep, type InsertNurturingStep,
+  type LeadNurturing, type InsertLeadNurturing,
+  type NurturingAction, type InsertNurturingAction,
   conversations, messages, formations, faqs, leads, leadActivities,
   courseModules, enrollments, moduleProgress,
+  nurturingSequences, nurturingSteps, leadNurturing, nurturingActions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte, isNotNull, sql } from "drizzle-orm";
@@ -69,6 +74,35 @@ export interface IStorage {
   getModuleProgress(userId: string, moduleId: number): Promise<ModuleProgress | undefined>;
   getUserProgressForFormation(userId: string, formationId: number): Promise<ModuleProgress[]>;
   updateModuleProgress(userId: string, moduleId: number, data: Partial<InsertModuleProgress>): Promise<ModuleProgress>;
+  
+  // Nurturing Sequences
+  getNurturingSequence(id: number): Promise<NurturingSequence | undefined>;
+  getAllNurturingSequences(): Promise<NurturingSequence[]>;
+  getActiveNurturingSequences(): Promise<NurturingSequence[]>;
+  getNurturingSequencesByTrigger(triggerEvent: string, source?: string): Promise<NurturingSequence[]>;
+  createNurturingSequence(data: InsertNurturingSequence): Promise<NurturingSequence>;
+  updateNurturingSequence(id: number, data: Partial<InsertNurturingSequence>): Promise<NurturingSequence | undefined>;
+  deleteNurturingSequence(id: number): Promise<void>;
+  
+  // Nurturing Steps
+  getNurturingSteps(sequenceId: number): Promise<NurturingStep[]>;
+  getNurturingStep(id: number): Promise<NurturingStep | undefined>;
+  createNurturingStep(data: InsertNurturingStep): Promise<NurturingStep>;
+  updateNurturingStep(id: number, data: Partial<InsertNurturingStep>): Promise<NurturingStep | undefined>;
+  deleteNurturingStep(id: number): Promise<void>;
+  
+  // Lead Nurturing
+  getLeadNurturing(leadId: number, sequenceId: number): Promise<LeadNurturing | undefined>;
+  getLeadNurturingById(id: number): Promise<LeadNurturing | undefined>;
+  getActiveLeadNurturing(leadId: number): Promise<LeadNurturing[]>;
+  getPendingNurturingActions(): Promise<NurturingAction[]>;
+  createLeadNurturing(data: InsertLeadNurturing): Promise<LeadNurturing>;
+  updateLeadNurturing(id: number, data: Partial<InsertLeadNurturing>): Promise<LeadNurturing | undefined>;
+  
+  // Nurturing Actions
+  getNurturingActions(leadNurturingId: number): Promise<NurturingAction[]>;
+  createNurturingAction(data: InsertNurturingAction): Promise<NurturingAction>;
+  updateNurturingAction(id: number, data: Partial<InsertNurturingAction>): Promise<NurturingAction | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,6 +335,150 @@ export class DatabaseStorage implements IStorage {
       lastWatchedAt: new Date(),
     }).returning();
     return created;
+  }
+  
+  // Nurturing Sequences
+  async getNurturingSequence(id: number): Promise<NurturingSequence | undefined> {
+    const [sequence] = await db.select().from(nurturingSequences).where(eq(nurturingSequences.id, id));
+    return sequence || undefined;
+  }
+  
+  async getAllNurturingSequences(): Promise<NurturingSequence[]> {
+    return db.select().from(nurturingSequences).orderBy(desc(nurturingSequences.createdAt));
+  }
+  
+  async getActiveNurturingSequences(): Promise<NurturingSequence[]> {
+    return db.select().from(nurturingSequences)
+      .where(eq(nurturingSequences.isActive, true))
+      .orderBy(desc(nurturingSequences.createdAt));
+  }
+  
+  async getNurturingSequencesByTrigger(triggerEvent: string, source?: string): Promise<NurturingSequence[]> {
+    if (source) {
+      return db.select().from(nurturingSequences)
+        .where(and(
+          eq(nurturingSequences.isActive, true),
+          eq(nurturingSequences.triggerEvent, triggerEvent),
+          sql`(${nurturingSequences.targetSource} IS NULL OR ${nurturingSequences.targetSource} = ${source})`
+        ));
+    }
+    return db.select().from(nurturingSequences)
+      .where(and(
+        eq(nurturingSequences.isActive, true),
+        eq(nurturingSequences.triggerEvent, triggerEvent)
+      ));
+  }
+  
+  async createNurturingSequence(data: InsertNurturingSequence): Promise<NurturingSequence> {
+    const [sequence] = await db.insert(nurturingSequences).values(data).returning();
+    return sequence;
+  }
+  
+  async updateNurturingSequence(id: number, data: Partial<InsertNurturingSequence>): Promise<NurturingSequence | undefined> {
+    const [sequence] = await db.update(nurturingSequences)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(nurturingSequences.id, id))
+      .returning();
+    return sequence || undefined;
+  }
+  
+  async deleteNurturingSequence(id: number): Promise<void> {
+    await db.delete(nurturingSequences).where(eq(nurturingSequences.id, id));
+  }
+  
+  // Nurturing Steps
+  async getNurturingSteps(sequenceId: number): Promise<NurturingStep[]> {
+    return db.select().from(nurturingSteps)
+      .where(eq(nurturingSteps.sequenceId, sequenceId))
+      .orderBy(nurturingSteps.stepOrder);
+  }
+  
+  async getNurturingStep(id: number): Promise<NurturingStep | undefined> {
+    const [step] = await db.select().from(nurturingSteps).where(eq(nurturingSteps.id, id));
+    return step || undefined;
+  }
+  
+  async createNurturingStep(data: InsertNurturingStep): Promise<NurturingStep> {
+    const [step] = await db.insert(nurturingSteps).values(data).returning();
+    return step;
+  }
+  
+  async updateNurturingStep(id: number, data: Partial<InsertNurturingStep>): Promise<NurturingStep | undefined> {
+    const [step] = await db.update(nurturingSteps)
+      .set(data)
+      .where(eq(nurturingSteps.id, id))
+      .returning();
+    return step || undefined;
+  }
+  
+  async deleteNurturingStep(id: number): Promise<void> {
+    await db.delete(nurturingSteps).where(eq(nurturingSteps.id, id));
+  }
+  
+  // Lead Nurturing
+  async getLeadNurturing(leadId: number, sequenceId: number): Promise<LeadNurturing | undefined> {
+    const [nurturing] = await db.select().from(leadNurturing)
+      .where(and(
+        eq(leadNurturing.leadId, leadId),
+        eq(leadNurturing.sequenceId, sequenceId)
+      ));
+    return nurturing || undefined;
+  }
+  
+  async getLeadNurturingById(id: number): Promise<LeadNurturing | undefined> {
+    const [nurturing] = await db.select().from(leadNurturing)
+      .where(eq(leadNurturing.id, id));
+    return nurturing || undefined;
+  }
+  
+  async getActiveLeadNurturing(leadId: number): Promise<LeadNurturing[]> {
+    return db.select().from(leadNurturing)
+      .where(and(
+        eq(leadNurturing.leadId, leadId),
+        eq(leadNurturing.status, "active")
+      ));
+  }
+  
+  async getPendingNurturingActions(): Promise<NurturingAction[]> {
+    return db.select().from(nurturingActions)
+      .where(and(
+        eq(nurturingActions.status, "pending"),
+        lte(nurturingActions.scheduledAt, new Date())
+      ))
+      .orderBy(nurturingActions.scheduledAt);
+  }
+  
+  async createLeadNurturing(data: InsertLeadNurturing): Promise<LeadNurturing> {
+    const [nurturing] = await db.insert(leadNurturing).values(data).returning();
+    return nurturing;
+  }
+  
+  async updateLeadNurturing(id: number, data: Partial<InsertLeadNurturing>): Promise<LeadNurturing | undefined> {
+    const [nurturing] = await db.update(leadNurturing)
+      .set(data)
+      .where(eq(leadNurturing.id, id))
+      .returning();
+    return nurturing || undefined;
+  }
+  
+  // Nurturing Actions
+  async getNurturingActions(leadNurturingId: number): Promise<NurturingAction[]> {
+    return db.select().from(nurturingActions)
+      .where(eq(nurturingActions.leadNurturingId, leadNurturingId))
+      .orderBy(nurturingActions.scheduledAt);
+  }
+  
+  async createNurturingAction(data: InsertNurturingAction): Promise<NurturingAction> {
+    const [action] = await db.insert(nurturingActions).values(data).returning();
+    return action;
+  }
+  
+  async updateNurturingAction(id: number, data: Partial<InsertNurturingAction>): Promise<NurturingAction | undefined> {
+    const [action] = await db.update(nurturingActions)
+      .set(data)
+      .where(eq(nurturingActions.id, id))
+      .returning();
+    return action || undefined;
   }
 }
 

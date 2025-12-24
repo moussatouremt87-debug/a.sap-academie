@@ -15,6 +15,7 @@ import Formations from "@/pages/formations";
 import FaqPage from "@/pages/faq";
 import PourquoiAsap from "@/pages/pourquoi-asap";
 import CRM from "@/pages/crm";
+import Nurturing from "@/pages/nurturing";
 import MentionsLegales from "@/pages/mentions-legales";
 import StudentPortal from "@/pages/student-portal";
 import Inscription from "@/pages/inscription";
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/faq" component={FaqPage} />
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
       <Route path="/crm" component={CRM} />
+      <Route path="/nurturing" component={Nurturing} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/espace-apprenant" component={StudentPortal} />
       <Route path="/inscription" component={Inscription} />
@@ -41,7 +43,7 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
-  const isCrmPage = location === "/crm";
+  const isCrmPage = location === "/crm" || location === "/nurturing";
   const isStudentPortal = location === "/espace-apprenant";
   const isInscriptionPage = location.startsWith("/inscription");
 

@@ -2,7 +2,11 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema, insertEnrollmentSchema, insertModuleProgressSchema } from "@shared/schema";
+import { 
+  insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema, 
+  insertEnrollmentSchema, insertModuleProgressSchema,
+  insertNurturingSequenceSchema, insertNurturingStepSchema, insertLeadNurturingSchema
+} from "@shared/schema";
 import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
@@ -172,6 +176,11 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid lead data", details: result.error.issues });
       }
       const lead = await storage.createLead(result.data);
+      
+      // Trigger auto-enrollment in nurturing sequences (fire and forget with error logging)
+      autoEnrollInNurturing(lead.id, "new_lead", result.data.source || undefined)
+        .catch(err => console.error("Auto-enrollment failed for lead", lead.id, err));
+      
       res.status(201).json(lead);
     } catch (error) {
       console.error("Error creating lead:", error);
@@ -682,6 +691,393 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
       res.status(500).json({ error: "Failed to update progress" });
     }
   });
+
+  // ============ NURTURING SEQUENCES API (Protected by Auth) ============
+  
+  // Get all nurturing sequences
+  app.get("/api/crm/nurturing-sequences", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sequences = await storage.getAllNurturingSequences();
+      
+      // Enrich with step count
+      const enrichedSequences = await Promise.all(
+        sequences.map(async (seq) => {
+          const steps = await storage.getNurturingSteps(seq.id);
+          return { ...seq, stepCount: steps.length };
+        })
+      );
+      
+      res.json(enrichedSequences);
+    } catch (error) {
+      console.error("Error fetching nurturing sequences:", error);
+      res.status(500).json({ error: "Failed to fetch nurturing sequences" });
+    }
+  });
+  
+  // Get single nurturing sequence with steps
+  app.get("/api/crm/nurturing-sequences/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const sequence = await storage.getNurturingSequence(id);
+      
+      if (!sequence) {
+        return res.status(404).json({ error: "Sequence not found" });
+      }
+      
+      const steps = await storage.getNurturingSteps(id);
+      res.json({ ...sequence, steps });
+    } catch (error) {
+      console.error("Error fetching nurturing sequence:", error);
+      res.status(500).json({ error: "Failed to fetch nurturing sequence" });
+    }
+  });
+  
+  // Create nurturing sequence
+  app.post("/api/crm/nurturing-sequences", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const result = insertNurturingSequenceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid sequence data", details: result.error.issues });
+      }
+      
+      const sequence = await storage.createNurturingSequence(result.data);
+      res.status(201).json(sequence);
+    } catch (error) {
+      console.error("Error creating nurturing sequence:", error);
+      res.status(500).json({ error: "Failed to create nurturing sequence" });
+    }
+  });
+  
+  // Update nurturing sequence
+  app.patch("/api/crm/nurturing-sequences/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const sequence = await storage.updateNurturingSequence(id, req.body);
+      
+      if (!sequence) {
+        return res.status(404).json({ error: "Sequence not found" });
+      }
+      
+      res.json(sequence);
+    } catch (error) {
+      console.error("Error updating nurturing sequence:", error);
+      res.status(500).json({ error: "Failed to update nurturing sequence" });
+    }
+  });
+  
+  // Delete nurturing sequence
+  app.delete("/api/crm/nurturing-sequences/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNurturingSequence(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting nurturing sequence:", error);
+      res.status(500).json({ error: "Failed to delete nurturing sequence" });
+    }
+  });
+  
+  // ============ NURTURING STEPS API ============
+  
+  // Create step for a sequence
+  app.post("/api/crm/nurturing-sequences/:sequenceId/steps", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const sequenceId = parseInt(req.params.sequenceId);
+      const result = insertNurturingStepSchema.safeParse({ ...req.body, sequenceId });
+      
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid step data", details: result.error.issues });
+      }
+      
+      const step = await storage.createNurturingStep(result.data);
+      res.status(201).json(step);
+    } catch (error) {
+      console.error("Error creating nurturing step:", error);
+      res.status(500).json({ error: "Failed to create nurturing step" });
+    }
+  });
+  
+  // Update step
+  app.patch("/api/crm/nurturing-steps/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const step = await storage.updateNurturingStep(id, req.body);
+      
+      if (!step) {
+        return res.status(404).json({ error: "Step not found" });
+      }
+      
+      res.json(step);
+    } catch (error) {
+      console.error("Error updating nurturing step:", error);
+      res.status(500).json({ error: "Failed to update nurturing step" });
+    }
+  });
+  
+  // Delete step
+  app.delete("/api/crm/nurturing-steps/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNurturingStep(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting nurturing step:", error);
+      res.status(500).json({ error: "Failed to delete nurturing step" });
+    }
+  });
+  
+  // ============ LEAD NURTURING ENROLLMENT ============
+  
+  // Enroll lead in a nurturing sequence
+  app.post("/api/crm/leads/:leadId/nurturing", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const leadId = parseInt(req.params.leadId);
+      const { sequenceId } = req.body;
+      
+      if (!sequenceId) {
+        return res.status(400).json({ error: "sequenceId is required" });
+      }
+      
+      // Check if already enrolled in this sequence
+      const existing = await storage.getLeadNurturing(leadId, sequenceId);
+      if (existing && existing.status === "active") {
+        return res.status(400).json({ error: "Lead already enrolled in this sequence" });
+      }
+      
+      // Get first step to calculate next action time
+      const steps = await storage.getNurturingSteps(sequenceId);
+      const firstStep = steps[0];
+      
+      let nextActionAt = new Date();
+      if (firstStep) {
+        nextActionAt.setDate(nextActionAt.getDate() + (firstStep.delayDays || 0));
+        nextActionAt.setHours(nextActionAt.getHours() + (firstStep.delayHours || 0));
+      }
+      
+      const nurturing = await storage.createLeadNurturing({
+        leadId,
+        sequenceId,
+        currentStepId: firstStep?.id || null,
+        status: "active",
+        nextActionAt
+      });
+      
+      // Log activity
+      await storage.createLeadActivity({
+        leadId,
+        type: "nurturing",
+        content: `Enrolled in nurturing sequence #${sequenceId}`
+      });
+      
+      res.status(201).json(nurturing);
+    } catch (error) {
+      console.error("Error enrolling lead in nurturing:", error);
+      res.status(500).json({ error: "Failed to enroll lead in nurturing" });
+    }
+  });
+  
+  // Get lead's active nurturing sequences
+  app.get("/api/crm/leads/:leadId/nurturing", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const leadId = parseInt(req.params.leadId);
+      const nurturing = await storage.getActiveLeadNurturing(leadId);
+      
+      // Enrich with sequence info
+      const enriched = await Promise.all(
+        nurturing.map(async (n) => {
+          const sequence = await storage.getNurturingSequence(n.sequenceId);
+          const currentStep = n.currentStepId ? await storage.getNurturingStep(n.currentStepId) : null;
+          return { ...n, sequence, currentStep };
+        })
+      );
+      
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching lead nurturing:", error);
+      res.status(500).json({ error: "Failed to fetch lead nurturing" });
+    }
+  });
+  
+  // Pause/resume/cancel lead nurturing
+  app.patch("/api/crm/lead-nurturing/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { action } = req.body;
+      
+      let updateData: any = {};
+      
+      if (action === "pause") {
+        updateData = { status: "paused", pausedAt: new Date() };
+      } else if (action === "resume") {
+        updateData = { status: "active", pausedAt: null };
+      } else if (action === "cancel") {
+        updateData = { status: "cancelled" };
+      } else {
+        return res.status(400).json({ error: "Invalid action. Use: pause, resume, or cancel" });
+      }
+      
+      const nurturing = await storage.updateLeadNurturing(id, updateData);
+      
+      if (!nurturing) {
+        return res.status(404).json({ error: "Lead nurturing not found" });
+      }
+      
+      res.json(nurturing);
+    } catch (error) {
+      console.error("Error updating lead nurturing:", error);
+      res.status(500).json({ error: "Failed to update lead nurturing" });
+    }
+  });
+  
+  // ============ NURTURING PROCESSOR ============
+  // Process pending nurturing actions - can be called via cron or scheduler
+  app.post("/api/crm/nurturing/process", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const pendingActions = await storage.getPendingNurturingActions();
+      const results: { processed: number; errors: number } = { processed: 0, errors: 0 };
+      
+      for (const action of pendingActions) {
+        try {
+          // Execute the action based on type
+          if (action.type === "email") {
+            // Log email action (actual email sending would be integrated here)
+            await storage.createLeadActivity({
+              leadId: action.leadId,
+              type: "email",
+              content: `[Nurturing] Email sent: ${action.subject || "Follow-up"}`
+            });
+          } else if (action.type === "task") {
+            await storage.createLeadActivity({
+              leadId: action.leadId,
+              type: "follow_up",
+              content: `[Nurturing] Task created: ${action.content || "Follow-up task"}`
+            });
+          }
+          
+          // Mark action as completed
+          await storage.updateNurturingAction(action.id, {
+            status: "completed",
+            executedAt: new Date()
+          });
+          
+          // Advance to next step in sequence
+          const leadNurturing = await storage.getLeadNurturingById(action.leadNurturingId);
+          if (leadNurturing) {
+            const steps = await storage.getNurturingSteps(leadNurturing.sequenceId);
+            const currentStepIndex = steps.findIndex(s => s.id === leadNurturing.currentStepId);
+            const nextStep = steps[currentStepIndex + 1];
+            
+            if (nextStep) {
+              const nextActionAt = new Date();
+              nextActionAt.setDate(nextActionAt.getDate() + (nextStep.delayDays || 0));
+              nextActionAt.setHours(nextActionAt.getHours() + (nextStep.delayHours || 0));
+              
+              await storage.updateLeadNurturing(leadNurturing.id, {
+                currentStepId: nextStep.id,
+                nextActionAt
+              });
+              
+              // Schedule next action
+              await storage.createNurturingAction({
+                leadNurturingId: leadNurturing.id,
+                nurturingStepId: nextStep.id,
+                leadId: action.leadId,
+                type: nextStep.actionType,
+                subject: nextStep.emailSubject || null,
+                content: nextStep.emailBody || nextStep.taskDescription || null,
+                scheduledAt: nextActionAt,
+                status: "pending"
+              });
+            } else {
+              // Sequence completed
+              await storage.updateLeadNurturing(leadNurturing.id, {
+                status: "completed",
+                completedAt: new Date()
+              });
+              
+              await storage.createLeadActivity({
+                leadId: action.leadId,
+                type: "nurturing",
+                content: "Nurturing sequence completed"
+              });
+            }
+          }
+          
+          results.processed++;
+        } catch (actionError) {
+          console.error("Error processing nurturing action:", action.id, actionError);
+          await storage.updateNurturingAction(action.id, {
+            status: "failed"
+          });
+          results.errors++;
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Processed ${results.processed} actions, ${results.errors} errors`,
+        ...results
+      });
+    } catch (error) {
+      console.error("Error processing nurturing actions:", error);
+      res.status(500).json({ error: "Failed to process nurturing actions" });
+    }
+  });
+  
+  // ============ AUTO-ENROLLMENT TRIGGER ============
+  // This function is called internally when leads are created/updated
+  async function autoEnrollInNurturing(leadId: number, triggerEvent: string, source?: string) {
+    try {
+      const sequences = await storage.getNurturingSequencesByTrigger(triggerEvent, source);
+      
+      for (const sequence of sequences) {
+        const existing = await storage.getLeadNurturing(leadId, sequence.id);
+        if (existing) continue;
+        
+        const steps = await storage.getNurturingSteps(sequence.id);
+        const firstStep = steps[0];
+        
+        let nextActionAt = new Date();
+        if (firstStep) {
+          nextActionAt.setDate(nextActionAt.getDate() + (firstStep.delayDays || 0));
+          nextActionAt.setHours(nextActionAt.getHours() + (firstStep.delayHours || 0));
+        }
+        
+        const nurturing = await storage.createLeadNurturing({
+          leadId,
+          sequenceId: sequence.id,
+          currentStepId: firstStep?.id || null,
+          status: "active",
+          nextActionAt
+        });
+        
+        // Schedule first action if there's a first step
+        if (firstStep) {
+          await storage.createNurturingAction({
+            leadNurturingId: nurturing.id,
+            nurturingStepId: firstStep.id,
+            leadId,
+            type: firstStep.actionType,
+            subject: firstStep.emailSubject || null,
+            content: firstStep.emailBody || firstStep.taskDescription || null,
+            scheduledAt: nextActionAt,
+            status: "pending"
+          });
+        }
+        
+        await storage.createLeadActivity({
+          leadId,
+          type: "nurturing",
+          content: `Auto-enrolled in "${sequence.name}" sequence (trigger: ${triggerEvent})`
+        });
+      }
+    } catch (error) {
+      console.error("Error auto-enrolling in nurturing:", error);
+    }
+  }
+  
+  // Expose auto-enrollment for internal use
+  (app as any).autoEnrollInNurturing = autoEnrollInNurturing;
 
   return httpServer;
 }

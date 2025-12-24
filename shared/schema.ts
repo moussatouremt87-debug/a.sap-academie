@@ -272,9 +272,12 @@ export type LeadNurturing = typeof leadNurturing.$inferSelect;
 export const nurturingActions = pgTable("nurturing_actions", {
   id: serial("id").primaryKey(),
   leadNurturingId: integer("lead_nurturing_id").notNull().references(() => leadNurturing.id, { onDelete: "cascade" }),
-  stepId: integer("step_id").notNull().references(() => nurturingSteps.id, { onDelete: "cascade" }),
-  actionType: text("action_type").notNull(),
-  status: text("status").default("pending"), // pending, sent, failed, skipped
+  nurturingStepId: integer("nurturing_step_id").references(() => nurturingSteps.id, { onDelete: "cascade" }),
+  leadId: integer("lead_id").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // email, task, sms, wait
+  subject: text("subject"),
+  content: text("content"),
+  status: text("status").default("pending"), // pending, completed, failed, skipped
   scheduledAt: timestamp("scheduled_at").notNull(),
   executedAt: timestamp("executed_at"),
   errorMessage: text("error_message"),

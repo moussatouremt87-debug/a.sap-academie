@@ -461,6 +461,13 @@ export default function CRM() {
                 </Select>
               </div>
               
+              <Link href="/nurturing">
+                <Button variant="outline" size="sm" data-testid="button-nurturing">
+                  <Zap className="h-4 w-4 mr-2" />
+                  <span className="hidden lg:inline">Nurturing</span>
+                </Button>
+              </Link>
+              
               <Separator orientation="vertical" className="h-6 hidden md:block" />
               
               <div className="flex items-center gap-2">
@@ -951,20 +958,36 @@ export default function CRM() {
                         <p className="text-sm text-muted-foreground text-center py-8">Aucune activité</p>
                       ) : (
                         <div className="space-y-3">
-                          {leadDetails.activities.map((activity) => (
-                            <div key={activity.id} className="flex gap-3">
-                              <div className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
-                              <div className="flex-1">
-                                <p className="text-sm">
-                                  <span className="font-medium capitalize">{activity.type.replace("_", " ")}</span>
-                                  {" - "}{activity.content}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {new Date(activity.createdAt).toLocaleString("fr-FR")}
-                                </p>
+                          {leadDetails.activities.map((activity) => {
+                            const activityIcons: Record<string, { icon: typeof Mail; color: string }> = {
+                              note: { icon: FileText, color: "text-slate-500" },
+                              call: { icon: PhoneCall, color: "text-green-500" },
+                              email: { icon: MailOpen, color: "text-blue-500" },
+                              meeting: { icon: CalendarCheck, color: "text-purple-500" },
+                              follow_up: { icon: Clock, color: "text-amber-500" },
+                              status_change: { icon: RefreshCw, color: "text-orange-500" },
+                              nurturing: { icon: Zap, color: "text-primary" },
+                            };
+                            const config = activityIcons[activity.type] || { icon: FileText, color: "text-muted-foreground" };
+                            const ActivityIcon = config.icon;
+                            
+                            return (
+                              <div key={activity.id} className="flex gap-3">
+                                <div className={`mt-0.5 p-1.5 rounded-full bg-muted shrink-0`}>
+                                  <ActivityIcon className={`h-3 w-3 ${config.color}`} />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm">
+                                    <span className="font-medium capitalize">{activity.type.replace("_", " ")}</span>
+                                    {" - "}{activity.content}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {new Date(activity.createdAt).toLocaleString("fr-FR")}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
