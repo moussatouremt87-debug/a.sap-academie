@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 
 interface Message {
   id: string;
@@ -29,18 +30,6 @@ interface BookingState {
   meetLink: string;
 }
 
-const quickActions = [
-  { icon: CalendarDays, label: "Prendre RDV", prompt: "Je souhaite prendre un rendez-vous avec un consultant." },
-  { icon: Video, label: "Google Meet", prompt: "Je voudrais organiser une réunion Google Meet." },
-  { icon: Monitor, label: "Teams", prompt: "Je préfère une réunion Microsoft Teams." },
-];
-
-const suggestedPrompts = [
-  "Je veux déployer SAP dans mon entreprise",
-  "Quelles formations SAP proposez-vous ?",
-  "J'ai besoin d'un audit de mon SI",
-  "Comment fonctionne votre accompagnement ?",
-];
 
 const FEMALE_NAMES = [
   "Fatou", "Aminata", "Awa", "Mariama", "Khady", "Aissatou", "Ndéye", "Coumba", 
@@ -80,7 +69,9 @@ const TIME_PATTERNS = [
 ];
 
 const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -101,15 +92,19 @@ function CalendarPicker({
   selectedDate, 
   onSelectDate,
   currentMonth,
-  onChangeMonth
+  onChangeMonth,
+  language
 }: { 
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
   currentMonth: Date;
   onChangeMonth: (date: Date) => void;
+  language: string;
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const days_labels = language === "fr" ? DAYS_FR : DAYS_EN;
+  const months_labels = language === "fr" ? MONTHS_FR : MONTHS_EN;
 
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -179,14 +174,14 @@ function CalendarPicker({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="font-semibold">
-          {MONTHS_FR[month]} {year}
+          {months_labels[month]} {year}
         </span>
         <Button variant="ghost" size="icon" onClick={nextMonth} data-testid="button-next-month">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
-        {DAYS_FR.map(day => (
+        {days_labels.map(day => (
           <div key={day} className="h-9 w-9 flex items-center justify-center text-xs font-medium text-muted-foreground">
             {day}
           </div>
@@ -200,14 +195,17 @@ function CalendarPicker({
 function TimeSlotPicker({
   selectedDate,
   selectedTime,
-  onSelectTime
+  onSelectTime,
+  language
 }: {
   selectedDate: Date;
   selectedTime: string | null;
   onSelectTime: (time: string) => void;
+  language: string;
 }) {
   const now = new Date();
   const isToday = selectedDate.toDateString() === now.toDateString();
+  const months = language === "fr" ? MONTHS_FR : MONTHS_EN;
 
   const availableSlots = TIME_SLOTS.filter(time => {
     if (!isToday) return true;
@@ -220,7 +218,9 @@ function TimeSlotPicker({
   return (
     <div>
       <p className="mb-3 text-sm font-medium">
-        Créneaux disponibles le {selectedDate.getDate()} {MONTHS_FR[selectedDate.getMonth()]} :
+        {language === "fr" 
+          ? `Créneaux disponibles le ${selectedDate.getDate()} ${months[selectedDate.getMonth()]} :`
+          : `Available slots on ${months[selectedDate.getMonth()]} ${selectedDate.getDate()}:`}
       </p>
       <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
         {availableSlots.map(time => (
@@ -237,13 +237,16 @@ function TimeSlotPicker({
         ))}
       </div>
       {availableSlots.length === 0 && (
-        <p className="text-sm text-muted-foreground">Aucun créneau disponible pour cette date.</p>
+        <p className="text-sm text-muted-foreground">
+          {language === "fr" ? "Aucun créneau disponible pour cette date." : "No slots available for this date."}
+        </p>
       )}
     </div>
   );
 }
 
 export default function Agent() {
+  const { t, language } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -260,6 +263,19 @@ export default function Agent() {
   });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const quickActions = [
+    { icon: CalendarDays, label: t("agent.quickAction.rdv"), prompt: t("agent.quickAction.rdvPrompt") },
+    { icon: Video, label: t("agent.quickAction.meet"), prompt: t("agent.quickAction.meetPrompt") },
+    { icon: Monitor, label: t("agent.quickAction.teams"), prompt: t("agent.quickAction.teamsPrompt") },
+  ];
+
+  const suggestedPrompts = [
+    t("agent.suggested.deploy"),
+    t("agent.suggested.formations"),
+    t("agent.suggested.audit"),
+    t("agent.suggested.accompagnement"),
+  ];
 
   const createConversation = async () => {
     try {
@@ -304,16 +320,17 @@ export default function Agent() {
         meetLink: data.meetLink || ""
       }));
       
+      const atWord = language === "fr" ? "à" : "at";
       const successMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: `Excellent ! Votre réunion Google Meet a été créée avec succès ! Une invitation a été envoyée à ${booking.email}.
+        content: `${t("agent.booking.successMessage")} ${booking.email}.
 
-Votre créneau : **${booking.selectedSlot?.date} à ${booking.selectedSlot?.time}**
+${language === "fr" ? "Votre créneau" : "Your slot"} : **${booking.selectedSlot?.date} ${atWord} ${booking.selectedSlot?.time}**
 
-Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vos besoins et vous présenterons les meilleures solutions A.SAP Consulting pour votre projet.
+${t("agent.booking.lookingForward")}
 
-À très bientôt !`
+${t("agent.booking.seeYouSoon")}`
       };
       setMessages(prev => [...prev, successMessage]);
     },
@@ -321,7 +338,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: "Désolé, une erreur s'est produite lors de la création de la réunion. Veuillez réessayer ou nous contacter directement."
+        content: t("agent.booking.error")
       };
       setMessages(prev => [...prev, errorMessage]);
       setBooking({ step: "hidden", selectedDate: null, selectedSlot: null, email: "", meetLink: "" });
@@ -417,9 +434,9 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
     }
 
     if (checkForMeetingRequest(content)) {
-      const assistantContent = `Parfait ! Je vous propose de réserver un créneau pour une consultation Google Meet de 15 minutes avec notre équipe.
+      const assistantContent = `${t("agent.booking.invite")}
 
-**Choisissez votre date et heure** dans le calendrier ci-dessous :`;
+**${t("agent.booking.chooseSlot")}**`;
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -499,7 +516,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
         const updated = [...prev];
         const lastMessage = updated[updated.length - 1];
         if (lastMessage.role === "assistant" && !lastMessage.content) {
-          lastMessage.content = "Désolé, une erreur s'est produite. Veuillez réessayer.";
+          lastMessage.content = language === "fr" ? "Désolé, une erreur s'est produite. Veuillez réessayer." : "Sorry, an error occurred. Please try again.";
         }
         return updated;
       });
@@ -528,7 +545,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
         <Card className="mx-auto my-4 max-w-md p-4">
           <div className="mb-4 flex items-center gap-2">
             <Video className="h-5 w-5 text-primary" />
-            <span className="font-semibold">Réserver une consultation</span>
+            <span className="font-semibold">{t("agent.booking.selectDate")}</span>
           </div>
           
           <CalendarPicker
@@ -536,6 +553,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             onSelectDate={handleDateSelect}
             currentMonth={currentMonth}
             onChangeMonth={setCurrentMonth}
+            language={language}
           />
           
           {booking.selectedDate && (
@@ -544,6 +562,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                 selectedDate={booking.selectedDate}
                 selectedTime={selectedTime}
                 onSelectTime={handleTimeSelect}
+                language={language}
               />
             </div>
           )}
@@ -555,13 +574,13 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
               disabled={!booking.selectedDate || !selectedTime}
               data-testid="button-confirm-slot"
             >
-              Confirmer ce créneau
+              {t("agent.booking.confirmSlot")}
             </Button>
             <Button 
               variant="outline"
               onClick={() => setBooking({ step: "hidden", selectedDate: null, selectedSlot: null, email: "", meetLink: "" })}
             >
-              Annuler
+              {language === "fr" ? "Annuler" : "Cancel"}
             </Button>
           </div>
         </Card>
@@ -574,7 +593,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
           <div className="mb-4">
             <div className="flex items-center gap-2 text-primary">
               <CheckCircle2 className="h-5 w-5" />
-              <span className="font-semibold">Créneau sélectionné</span>
+              <span className="font-semibold">{t("agent.booking.yourSlot")}</span>
             </div>
             <Badge variant="secondary" className="mt-2">
               {booking.selectedSlot?.date} - {booking.selectedSlot?.time}
@@ -583,11 +602,11 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
           <div className="mb-4">
             <label className="mb-2 block text-sm font-medium">
               <Mail className="mr-2 inline h-4 w-4" />
-              Votre email pour recevoir l'invitation
+              {t("agent.booking.enterEmail")}
             </label>
             <Input
               type="email"
-              placeholder="votre@email.com"
+              placeholder={t("agent.booking.emailPlaceholder")}
               value={booking.email}
               onChange={(e) => setBooking(prev => ({ ...prev, email: e.target.value }))}
               data-testid="input-booking-email"
@@ -601,13 +620,13 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
               data-testid="button-confirm-booking"
             >
               <Video className="mr-2 h-4 w-4" />
-              Confirmer le rendez-vous
+              {t("agent.booking.confirmBooking")}
             </Button>
             <Button 
               variant="outline"
               onClick={() => setBooking(prev => ({ ...prev, step: "calendar" }))}
             >
-              Retour
+              {language === "fr" ? "Retour" : "Back"}
             </Button>
           </div>
         </Card>
@@ -619,7 +638,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
         <Card className="mx-auto my-4 max-w-md p-6">
           <div className="flex flex-col items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">Création de votre réunion Google Meet...</p>
+            <p className="mt-4 text-muted-foreground">{t("agent.booking.creating")}</p>
           </div>
         </Card>
       );
@@ -630,14 +649,14 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
         <Card className="mx-auto my-4 max-w-md border-primary/20 bg-primary/5 p-4">
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="h-6 w-6" />
-            <span className="font-semibold">Réunion confirmée</span>
+            <span className="font-semibold">{t("agent.booking.success")}</span>
           </div>
           <div className="mt-3 space-y-2">
             <p className="text-sm">
-              <strong>Date :</strong> {booking.selectedSlot?.date} à {booking.selectedSlot?.time}
+              <strong>{t("agent.booking.date")} :</strong> {booking.selectedSlot?.date} {language === "fr" ? "à" : "at"} {booking.selectedSlot?.time}
             </p>
             <p className="text-sm">
-              <strong>Email :</strong> {booking.email}
+              <strong>{t("agent.booking.email")} :</strong> {booking.email}
             </p>
           </div>
           <Button
@@ -646,7 +665,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             data-testid="button-join-meet"
           >
             <ExternalLink className="mr-2 h-4 w-4" />
-            Rejoindre Google Meet
+            {t("agent.booking.joinMeet")}
           </Button>
         </Card>
       );
@@ -663,8 +682,8 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
             <MessageCircle className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-semibold" data-testid="text-agent-title">{commercial.name} - Commercial{commercial.isFemale ? 'e' : ''} A.SAP Consulting</h1>
-            <p className="text-sm text-muted-foreground">Votre conseill{commercial.isFemale ? 'ère dédiée' : 'er dédié'}</p>
+            <h1 className="font-semibold" data-testid="text-agent-title">{commercial.name} - {commercial.isFemale ? t("agent.commercialTitleFemale") : t("agent.commercialTitle")} A.SAP Consulting</h1>
+            <p className="text-sm text-muted-foreground">{commercial.isFemale ? t("agent.advisorDedicatedFemale") : t("agent.advisorDedicated")}</p>
           </div>
         </div>
       </div>
@@ -677,11 +696,10 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
                 <MessageCircle className="h-8 w-8 text-primary" />
               </div>
               <h2 className="mb-2 text-xl font-semibold" data-testid="text-agent-welcome">
-                Bonjour, je m'appelle {commercial.name}
+                {t("agent.greeting")} {commercial.name}
               </h2>
               <p className="mb-8 max-w-md text-center text-muted-foreground">
-                Je suis votre conseill{commercial.isFemale ? 'ère commerciale' : 'er commercial'} A.SAP Consulting. En quoi puis-je vous aider ?
-                Décrivez-moi votre projet et je vous guiderai vers les meilleures solutions.
+                {commercial.isFemale ? t("agent.roleIntroFemale") : t("agent.roleIntro")}
               </p>
               <div className="mb-6 flex flex-wrap justify-center gap-2">
                 {quickActions.map((action, index) => (
@@ -768,7 +786,7 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Décrivez votre besoin..."
+              placeholder={t("agent.placeholder")}
               className="min-h-[44px] max-h-32 resize-none"
               disabled={isStreaming || booking.step === "confirming"}
               data-testid="input-chat-message"
