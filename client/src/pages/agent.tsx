@@ -65,6 +65,20 @@ const MEETING_KEYWORDS = [
   "appel", "call", "visio", "visioconférence", "consultation"
 ];
 
+const TIME_PATTERNS = [
+  /demain\s+\d{1,2}h/i,
+  /demain\s+à\s+\d{1,2}h/i,
+  /demain\s+\d{1,2}:\d{2}/i,
+  /lundi|mardi|mercredi|jeudi|vendredi/i,
+  /\d{1,2}h\d{0,2}/i,
+  /\d{1,2}:\d{2}/,
+  /à\s+\d{1,2}h/i,
+  /prochain\s+créneau/i,
+  /disponible\s+demain/i,
+  /monday|tuesday|wednesday|thursday|friday/i,
+  /tomorrow\s+at\s+\d{1,2}/i,
+];
+
 const DAYS_FR = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
@@ -329,7 +343,9 @@ Je me réjouis de vous retrouver pour cette consultation. Nous discuterons de vo
 
   const checkForMeetingRequest = (text: string): boolean => {
     const lowerText = text.toLowerCase();
-    return MEETING_KEYWORDS.some(keyword => lowerText.includes(keyword));
+    const hasKeyword = MEETING_KEYWORDS.some(keyword => lowerText.includes(keyword));
+    const hasTimePattern = TIME_PATTERNS.some(pattern => pattern.test(text));
+    return hasKeyword || hasTimePattern;
   };
 
   const showCalendar = () => {
