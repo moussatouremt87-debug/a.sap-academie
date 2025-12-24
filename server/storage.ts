@@ -43,6 +43,8 @@ export interface IStorage {
   getAllFormations(): Promise<Formation[]>;
   getPublishedFormations(): Promise<Formation[]>;
   createFormation(data: InsertFormation): Promise<Formation>;
+  updateFormation(id: number, data: Partial<InsertFormation>): Promise<Formation | undefined>;
+  deleteFormation(id: number): Promise<void>;
   
   // FAQs
   getFaq(id: number): Promise<Faq | undefined>;
@@ -85,9 +87,13 @@ export interface IStorage {
   
   // Enrollments
   getEnrollment(userId: string, formationId: number): Promise<Enrollment | undefined>;
+  getEnrollmentById(id: number): Promise<Enrollment | undefined>;
   getUserEnrollments(userId: string): Promise<Enrollment[]>;
+  getAllEnrollments(): Promise<Enrollment[]>;
+  getEnrollmentsByFormation(formationId: number): Promise<Enrollment[]>;
   createEnrollment(data: InsertEnrollment): Promise<Enrollment>;
   updateEnrollment(id: number, data: Partial<InsertEnrollment>): Promise<Enrollment | undefined>;
+  deleteEnrollment(id: number): Promise<void>;
   
   // Module Progress
   getModuleProgress(userId: string, moduleId: number): Promise<ModuleProgress | undefined>;
@@ -210,6 +216,18 @@ export class DatabaseStorage implements IStorage {
   async createFormation(data: InsertFormation): Promise<Formation> {
     const [formation] = await db.insert(formations).values(data).returning();
     return formation;
+  }
+
+  async updateFormation(id: number, data: Partial<InsertFormation>): Promise<Formation | undefined> {
+    const [formation] = await db.update(formations)
+      .set(data)
+      .where(eq(formations.id, id))
+      .returning();
+    return formation || undefined;
+  }
+
+  async deleteFormation(id: number): Promise<void> {
+    await db.delete(formations).where(eq(formations.id, id));
   }
 
   // FAQs
@@ -391,10 +409,25 @@ export class DatabaseStorage implements IStorage {
       ));
     return enrollment || undefined;
   }
+
+  async getEnrollmentById(id: number): Promise<Enrollment | undefined> {
+    const [enrollment] = await db.select().from(enrollments).where(eq(enrollments.id, id));
+    return enrollment || undefined;
+  }
   
   async getUserEnrollments(userId: string): Promise<Enrollment[]> {
     return db.select().from(enrollments)
       .where(eq(enrollments.userId, userId))
+      .orderBy(desc(enrollments.enrolledAt));
+  }
+
+  async getAllEnrollments(): Promise<Enrollment[]> {
+    return db.select().from(enrollments).orderBy(desc(enrollments.enrolledAt));
+  }
+
+  async getEnrollmentsByFormation(formationId: number): Promise<Enrollment[]> {
+    return db.select().from(enrollments)
+      .where(eq(enrollments.formationId, formationId))
       .orderBy(desc(enrollments.enrolledAt));
   }
   
@@ -409,6 +442,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(enrollments.id, id))
       .returning();
     return enrollment || undefined;
+  }
+
+  async deleteEnrollment(id: number): Promise<void> {
+    await db.delete(enrollments).where(eq(enrollments.id, id));
   }
   
   // Module Progress

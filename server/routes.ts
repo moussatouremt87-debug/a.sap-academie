@@ -12,7 +12,7 @@ import {
 import crypto from "crypto";
 import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes, objectStorageClient } from "./replit_integrations/object_storage";
 import { sendEnrollmentConfirmation, sendMeetingConfirmation } from "./email";
 
@@ -1981,6 +1981,371 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
   
   // Expose auto-enrollment for internal use
   (app as any).autoEnrollInNurturing = autoEnrollInNurturing;
+
+  // ============ ADMIN E-LEARNING ROUTES ============
+  // Middleware to check if user is admin
+  const isAdmin: RequestHandler = async (req: Request, res: Response, next: Function) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Non autorisé" });
+    }
+    
+    const userId = (req.user as any)?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non trouvé" });
+    }
+    
+    try {
+      const user = await authStorage.getUser(userId);
+      if (!user || !user.isAdmin) {
+        return res.status(403).json({ message: "Accès interdit - Droits administrateur requis" });
+      }
+      next();
+    } catch (error) {
+      return res.status(500).json({ message: "Erreur serveur" });
+    }
+  };
+
+  // Admin: Get all formations with modules and lessons count
+  app.get("/api/admin/formations", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const allFormations = await storage.getAllFormations();
+      const formationsWithStats = await Promise.all(allFormations.map(async (formation) => {
+        const modules = await storage.getCourseModules(formation.id);
+        let totalLessons = 0;
+        for (const module of modules) {
+          const lessons = await storage.getCourseLessons(module.id);
+          totalLessons += lessons.length;
+        }
+        const enrollments = await storage.getEnrollmentsByFormation(formation.id);
+        return {
+          ...formation,
+          moduleCount: modules.length,
+          lessonCount: totalLessons,
+          enrollmentCount: enrollments.length
+        };
+      }));
+      res.json(formationsWithStats);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Create formation
+  app.post("/api/admin/formations", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const validated = insertFormationSchema.parse(req.body);
+      const formation = await storage.createFormation(validated);
+      res.status(201).json(formation);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Update formation
+  app.patch("/api/admin/formations/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const formation = await storage.updateFormation(id, req.body);
+      if (!formation) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      res.json(formation);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Delete formation
+  app.delete("/api/admin/formations/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteFormation(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Get modules for a formation
+  app.get("/api/admin/formations/:formationId/modules", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const formationId = parseInt(req.params.formationId);
+      const modules = await storage.getCourseModules(formationId);
+      const modulesWithLessons = await Promise.all(modules.map(async (module) => {
+        const lessons = await storage.getCourseLessons(module.id);
+        return { ...module, lessons, lessonCount: lessons.length };
+      }));
+      res.json(modulesWithLessons);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Create module
+  app.post("/api/admin/modules", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const validated = insertCourseModuleSchema.parse(req.body);
+      const module = await storage.createCourseModule(validated);
+      res.status(201).json(module);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Update module
+  app.patch("/api/admin/modules/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const module = await storage.updateCourseModule(id, req.body);
+      if (!module) {
+        return res.status(404).json({ message: "Module non trouvé" });
+      }
+      res.json(module);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Delete module
+  app.delete("/api/admin/modules/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCourseModule(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Create lesson
+  app.post("/api/admin/lessons", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const validated = insertCourseLessonSchema.parse(req.body);
+      const lesson = await storage.createCourseLesson(validated);
+      res.status(201).json(lesson);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Update lesson
+  app.patch("/api/admin/lessons/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lesson = await storage.updateCourseLesson(id, req.body);
+      if (!lesson) {
+        return res.status(404).json({ message: "Leçon non trouvée" });
+      }
+      res.json(lesson);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Delete lesson
+  app.delete("/api/admin/lessons/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCourseLesson(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Get all enrollments with student progress
+  app.get("/api/admin/enrollments", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const allEnrollments = await storage.getAllEnrollments();
+      const enrollmentsWithProgress = await Promise.all(allEnrollments.map(async (enrollment) => {
+        const formation = await storage.getFormation(enrollment.formationId);
+        let progressPercent = 0;
+        
+        if (enrollment.userId) {
+          const modules = await storage.getCourseModules(enrollment.formationId);
+          let totalLessons = 0;
+          let completedLessons = 0;
+          
+          for (const module of modules) {
+            const lessons = await storage.getCourseLessons(module.id);
+            totalLessons += lessons.length;
+            
+            for (const lesson of lessons) {
+              const progress = await storage.getLessonProgress(enrollment.userId, lesson.id);
+              if (progress?.completed) {
+                completedLessons++;
+              }
+            }
+          }
+          
+          if (totalLessons > 0) {
+            progressPercent = Math.round((completedLessons / totalLessons) * 100);
+          }
+        }
+        
+        return {
+          ...enrollment,
+          formation: formation ? { id: formation.id, title: formation.title, category: formation.category } : null,
+          progressPercent
+        };
+      }));
+      res.json(enrollmentsWithProgress);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Get enrollments for specific formation
+  app.get("/api/admin/formations/:formationId/enrollments", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const formationId = parseInt(req.params.formationId);
+      const enrollments = await storage.getEnrollmentsByFormation(formationId);
+      const formation = await storage.getFormation(formationId);
+      const modules = await storage.getCourseModules(formationId);
+      
+      const enrollmentsWithProgress = await Promise.all(enrollments.map(async (enrollment) => {
+        let progressPercent = 0;
+        let completedModules = 0;
+        const moduleProgress: any[] = [];
+        
+        if (enrollment.userId) {
+          let totalLessons = 0;
+          let completedLessons = 0;
+          
+          for (const module of modules) {
+            const lessons = await storage.getCourseLessons(module.id);
+            let moduleCompletedLessons = 0;
+            
+            for (const lesson of lessons) {
+              const progress = await storage.getLessonProgress(enrollment.userId, lesson.id);
+              if (progress?.completed) {
+                completedLessons++;
+                moduleCompletedLessons++;
+              }
+            }
+            
+            totalLessons += lessons.length;
+            const modulePercent = lessons.length > 0 ? Math.round((moduleCompletedLessons / lessons.length) * 100) : 0;
+            moduleProgress.push({
+              moduleId: module.id,
+              moduleTitle: module.title,
+              completedLessons: moduleCompletedLessons,
+              totalLessons: lessons.length,
+              progressPercent: modulePercent
+            });
+            
+            if (modulePercent === 100) {
+              completedModules++;
+            }
+          }
+          
+          if (totalLessons > 0) {
+            progressPercent = Math.round((completedLessons / totalLessons) * 100);
+          }
+        }
+        
+        return {
+          ...enrollment,
+          progressPercent,
+          completedModules,
+          totalModules: modules.length,
+          moduleProgress
+        };
+      }));
+      
+      res.json({ formation, enrollments: enrollmentsWithProgress });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Update enrollment status
+  app.patch("/api/admin/enrollments/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const enrollment = await storage.updateEnrollment(id, req.body);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Inscription non trouvée" });
+      }
+      res.json(enrollment);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Delete enrollment
+  app.delete("/api/admin/enrollments/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEnrollment(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Analytics dashboard data
+  app.get("/api/admin/analytics", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const allFormations = await storage.getAllFormations();
+      const allEnrollments = await storage.getAllEnrollments();
+      
+      // Calculate stats
+      const activeEnrollments = allEnrollments.filter(e => e.status === "active").length;
+      const completedEnrollments = allEnrollments.filter(e => e.status === "completed").length;
+      const pendingEnrollments = allEnrollments.filter(e => e.status === "pending").length;
+      
+      // Enrollment by formation
+      const enrollmentsByFormation = await Promise.all(allFormations.map(async (formation) => {
+        const enrollments = await storage.getEnrollmentsByFormation(formation.id);
+        return {
+          formationId: formation.id,
+          formationTitle: formation.title,
+          category: formation.category,
+          enrollmentCount: enrollments.length,
+          activeCount: enrollments.filter(e => e.status === "active").length,
+          completedCount: enrollments.filter(e => e.status === "completed").length
+        };
+      }));
+      
+      // Recent enrollments
+      const recentEnrollments = allEnrollments.slice(0, 10).map(e => ({
+        id: e.id,
+        studentName: `${e.firstName} ${e.lastName}`,
+        email: e.email,
+        formationId: e.formationId,
+        status: e.status,
+        enrolledAt: e.enrolledAt
+      }));
+      
+      res.json({
+        totalFormations: allFormations.length,
+        publishedFormations: allFormations.filter(f => f.isPublished).length,
+        totalEnrollments: allEnrollments.length,
+        activeEnrollments,
+        completedEnrollments,
+        pendingEnrollments,
+        enrollmentsByFormation,
+        recentEnrollments
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
+  // Admin: Check admin status
+  app.get("/api/admin/check", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)?.claims?.sub;
+      if (!userId) {
+        return res.json({ isAdmin: false });
+      }
+      const user = await authStorage.getUser(userId);
+      res.json({ isAdmin: user?.isAdmin || false });
+    } catch (error) {
+      res.json({ isAdmin: false });
+    }
+  });
 
   return httpServer;
 }
