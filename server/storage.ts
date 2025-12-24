@@ -6,8 +6,10 @@ import {
   type Lead, type InsertLead,
   type LeadActivity, type InsertLeadActivity,
   type CourseModule, type InsertCourseModule,
+  type CourseLesson, type InsertCourseLesson,
   type Enrollment, type InsertEnrollment,
   type ModuleProgress, type InsertModuleProgress,
+  type LessonProgress, type InsertLessonProgress,
   type NurturingSequence, type InsertNurturingSequence,
   type NurturingStep, type InsertNurturingStep,
   type LeadNurturing, type InsertLeadNurturing,
@@ -18,7 +20,7 @@ import {
   type DocumentComment, type InsertDocumentComment,
   type DocumentActivity, type InsertDocumentActivity,
   conversations, messages, formations, faqs, leads, leadActivities,
-  courseModules, enrollments, moduleProgress,
+  courseModules, courseLessons, enrollments, moduleProgress, lessonProgress,
   nurturingSequences, nurturingSteps, leadNurturing, nurturingActions,
   documents, documentFolders, documentShares, documentComments, documentActivities,
 } from "@shared/schema";
@@ -67,8 +69,19 @@ export interface IStorage {
   
   // Course Modules
   getCourseModules(formationId: number): Promise<CourseModule[]>;
+  getPublishedCourseModules(formationId: number): Promise<CourseModule[]>;
   getCourseModule(id: number): Promise<CourseModule | undefined>;
   createCourseModule(data: InsertCourseModule): Promise<CourseModule>;
+  updateCourseModule(id: number, data: Partial<InsertCourseModule>): Promise<CourseModule | undefined>;
+  deleteCourseModule(id: number): Promise<void>;
+  
+  // Course Lessons
+  getCourseLessons(moduleId: number): Promise<CourseLesson[]>;
+  getPublishedCourseLessons(moduleId: number): Promise<CourseLesson[]>;
+  getCourseLesson(id: number): Promise<CourseLesson | undefined>;
+  createCourseLesson(data: InsertCourseLesson): Promise<CourseLesson>;
+  updateCourseLesson(id: number, data: Partial<InsertCourseLesson>): Promise<CourseLesson | undefined>;
+  deleteCourseLesson(id: number): Promise<void>;
   
   // Enrollments
   getEnrollment(userId: string, formationId: number): Promise<Enrollment | undefined>;
@@ -80,6 +93,11 @@ export interface IStorage {
   getModuleProgress(userId: string, moduleId: number): Promise<ModuleProgress | undefined>;
   getUserProgressForFormation(userId: string, formationId: number): Promise<ModuleProgress[]>;
   updateModuleProgress(userId: string, moduleId: number, data: Partial<InsertModuleProgress>): Promise<ModuleProgress>;
+  
+  // Lesson Progress
+  getLessonProgress(userId: string, lessonId: number): Promise<LessonProgress | undefined>;
+  getUserProgressForModule(userId: string, moduleId: number): Promise<LessonProgress[]>;
+  updateLessonProgress(userId: string, lessonId: number, data: Partial<InsertLessonProgress>): Promise<LessonProgress>;
   
   // Nurturing Sequences
   getNurturingSequence(id: number): Promise<NurturingSequence | undefined>;
@@ -295,6 +313,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(courseModules.order);
   }
   
+  async getPublishedCourseModules(formationId: number): Promise<CourseModule[]> {
+    return db.select().from(courseModules)
+      .where(and(
+        eq(courseModules.formationId, formationId),
+        eq(courseModules.isPublished, true)
+      ))
+      .orderBy(courseModules.order);
+  }
+  
   async getCourseModule(id: number): Promise<CourseModule | undefined> {
     const [module] = await db.select().from(courseModules).where(eq(courseModules.id, id));
     return module || undefined;
@@ -303,6 +330,56 @@ export class DatabaseStorage implements IStorage {
   async createCourseModule(data: InsertCourseModule): Promise<CourseModule> {
     const [module] = await db.insert(courseModules).values(data).returning();
     return module;
+  }
+  
+  async updateCourseModule(id: number, data: Partial<InsertCourseModule>): Promise<CourseModule | undefined> {
+    const [module] = await db.update(courseModules)
+      .set(data)
+      .where(eq(courseModules.id, id))
+      .returning();
+    return module || undefined;
+  }
+  
+  async deleteCourseModule(id: number): Promise<void> {
+    await db.delete(courseModules).where(eq(courseModules.id, id));
+  }
+  
+  // Course Lessons
+  async getCourseLessons(moduleId: number): Promise<CourseLesson[]> {
+    return db.select().from(courseLessons)
+      .where(eq(courseLessons.moduleId, moduleId))
+      .orderBy(courseLessons.order);
+  }
+  
+  async getPublishedCourseLessons(moduleId: number): Promise<CourseLesson[]> {
+    return db.select().from(courseLessons)
+      .where(and(
+        eq(courseLessons.moduleId, moduleId),
+        eq(courseLessons.isPublished, true)
+      ))
+      .orderBy(courseLessons.order);
+  }
+  
+  async getCourseLesson(id: number): Promise<CourseLesson | undefined> {
+    const [lesson] = await db.select().from(courseLessons).where(eq(courseLessons.id, id));
+    return lesson || undefined;
+  }
+  
+  async createCourseLesson(data: InsertCourseLesson): Promise<CourseLesson> {
+    const [lesson] = await db.insert(courseLessons).values(data).returning();
+    return lesson;
+  }
+  
+  async updateCourseLesson(id: number, data: Partial<InsertCourseLesson>): Promise<CourseLesson | undefined> {
+    const [lesson] = await db.update(courseLessons)
+      .set(data)
+      .where(eq(courseLessons.id, id))
+      .returning();
+    return lesson || undefined;
+  }
+  
+  async deleteCourseLesson(id: number): Promise<void> {
+    await db.delete(courseLessons).where(eq(courseLessons.id, id));
   }
   
   // Enrollments
@@ -370,6 +447,48 @@ export class DatabaseStorage implements IStorage {
     const [created] = await db.insert(moduleProgress).values({
       userId,
       moduleId,
+      ...data,
+      lastWatchedAt: new Date(),
+    }).returning();
+    return created;
+  }
+  
+  // Lesson Progress
+  async getLessonProgress(userId: string, lessonId: number): Promise<LessonProgress | undefined> {
+    const [progress] = await db.select().from(lessonProgress)
+      .where(and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId)
+      ));
+    return progress || undefined;
+  }
+  
+  async getUserProgressForModule(userId: string, moduleId: number): Promise<LessonProgress[]> {
+    const lessons = await this.getCourseLessons(moduleId);
+    const lessonIds = lessons.map(l => l.id);
+    if (lessonIds.length === 0) return [];
+    
+    return db.select().from(lessonProgress)
+      .where(and(
+        eq(lessonProgress.userId, userId),
+        sql`${lessonProgress.lessonId} IN (${sql.join(lessonIds.map(id => sql`${id}`), sql`, `)})`
+      ));
+  }
+  
+  async updateLessonProgress(userId: string, lessonId: number, data: Partial<InsertLessonProgress>): Promise<LessonProgress> {
+    const existing = await this.getLessonProgress(userId, lessonId);
+    
+    if (existing) {
+      const [updated] = await db.update(lessonProgress)
+        .set({ ...data, lastWatchedAt: new Date() })
+        .where(eq(lessonProgress.id, existing.id))
+        .returning();
+      return updated;
+    }
+    
+    const [created] = await db.insert(lessonProgress).values({
+      userId,
+      lessonId,
       ...data,
       lastWatchedAt: new Date(),
     }).returning();

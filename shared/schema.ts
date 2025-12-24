@@ -142,9 +142,13 @@ export const courseModules = pgTable("course_modules", {
   title: text("title").notNull(),
   description: text("description"),
   videoUrl: text("video_url"), // YouTube, Vimeo URL or direct video link
+  videoProvider: text("video_provider"), // youtube, vimeo, direct
+  thumbnailUrl: text("thumbnail_url"),
   duration: integer("duration"), // minutes
   order: integer("order").default(0),
   isFree: boolean("is_free").default(false), // Preview module
+  isPublished: boolean("is_published").default(false),
+  resources: text("resources").array(), // PDF links, additional materials
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -155,6 +159,30 @@ export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
 
 export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
 export type CourseModule = typeof courseModules.$inferSelect;
+
+// Course lessons - individual videos within a module
+export const courseLessons = pgTable("course_lessons", {
+  id: serial("id").primaryKey(),
+  moduleId: integer("module_id").notNull().references(() => courseModules.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  videoUrl: text("video_url").notNull(),
+  videoProvider: text("video_provider").default("youtube"), // youtube, vimeo, direct
+  thumbnailUrl: text("thumbnail_url"),
+  duration: integer("duration"), // seconds
+  order: integer("order").default(0),
+  isFree: boolean("is_free").default(false),
+  isPublished: boolean("is_published").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertCourseLessonSchema = createInsertSchema(courseLessons).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCourseLesson = z.infer<typeof insertCourseLessonSchema>;
+export type CourseLesson = typeof courseLessons.$inferSelect;
 
 // Student enrollments with education background
 export const enrollments = pgTable("enrollments", {
@@ -203,6 +231,26 @@ export const insertModuleProgressSchema = createInsertSchema(moduleProgress).omi
 
 export type InsertModuleProgress = z.infer<typeof insertModuleProgressSchema>;
 export type ModuleProgress = typeof moduleProgress.$inferSelect;
+
+// Progress tracking per lesson
+export const lessonProgress = pgTable("lesson_progress", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  lessonId: integer("lesson_id").notNull().references(() => courseLessons.id, { onDelete: "cascade" }),
+  completed: boolean("completed").default(false),
+  watchedSeconds: integer("watched_seconds").default(0),
+  totalSeconds: integer("total_seconds"), // Video duration for percentage calculation
+  lastPosition: integer("last_position").default(0), // Resume position in seconds
+  lastWatchedAt: timestamp("last_watched_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress).omit({
+  id: true,
+});
+
+export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
+export type LessonProgress = typeof lessonProgress.$inferSelect;
 
 // Nurturing sequences for automated lead follow-up
 export const nurturingSequences = pgTable("nurturing_sequences", {
