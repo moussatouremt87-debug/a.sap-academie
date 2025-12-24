@@ -14,6 +14,7 @@ import Formations from "@/pages/formations";
 import FaqPage from "@/pages/faq";
 import PourquoiAsap from "@/pages/pourquoi-asap";
 import CRM from "@/pages/crm";
+import MentionsLegales from "@/pages/mentions-legales";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/faq" component={FaqPage} />
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
       <Route path="/crm" component={CRM} />
+      <Route path="/mentions-legales" component={MentionsLegales} />
       <Route component={NotFound} />
     </Switch>
   );

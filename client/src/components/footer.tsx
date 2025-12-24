@@ -38,6 +38,7 @@ export function Footer() {
               <li><Link href="/agent" className="hover:text-foreground transition-colors">Contact Commercial</Link></li>
               <li><Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
               <li><Link href="/pourquoi-asap" className="hover:text-foreground transition-colors">Pourquoi A.SAP</Link></li>
+              <li><Link href="/mentions-legales" className="hover:text-foreground transition-colors">Mentions Légales & RGPD</Link></li>
             </ul>
           </div>
 
