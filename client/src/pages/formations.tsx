@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation, type Language } from "@/lib/i18n";
+import { SEO, generateBreadcrumbSchema } from "@/components/seo";
 import type { Formation } from "@shared/schema";
 import remoteWorkImage from "@assets/Gemini_Generated_Image_ktbxeiktbxeiktbx_1766483159474.png";
 
@@ -186,8 +187,24 @@ export default function Formations() {
     return formatTranslationKeys[fmt] ? t(formatTranslationKeys[fmt]) : fmt;
   };
 
+  const formationsBreadcrumb = generateBreadcrumbSchema([
+    { name: language === "fr" ? "Accueil" : "Home", url: "/" },
+    { name: language === "fr" ? "Formations" : "Training", url: "/formations" }
+  ]);
+
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title={language === "fr" ? "Formations SAP Certifiantes" : "SAP Certified Training"}
+        description={language === "fr"
+          ? "Catalogue complet de formations SAP certifiantes à Dakar. Modules FI, MM, SD, ABAP, S/4HANA. En ligne, présentiel ou hybride."
+          : "Complete catalog of SAP certified training in Dakar. FI, MM, SD, ABAP, S/4HANA modules. Online, on-site or hybrid."}
+        keywords="formation SAP, certification SAP, cours SAP, Dakar, Sénégal, FI, MM, SD, ABAP, S/4HANA, e-learning"
+        url="/formations"
+        schema={formationsBreadcrumb}
+        includeOrgSchema={false}
+      />
+      <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-formations-title">
@@ -409,6 +426,7 @@ export default function Formations() {
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

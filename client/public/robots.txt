@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://asap.sn/sitemap.xml
+
+Disallow: /crm
+Disallow: /espace-apprenant
+Disallow: /api/

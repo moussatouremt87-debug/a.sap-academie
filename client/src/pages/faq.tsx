@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n";
+import { SEO, generateFAQSchema, generateBreadcrumbSchema } from "@/components/seo";
 import type { Faq } from "@shared/schema";
 
 const categoryLabels: Record<string, { fr: string; en: string }> = {
@@ -88,8 +89,30 @@ export default function FaqPage() {
     return cat;
   };
 
+  const faqSchemaData = filteredFaqs?.map(faq => ({
+    question: language === "fr" ? faq.questionFr : (faq.questionEn || faq.questionFr),
+    answer: language === "fr" ? faq.answerFr : (faq.answerEn || faq.answerFr)
+  })) || [];
+
+  const faqSchema = generateFAQSchema(faqSchemaData);
+  const faqBreadcrumb = generateBreadcrumbSchema([
+    { name: language === "fr" ? "Accueil" : "Home", url: "/" },
+    { name: "FAQ", url: "/faq" }
+  ]);
+
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title="FAQ"
+        description={language === "fr"
+          ? "Trouvez les réponses à vos questions sur nos services SAP, formations, tarifs et processus de consultation."
+          : "Find answers to your questions about our SAP services, training, pricing and consultation process."}
+        keywords="FAQ, questions fréquentes, SAP, formation, conseil, Dakar, Sénégal"
+        url="/faq"
+        schema={[faqSchema, faqBreadcrumb]}
+        includeOrgSchema={false}
+      />
+      <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-faq-title">
@@ -227,6 +250,7 @@ export default function FaqPage() {
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

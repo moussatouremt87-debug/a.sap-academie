@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
+import { SEO, generateBreadcrumbSchema } from "@/components/seo";
 import transformationImage from "@assets/Gemini_Generated_Image_e2646ke2646ke264_(1)_1766483159475.png";
 
 interface Service {
@@ -108,7 +109,7 @@ const categoryIdToKey: Record<string, string> = {
 };
 
 export default function Expertises() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [selectedService, setSelectedService] = useState<{categoryId: string, serviceId: string, serviceIcon: any, categoryColor: string} | null>(null);
 
   const getServiceName = (serviceId: string) => t(`expertises.service.${serviceId}`);
@@ -116,8 +117,24 @@ export default function Expertises() {
   const getServiceBenefits = (serviceId: string) => t(`expertises.service.${serviceId}.benefits`).split(",");
   const getServiceDeliverables = (serviceId: string) => t(`expertises.service.${serviceId}.deliverables`).split(",");
 
+  const expertisesBreadcrumb = generateBreadcrumbSchema([
+    { name: language === "fr" ? "Accueil" : "Home", url: "/" },
+    { name: language === "fr" ? "Nos Expertises" : "Our Expertise", url: "/expertises" }
+  ]);
+
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title={language === "fr" ? "Nos Expertises" : "Our Expertise"}
+        description={language === "fr"
+          ? "Découvrez nos expertises en conseil stratégique, transformation digitale, SAP, formation et développement commercial au Sénégal."
+          : "Discover our expertise in strategic consulting, digital transformation, SAP, training and business development in Senegal."}
+        keywords="conseil stratégique, transformation digitale, SAP consulting, formation, développement commercial, Dakar, Sénégal"
+        url="/expertises"
+        schema={expertisesBreadcrumb}
+        includeOrgSchema={false}
+      />
+      <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-expertises-title">
@@ -294,6 +311,7 @@ export default function Expertises() {
           </Link>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

@@ -6,10 +6,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n";
+import { SEO, generateBreadcrumbSchema } from "@/components/seo";
 import teamImage from "@assets/Gemini_Generated_Image_nmk9wvnmk9wvnmk9_1766483159475.png";
 
 export default function PourquoiAsap() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+
+  const aboutBreadcrumb = generateBreadcrumbSchema([
+    { name: language === "fr" ? "Accueil" : "Home", url: "/" },
+    { name: language === "fr" ? "Pourquoi A.SAP" : "Why A.SAP", url: "/pourquoi-asap" }
+  ]);
 
   const values = [
     {
@@ -67,7 +73,18 @@ export default function PourquoiAsap() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title={language === "fr" ? "Pourquoi A.SAP" : "Why A.SAP"}
+        description={language === "fr"
+          ? "Découvrez pourquoi choisir A.SAP pour votre transformation digitale. Notre vision, nos valeurs et notre méthodologie d'accompagnement."
+          : "Discover why choose A.SAP for your digital transformation. Our vision, values and support methodology."}
+        keywords="A.SAP, pourquoi nous choisir, transformation digitale, conseil SAP, Dakar, Sénégal, méthodologie"
+        url="/pourquoi-asap"
+        schema={aboutBreadcrumb}
+        includeOrgSchema={false}
+      />
+      <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-pourquoi-title">
@@ -228,6 +245,7 @@ export default function PourquoiAsap() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

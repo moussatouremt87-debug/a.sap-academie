@@ -3,10 +3,15 @@ import { ArrowRight, Sparkles, Cpu, Database, GraduationCap, FolderKanban, Compa
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n";
+import { SEO, generateBreadcrumbSchema } from "@/components/seo";
 import heroVideo from "@assets/generated_videos/corporate_consulting_meeting_ambiance.mp4";
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+
+  const homeBreadcrumb = generateBreadcrumbSchema([
+    { name: language === "fr" ? "Accueil" : "Home", url: "/" }
+  ]);
 
   const problemCards = [
     {
@@ -43,7 +48,18 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex flex-col">
+    <>
+      <SEO
+        title={language === "fr" ? "Accueil" : "Home"}
+        description={language === "fr" 
+          ? "A.SAP SARL, expert en conseil SAP, transformation digitale et formations certifiantes à Dakar. Accompagnement personnalisé pour votre réussite numérique."
+          : "A.SAP SARL, expert in SAP consulting, digital transformation and certified training in Dakar. Personalized support for your digital success."}
+        keywords="SAP, conseil, consulting, transformation digitale, formation SAP, Dakar, Sénégal, ERP, S/4HANA, certification"
+        url="/"
+        schema={homeBreadcrumb}
+        includeOrgSchema={true}
+      />
+      <div className="flex flex-col">
       <section className="relative overflow-hidden py-20 md:py-32">
         <video
           autoPlay
@@ -147,6 +163,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }
