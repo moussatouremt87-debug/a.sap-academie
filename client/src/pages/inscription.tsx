@@ -79,6 +79,9 @@ export default function Inscription() {
           ? "Nous avons bien reçu votre demande. Notre équipe vous contactera sous 24-48h."
           : "We have received your request. Our team will contact you within 24-48h.",
       });
+      setTimeout(() => {
+        setLocation("/");
+      }, 2000);
     },
     onError: (error) => {
       toast({
