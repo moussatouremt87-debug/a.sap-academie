@@ -341,7 +341,7 @@ export default function Formations() {
                   {t("formations.clearFilters")}
                 </Button>
                 <Link href="/agent">
-                  <Button>
+                  <Button className="bg-gold text-gold-foreground">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     {t("expertises.talkToSales")}
                   </Button>

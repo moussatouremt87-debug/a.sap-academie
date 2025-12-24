@@ -208,7 +208,7 @@ export default function Expertises() {
                 </div>
                 <div className="mt-6">
                   <Link href="/agent">
-                    <Button variant="outline" data-testid={`button-agent-${category.id}`}>
+                    <Button className="bg-gold text-gold-foreground" data-testid={`button-agent-${category.id}`}>
                       <MessageCircle className="mr-2 h-4 w-4" />
                       {t("expertises.talkToSales")}
                     </Button>
