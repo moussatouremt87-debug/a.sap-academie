@@ -156,12 +156,23 @@ export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
 export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
 export type CourseModule = typeof courseModules.$inferSelect;
 
-// Student enrollments
+// Student enrollments with education background
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
   formationId: integer("formation_id").notNull().references(() => formations.id, { onDelete: "cascade" }),
-  status: text("status").default("active"), // active, completed, expired
+  userId: varchar("user_id"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  educationLevel: text("education_level").notNull(),
+  educationField: text("education_field"),
+  currentPosition: text("current_position"),
+  company: text("company"),
+  experience: text("experience"),
+  motivation: text("motivation"),
+  cvUrl: text("cv_url"),
+  status: text("status").default("pending"), // pending, active, completed, expired, rejected
   enrolledAt: timestamp("enrolled_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
   completedAt: timestamp("completed_at"),
   expiresAt: timestamp("expires_at"),
