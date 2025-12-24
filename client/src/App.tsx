@@ -22,6 +22,7 @@ import StudentPortal from "@/pages/student-portal";
 import Inscription from "@/pages/inscription";
 import Documents from "@/pages/documents";
 import SharedDocument from "@/pages/shared-document";
+import AdminElearning from "@/pages/admin-elearning";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/inscription" component={Inscription} />
       <Route path="/documents" component={Documents} />
       <Route path="/shared/:token" component={SharedDocument} />
+      <Route path="/admin/elearning" component={AdminElearning} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -49,7 +51,7 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
-  const isCrmPage = location === "/crm" || location === "/nurturing" || location === "/documents";
+  const isCrmPage = location === "/crm" || location === "/nurturing" || location === "/documents" || location === "/admin/elearning";
   const isStudentPortal = location === "/espace-apprenant" || location === "/e-learning";
   const isInscriptionPage = location.startsWith("/inscription");
 
