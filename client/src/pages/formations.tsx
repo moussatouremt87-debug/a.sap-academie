@@ -93,7 +93,10 @@ function FormationCard({ formation, t, language }: { formation: Formation; t: (k
       </CardContent>
       <CardFooter className="flex items-center justify-between gap-4 border-t pt-4">
         <div className="text-lg font-bold text-primary">
-          {(formation.price / 100).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} EUR
+          {t("formations.priceFrom")} {(formation.duration >= 90 
+            ? Math.round(formation.price / 3 / 1000 / 100) * 100 
+            : Math.round(formation.price / 656 / 100) * 100
+          ).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} €
         </div>
         <Link href={`/formations/${formation.id}`}>
           <Button size="sm" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
