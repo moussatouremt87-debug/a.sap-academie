@@ -267,7 +267,7 @@ function KanbanColumn({
 export default function CRM() {
   const { toast } = useToast();
   const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
-  const [view, setView] = useState<"dashboard" | "pipeline" | "list">("dashboard");
+  const [view, setView] = useState<"dashboard" | "pipeline" | "list" | "conversations">("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -296,6 +296,16 @@ export default function CRM() {
 
   const { data: followUpLeads = [] } = useQuery<Lead[]>({
     queryKey: ["/api/crm/leads/follow-up"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: allConversations = [], isLoading: conversationsLoading } = useQuery<(Conversation & { 
+    messages: Message[]; 
+    messageCount: number; 
+    lastMessage: Message | null;
+    lead: Lead | null;
+  })[]>({
+    queryKey: ["/api/crm/conversations"],
     enabled: isAuthenticated,
   });
 
@@ -431,10 +441,19 @@ export default function CRM() {
                   <Users className="h-4 w-4 mr-2" />
                   Liste
                 </Button>
+                <Button 
+                  variant={view === "conversations" ? "secondary" : "ghost"} 
+                  size="sm"
+                  onClick={() => setView("conversations")}
+                  data-testid="button-view-conversations"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Conversations
+                </Button>
               </div>
 
               <div className="md:hidden">
-                <Select value={view} onValueChange={(v) => setView(v as "dashboard" | "pipeline" | "list")}>
+                <Select value={view} onValueChange={(v) => setView(v as "dashboard" | "pipeline" | "list" | "conversations")}>
                   <SelectTrigger className="w-[140px]" data-testid="select-mobile-view">
                     <SelectValue />
                   </SelectTrigger>
@@ -455,6 +474,12 @@ export default function CRM() {
                       <span className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         Liste
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="conversations">
+                      <span className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Conversations
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -835,6 +860,128 @@ export default function CRM() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {view === "conversations" && (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold">Conversations</h1>
+              <p className="text-muted-foreground">
+                Toutes les conversations des utilisateurs avec l'agent commercial IA
+              </p>
+            </div>
+
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between gap-4">
+                  <CardTitle className="text-base">
+                    {allConversations.length} conversation{allConversations.length !== 1 ? "s" : ""}
+                  </CardTitle>
+                  <Badge variant="secondary">
+                    {allConversations.filter(c => !c.leadId).length} non liée{allConversations.filter(c => !c.leadId).length !== 1 ? "s" : ""}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {conversationsLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : allConversations.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-30" />
+                    <p>Aucune conversation pour le moment</p>
+                    <p className="text-sm mt-2">Les conversations des visiteurs apparaîtront ici</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {allConversations.map((conv) => (
+                      <div 
+                        key={conv.id}
+                        className="p-4 hover-elevate cursor-pointer"
+                        onClick={() => setExpandedConversation(expandedConversation === conv.id ? null : conv.id)}
+                        data-testid={`row-conversation-${conv.id}`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-lg bg-primary/10 shrink-0">
+                            <MessageSquare className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-semibold">{conv.title || `Conversation #${conv.id}`}</p>
+                              {conv.commercialName && (
+                                <Badge variant="outline" className="text-xs">{conv.commercialName}</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+                              <span>{conv.messageCount} message{conv.messageCount !== 1 ? "s" : ""}</span>
+                              <span>
+                                {new Date(conv.createdAt).toLocaleDateString("fr-FR", { 
+                                  day: 'numeric', 
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            {conv.lastMessage && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                <span className="font-medium">{conv.lastMessage.role === "user" ? "Visiteur:" : "IA:"}</span>{" "}
+                                {conv.lastMessage.content.substring(0, 150)}...
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 flex flex-col items-end gap-2">
+                            {conv.lead ? (
+                              <Badge 
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openLeadPanel(conv.lead!);
+                                }}
+                              >
+                                {conv.lead.name}
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">Non lié</Badge>
+                            )}
+                            {expandedConversation === conv.id ? (
+                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </div>
+                        
+                        {expandedConversation === conv.id && conv.messages.length > 0 && (
+                          <div className="mt-4 ml-12 space-y-3 border-l-2 pl-4">
+                            {conv.messages.slice(-10).map((msg, idx) => (
+                              <div key={idx} className={`p-3 rounded-lg text-sm ${msg.role === "user" ? "bg-muted" : "bg-primary/5"}`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className={`font-medium ${msg.role === "user" ? "text-foreground" : "text-primary"}`}>
+                                    {msg.role === "user" ? "Visiteur" : "Agent IA"}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <p className="whitespace-pre-wrap">{msg.content}</p>
+                              </div>
+                            ))}
+                            {conv.messages.length > 10 && (
+                              <p className="text-xs text-muted-foreground text-center py-2">
+                                ... {conv.messages.length - 10} messages précédents masqués
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

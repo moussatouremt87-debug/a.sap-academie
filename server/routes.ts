@@ -385,6 +385,38 @@ export async function registerRoutes(
 
   // ========== CRM ENDPOINTS (Protected - requires authentication) ==========
   
+  // Get all conversations for CRM
+  app.get("/api/crm/conversations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const allConversations = await storage.getAllConversations();
+      
+      // Get messages for each conversation (last 5 messages for preview)
+      const conversationsWithDetails = await Promise.all(
+        allConversations.map(async (conv) => {
+          const msgs = await storage.getMessagesByConversation(conv.id);
+          const lead = conv.leadId ? await storage.getLead(conv.leadId) : null;
+          return { 
+            ...conv, 
+            messages: msgs,
+            messageCount: msgs.length,
+            lastMessage: msgs[msgs.length - 1] || null,
+            lead
+          };
+        })
+      );
+      
+      // Sort by most recent first
+      conversationsWithDetails.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      res.json(conversationsWithDetails);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  });
+
   // Get all leads with optional filters
   app.get("/api/crm/leads", isAuthenticated, async (req: Request, res: Response) => {
     try {
