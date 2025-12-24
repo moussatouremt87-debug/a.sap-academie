@@ -2081,7 +2081,20 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
 
-  // Admin: Create module
+  // Admin: Create module (nested route for frontend)
+  app.post("/api/admin/formations/:formationId/modules", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const formationId = parseInt(req.params.formationId);
+      const data = { ...req.body, formationId };
+      const validated = insertCourseModuleSchema.parse(data);
+      const module = await storage.createCourseModule(validated);
+      res.status(201).json(module);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Create module (flat route fallback)
   app.post("/api/admin/modules", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {
       const validated = insertCourseModuleSchema.parse(req.body);
@@ -2092,8 +2105,8 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
 
-  // Admin: Update module
-  app.patch("/api/admin/modules/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+  // Admin: Update module (PUT and PATCH)
+  const updateModuleHandler = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const module = await storage.updateCourseModule(id, req.body);
@@ -2104,7 +2117,9 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     } catch (error: any) {
       res.status(400).json({ message: error.message || "Données invalides" });
     }
-  });
+  };
+  app.patch("/api/admin/modules/:id", isAuthenticated, isAdmin, updateModuleHandler);
+  app.put("/api/admin/modules/:id", isAuthenticated, isAdmin, updateModuleHandler);
 
   // Admin: Delete module
   app.delete("/api/admin/modules/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
@@ -2117,7 +2132,20 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
 
-  // Admin: Create lesson
+  // Admin: Create lesson (nested route for frontend)
+  app.post("/api/admin/modules/:moduleId/lessons", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const moduleId = parseInt(req.params.moduleId);
+      const data = { ...req.body, moduleId };
+      const validated = insertCourseLessonSchema.parse(data);
+      const lesson = await storage.createCourseLesson(validated);
+      res.status(201).json(lesson);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Données invalides" });
+    }
+  });
+
+  // Admin: Create lesson (flat route fallback)
   app.post("/api/admin/lessons", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
     try {
       const validated = insertCourseLessonSchema.parse(req.body);
@@ -2128,8 +2156,8 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
 
-  // Admin: Update lesson
-  app.patch("/api/admin/lessons/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+  // Admin: Update lesson (PUT and PATCH)
+  const updateLessonHandler = async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const lesson = await storage.updateCourseLesson(id, req.body);
@@ -2140,7 +2168,9 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     } catch (error: any) {
       res.status(400).json({ message: error.message || "Données invalides" });
     }
-  });
+  };
+  app.patch("/api/admin/lessons/:id", isAuthenticated, isAdmin, updateLessonHandler);
+  app.put("/api/admin/lessons/:id", isAuthenticated, isAdmin, updateLessonHandler);
 
   // Admin: Delete lesson
   app.delete("/api/admin/lessons/:id", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
