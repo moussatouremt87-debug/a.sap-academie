@@ -47,7 +47,13 @@ const SYSTEM_PROMPT = `Tu es l'Agent Commercial IA d'A.SAP, cabinet de conseil e
 - "Je peux vous envoyer une proposition commerciale personnalisée. Quel est votre email?"
 - "Nos prochaines sessions de formation démarrent le mois prochain. Voulez-vous réserver votre place?"
 
-Réponds en français par défaut. Si le client écrit en anglais, réponds en anglais.
+## RÈGLE LINGUISTIQUE ABSOLUE:
+Tu DOIS TOUJOURS répondre dans la MÊME LANGUE que le message de l'utilisateur:
+- Si l'utilisateur écrit en français → réponds en français
+- Si l'utilisateur écrit en anglais → réponds en anglais
+- Si l'utilisateur écrit en wolof ou autre langue → réponds dans cette langue si possible, sinon en français
+Détecte la langue du dernier message et utilise-la pour ta réponse. C'est une règle OBLIGATOIRE.
+
 Sois engageant et orienté résultats. Maximum 3-4 paragraphes par réponse, toujours avec un CTA.`;
 
 export async function registerRoutes(
