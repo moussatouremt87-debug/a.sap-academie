@@ -6,6 +6,7 @@ import { insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadAct
 import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -64,6 +65,9 @@ export async function registerRoutes(
   // Setup authentication (MUST be before other routes)
   await setupAuth(app);
   registerAuthRoutes(app);
+  
+  // Setup object storage routes for file uploads
+  registerObjectStorageRoutes(app);
   
   // AI Chat endpoint with streaming
   app.post("/api/chat", async (req: Request, res: Response) => {
@@ -172,6 +176,34 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error creating lead:", error);
       res.status(500).json({ error: "Failed to create lead" });
+    }
+  });
+
+  // Create enrollment (formation registration)
+  app.post("/api/enrollments", async (req: Request, res: Response) => {
+    try {
+      const result = insertEnrollmentSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: "Invalid enrollment data", details: result.error.issues });
+      }
+      const enrollment = await storage.createEnrollment(result.data);
+      
+      // Also create a lead for CRM tracking
+      await storage.createLead({
+        name: `${result.data.firstName} ${result.data.lastName}`,
+        email: result.data.email,
+        phone: result.data.phone || undefined,
+        company: result.data.company || undefined,
+        source: "formation",
+        status: "new",
+        priority: "high",
+        notes: `Inscription formation #${result.data.formationId}. Niveau: ${result.data.educationLevel}. Motivation: ${result.data.motivation || 'Non renseignée'}`
+      });
+      
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error creating enrollment:", error);
+      res.status(500).json({ error: "Failed to create enrollment" });
     }
   });
 

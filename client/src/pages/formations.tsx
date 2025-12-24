@@ -99,7 +99,7 @@ function FormationCard({ formation, t, language }: { formation: Formation; t: (k
             : Math.round(formation.price / 656 / 100) * 100
           ).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} €
         </div>
-        <Link href="/agent">
+        <Link href={`/inscription?formation=${formation.id}`}>
           <Button size="sm" className="bg-gold text-gold-foreground" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
         </Link>
       </CardFooter>
