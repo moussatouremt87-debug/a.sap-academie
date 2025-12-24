@@ -12,9 +12,15 @@ import {
   type NurturingStep, type InsertNurturingStep,
   type LeadNurturing, type InsertLeadNurturing,
   type NurturingAction, type InsertNurturingAction,
+  type Document, type InsertDocument,
+  type DocumentFolder, type InsertDocumentFolder,
+  type DocumentShare, type InsertDocumentShare,
+  type DocumentComment, type InsertDocumentComment,
+  type DocumentActivity, type InsertDocumentActivity,
   conversations, messages, formations, faqs, leads, leadActivities,
   courseModules, enrollments, moduleProgress,
   nurturingSequences, nurturingSteps, leadNurturing, nurturingActions,
+  documents, documentFolders, documentShares, documentComments, documentActivities,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, lte, isNotNull, sql } from "drizzle-orm";
@@ -103,6 +109,39 @@ export interface IStorage {
   getNurturingActions(leadNurturingId: number): Promise<NurturingAction[]>;
   createNurturingAction(data: InsertNurturingAction): Promise<NurturingAction>;
   updateNurturingAction(id: number, data: Partial<InsertNurturingAction>): Promise<NurturingAction | undefined>;
+  
+  // Documents
+  getDocument(id: number): Promise<Document | undefined>;
+  getDocumentsByOwner(ownerId: string): Promise<Document[]>;
+  getDocumentsByFolder(folderId: number): Promise<Document[]>;
+  createDocument(data: InsertDocument): Promise<Document>;
+  updateDocument(id: number, data: Partial<InsertDocument>): Promise<Document | undefined>;
+  deleteDocument(id: number): Promise<void>;
+  
+  // Document Folders
+  getFolder(id: number): Promise<DocumentFolder | undefined>;
+  getFoldersByOwner(ownerId: string): Promise<DocumentFolder[]>;
+  createFolder(data: InsertDocumentFolder): Promise<DocumentFolder>;
+  deleteFolder(id: number): Promise<void>;
+  
+  // Document Shares
+  getDocumentShare(id: number): Promise<DocumentShare | undefined>;
+  getDocumentShareByToken(token: string): Promise<DocumentShare | undefined>;
+  getSharesForDocument(documentId: number): Promise<DocumentShare[]>;
+  getSharesForUser(userId: string): Promise<DocumentShare[]>;
+  createDocumentShare(data: InsertDocumentShare): Promise<DocumentShare>;
+  updateDocumentShare(id: number, data: Partial<InsertDocumentShare>): Promise<DocumentShare | undefined>;
+  deleteDocumentShare(id: number): Promise<void>;
+  
+  // Document Comments
+  getDocumentComments(documentId: number): Promise<DocumentComment[]>;
+  createDocumentComment(data: InsertDocumentComment): Promise<DocumentComment>;
+  updateDocumentComment(id: number, data: Partial<InsertDocumentComment>): Promise<DocumentComment | undefined>;
+  deleteDocumentComment(id: number): Promise<void>;
+  
+  // Document Activities
+  getDocumentActivities(documentId: number): Promise<DocumentActivity[]>;
+  createDocumentActivity(data: InsertDocumentActivity): Promise<DocumentActivity>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -479,6 +518,139 @@ export class DatabaseStorage implements IStorage {
       .where(eq(nurturingActions.id, id))
       .returning();
     return action || undefined;
+  }
+  
+  // ============ DOCUMENT MANAGEMENT ============
+  
+  async getDocument(id: number): Promise<Document | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    return doc || undefined;
+  }
+  
+  async getDocumentsByOwner(ownerId: string): Promise<Document[]> {
+    return db.select().from(documents)
+      .where(eq(documents.ownerId, ownerId))
+      .orderBy(desc(documents.createdAt));
+  }
+  
+  async getDocumentsByFolder(folderId: number): Promise<Document[]> {
+    return db.select().from(documents)
+      .where(eq(documents.folderId, folderId))
+      .orderBy(desc(documents.createdAt));
+  }
+  
+  async createDocument(data: InsertDocument): Promise<Document> {
+    const [doc] = await db.insert(documents).values(data).returning();
+    return doc;
+  }
+  
+  async updateDocument(id: number, data: Partial<InsertDocument>): Promise<Document | undefined> {
+    const [doc] = await db.update(documents)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(documents.id, id))
+      .returning();
+    return doc || undefined;
+  }
+  
+  async deleteDocument(id: number): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
+  }
+  
+  // Document Folders
+  async getFolder(id: number): Promise<DocumentFolder | undefined> {
+    const [folder] = await db.select().from(documentFolders).where(eq(documentFolders.id, id));
+    return folder || undefined;
+  }
+  
+  async getFoldersByOwner(ownerId: string): Promise<DocumentFolder[]> {
+    return db.select().from(documentFolders)
+      .where(eq(documentFolders.ownerId, ownerId))
+      .orderBy(documentFolders.name);
+  }
+  
+  async createFolder(data: InsertDocumentFolder): Promise<DocumentFolder> {
+    const [folder] = await db.insert(documentFolders).values(data).returning();
+    return folder;
+  }
+  
+  async deleteFolder(id: number): Promise<void> {
+    await db.delete(documentFolders).where(eq(documentFolders.id, id));
+  }
+  
+  // Document Shares
+  async getDocumentShare(id: number): Promise<DocumentShare | undefined> {
+    const [share] = await db.select().from(documentShares).where(eq(documentShares.id, id));
+    return share || undefined;
+  }
+  
+  async getDocumentShareByToken(token: string): Promise<DocumentShare | undefined> {
+    const [share] = await db.select().from(documentShares).where(eq(documentShares.shareToken, token));
+    return share || undefined;
+  }
+  
+  async getSharesForDocument(documentId: number): Promise<DocumentShare[]> {
+    return db.select().from(documentShares)
+      .where(eq(documentShares.documentId, documentId))
+      .orderBy(desc(documentShares.createdAt));
+  }
+  
+  async getSharesForUser(userId: string): Promise<DocumentShare[]> {
+    return db.select().from(documentShares)
+      .where(eq(documentShares.sharedWithUserId, userId))
+      .orderBy(desc(documentShares.createdAt));
+  }
+  
+  async createDocumentShare(data: InsertDocumentShare): Promise<DocumentShare> {
+    const [share] = await db.insert(documentShares).values(data).returning();
+    return share;
+  }
+  
+  async updateDocumentShare(id: number, data: Partial<InsertDocumentShare>): Promise<DocumentShare | undefined> {
+    const [share] = await db.update(documentShares)
+      .set(data)
+      .where(eq(documentShares.id, id))
+      .returning();
+    return share || undefined;
+  }
+  
+  async deleteDocumentShare(id: number): Promise<void> {
+    await db.delete(documentShares).where(eq(documentShares.id, id));
+  }
+  
+  // Document Comments
+  async getDocumentComments(documentId: number): Promise<DocumentComment[]> {
+    return db.select().from(documentComments)
+      .where(eq(documentComments.documentId, documentId))
+      .orderBy(documentComments.createdAt);
+  }
+  
+  async createDocumentComment(data: InsertDocumentComment): Promise<DocumentComment> {
+    const [comment] = await db.insert(documentComments).values(data).returning();
+    return comment;
+  }
+  
+  async updateDocumentComment(id: number, data: Partial<InsertDocumentComment>): Promise<DocumentComment | undefined> {
+    const [comment] = await db.update(documentComments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(documentComments.id, id))
+      .returning();
+    return comment || undefined;
+  }
+  
+  async deleteDocumentComment(id: number): Promise<void> {
+    await db.delete(documentComments).where(eq(documentComments.id, id));
+  }
+  
+  // Document Activities
+  async getDocumentActivities(documentId: number): Promise<DocumentActivity[]> {
+    return db.select().from(documentActivities)
+      .where(eq(documentActivities.documentId, documentId))
+      .orderBy(desc(documentActivities.createdAt));
+  }
+  
+  async createDocumentActivity(data: InsertDocumentActivity): Promise<DocumentActivity> {
+    const [activity] = await db.insert(documentActivities).values(data).returning();
+    return activity;
   }
 }
 

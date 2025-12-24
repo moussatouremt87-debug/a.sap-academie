@@ -291,3 +291,120 @@ export const insertNurturingActionSchema = createInsertSchema(nurturingActions).
 
 export type InsertNurturingAction = z.infer<typeof insertNurturingActionSchema>;
 export type NurturingAction = typeof nurturingActions.$inferSelect;
+
+// ============ SECURE DOCUMENT SHARING ============
+
+// Documents - files stored in object storage
+export const documents = pgTable("documents", {
+  id: serial("id").primaryKey(),
+  ownerId: varchar("owner_id").notNull(), // User who uploaded
+  name: text("name").notNull(),
+  description: text("description"),
+  objectPath: text("object_path").notNull(), // Path in object storage
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  isPublic: boolean("is_public").default(false),
+  folderId: integer("folder_id"),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type Document = typeof documents.$inferSelect;
+
+// Document folders for organization
+export const documentFolders = pgTable("document_folders", {
+  id: serial("id").primaryKey(),
+  ownerId: varchar("owner_id").notNull(),
+  name: text("name").notNull(),
+  parentId: integer("parent_id"),
+  color: text("color"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDocumentFolderSchema = createInsertSchema(documentFolders).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDocumentFolder = z.infer<typeof insertDocumentFolderSchema>;
+export type DocumentFolder = typeof documentFolders.$inferSelect;
+
+// Document shares - who has access to what
+export const documentShares = pgTable("document_shares", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+  sharedById: varchar("shared_by_id").notNull(),
+  sharedWithEmail: text("shared_with_email"), // Email of recipient
+  sharedWithUserId: varchar("shared_with_user_id"), // If they have an account
+  permission: text("permission").default("view"), // view, comment, edit
+  shareToken: text("share_token").unique(), // For link sharing
+  expiresAt: timestamp("expires_at"),
+  password: text("password"), // Optional password protection
+  maxDownloads: integer("max_downloads"),
+  downloadCount: integer("download_count").default(0),
+  isActive: boolean("is_active").default(true),
+  notifyOnAccess: boolean("notify_on_access").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDocumentShareSchema = createInsertSchema(documentShares).omit({
+  id: true,
+  downloadCount: true,
+  createdAt: true,
+});
+
+export type InsertDocumentShare = z.infer<typeof insertDocumentShareSchema>;
+export type DocumentShare = typeof documentShares.$inferSelect;
+
+// Document comments - collaborative annotations
+export const documentComments = pgTable("document_comments", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name").notNull(),
+  content: text("content").notNull(),
+  parentId: integer("parent_id"), // For threaded replies
+  pageNumber: integer("page_number"), // For PDF annotations
+  position: text("position"), // JSON with x, y coordinates
+  isResolved: boolean("is_resolved").default(false),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDocumentCommentSchema = createInsertSchema(documentComments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDocumentComment = z.infer<typeof insertDocumentCommentSchema>;
+export type DocumentComment = typeof documentComments.$inferSelect;
+
+// Document activity - audit trail
+export const documentActivities = pgTable("document_activities", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
+  userId: varchar("user_id"),
+  userEmail: text("user_email"),
+  action: text("action").notNull(), // viewed, downloaded, shared, commented, edited
+  details: text("details"), // JSON with additional info
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+export const insertDocumentActivitySchema = createInsertSchema(documentActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDocumentActivity = z.infer<typeof insertDocumentActivitySchema>;
+export type DocumentActivity = typeof documentActivities.$inferSelect;
