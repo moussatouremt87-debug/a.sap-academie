@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams } from "wouter";
-import { FileText, Download, Lock, AlertCircle, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { FileText, Download, Lock, AlertCircle, Clock, CheckCircle, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,7 +215,17 @@ export default function SharedDocument() {
   return (
     <>
       <SEO title={`${data.document.name} | A.SAP`} noIndex />
-      <div className="min-h-screen bg-background flex items-center justify-center p-4" data-testid="shared-doc-view">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4" data-testid="shared-doc-view">
+        <div className="w-full max-w-md mb-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = "/"}
+            data-testid="button-back-top"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 p-4 bg-muted rounded-full w-fit">
@@ -262,6 +272,16 @@ export default function SharedDocument() {
             </Button>
           </CardContent>
         </Card>
+        <div className="w-full max-w-md mt-4 flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = "/"}
+            data-testid="button-back-bottom"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour à l'accueil
+          </Button>
+        </div>
       </div>
     </>
   );
