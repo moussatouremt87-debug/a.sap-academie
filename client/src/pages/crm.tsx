@@ -272,9 +272,9 @@ export default function CRM() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [expandedConversation, setExpandedConversation] = useState<number | null>(null);
   const [showPanel, setShowPanel] = useState(false);
   const [newNote, setNewNote] = useState("");
-  const [expandedConversation, setExpandedConversation] = useState<number | null>(null);
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
 
