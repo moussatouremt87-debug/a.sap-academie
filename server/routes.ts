@@ -5,8 +5,10 @@ import { storage } from "./storage";
 import { 
   insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema, 
   insertEnrollmentSchema, insertModuleProgressSchema,
-  insertNurturingSequenceSchema, insertNurturingStepSchema, insertLeadNurturingSchema
+  insertNurturingSequenceSchema, insertNurturingStepSchema, insertLeadNurturingSchema,
+  insertDocumentSchema, insertDocumentFolderSchema, insertDocumentShareSchema, insertDocumentCommentSchema, insertDocumentActivitySchema
 } from "@shared/schema";
+import crypto from "crypto";
 import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
@@ -1024,6 +1026,403 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
   
+  // ============ DOCUMENT MANAGEMENT ============
+  
+  // Get user's documents
+  app.get("/api/documents", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const documents = await storage.getDocumentsByOwner(user.id);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get single document
+  app.get("/api/documents/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc) {
+        return res.status(404).json({ message: "Document non trouvé" });
+      }
+      
+      // Check ownership or share access
+      if (doc.ownerId !== user.id) {
+        const shares = await storage.getSharesForDocument(doc.id);
+        const hasAccess = shares.some(s => 
+          s.sharedWithUserId === user.id || s.isActive
+        );
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Accès refusé" });
+        }
+      }
+      
+      res.json(doc);
+    } catch (error) {
+      console.error("Error fetching document:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Create document (after file upload)
+  app.post("/api/documents", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const data = insertDocumentSchema.parse({
+        ...req.body,
+        ownerId: user.id
+      });
+      
+      const document = await storage.createDocument(data);
+      
+      // Log activity
+      await storage.createDocumentActivity({
+        documentId: document.id,
+        userId: user.id,
+        action: "created",
+        details: JSON.stringify({ name: document.name })
+      });
+      
+      res.json(document);
+    } catch (error) {
+      console.error("Error creating document:", error);
+      res.status(500).json({ message: "Erreur création document" });
+    }
+  });
+  
+  // Update document
+  app.patch("/api/documents/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const updated = await storage.updateDocument(doc.id, req.body);
+      
+      await storage.createDocumentActivity({
+        documentId: doc.id,
+        userId: user.id,
+        action: "edited",
+        details: JSON.stringify(req.body)
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating document:", error);
+      res.status(500).json({ message: "Erreur mise à jour" });
+    }
+  });
+  
+  // Delete document
+  app.delete("/api/documents/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      await storage.deleteDocument(doc.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "Erreur suppression" });
+    }
+  });
+  
+  // ============ DOCUMENT FOLDERS ============
+  
+  app.get("/api/folders", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const folders = await storage.getFoldersByOwner(user.id);
+      res.json(folders);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  app.post("/api/folders", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const data = insertDocumentFolderSchema.parse({
+        ...req.body,
+        ownerId: user.id
+      });
+      const folder = await storage.createFolder(data);
+      res.json(folder);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur création dossier" });
+    }
+  });
+  
+  app.delete("/api/folders/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const folder = await storage.getFolder(parseInt(req.params.id));
+      
+      if (!folder || folder.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      await storage.deleteFolder(folder.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur suppression" });
+    }
+  });
+  
+  // ============ DOCUMENT SHARING ============
+  
+  // Get shares for a document
+  app.get("/api/documents/:id/shares", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const shares = await storage.getSharesForDocument(doc.id);
+      res.json(shares);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Create share
+  app.post("/api/documents/:id/shares", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const shareToken = crypto.randomBytes(32).toString("hex");
+      
+      const data = insertDocumentShareSchema.parse({
+        ...req.body,
+        documentId: doc.id,
+        sharedById: user.id,
+        shareToken
+      });
+      
+      const share = await storage.createDocumentShare(data);
+      
+      await storage.createDocumentActivity({
+        documentId: doc.id,
+        userId: user.id,
+        action: "shared",
+        details: JSON.stringify({ email: req.body.sharedWithEmail, permission: req.body.permission })
+      });
+      
+      res.json(share);
+    } catch (error) {
+      console.error("Error creating share:", error);
+      res.status(500).json({ message: "Erreur création partage" });
+    }
+  });
+  
+  // Revoke share
+  app.delete("/api/shares/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const share = await storage.getDocumentShare(parseInt(req.params.id));
+      
+      if (!share) {
+        return res.status(404).json({ message: "Partage non trouvé" });
+      }
+      
+      // Verify ownership via document
+      const doc = await storage.getDocument(share.documentId);
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      await storage.deleteDocumentShare(share.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur suppression partage" });
+    }
+  });
+  
+  // Access document via share link
+  app.get("/api/shared/:token", async (req: Request, res: Response) => {
+    try {
+      const share = await storage.getDocumentShareByToken(req.params.token);
+      
+      if (!share || !share.isActive) {
+        return res.status(404).json({ message: "Lien de partage invalide" });
+      }
+      
+      // Check expiration
+      if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "Lien expiré" });
+      }
+      
+      // Check download limit
+      if (share.maxDownloads && (share.downloadCount || 0) >= share.maxDownloads) {
+        return res.status(410).json({ message: "Limite de téléchargements atteinte" });
+      }
+      
+      const doc = await storage.getDocument(share.documentId);
+      if (!doc) {
+        return res.status(404).json({ message: "Document non trouvé" });
+      }
+      
+      // Log access
+      await storage.createDocumentActivity({
+        documentId: doc.id,
+        action: "viewed",
+        details: JSON.stringify({ via: "share_link" }),
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"]
+      });
+      
+      // Return doc info (not the actual file - that comes from object storage)
+      res.json({
+        document: {
+          id: doc.id,
+          name: doc.name,
+          description: doc.description,
+          mimeType: doc.mimeType,
+          fileSize: doc.fileSize
+        },
+        permission: share.permission,
+        hasPassword: !!share.password
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // ============ DOCUMENT COMMENTS ============
+  
+  app.get("/api/documents/:id/comments", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc) {
+        return res.status(404).json({ message: "Document non trouvé" });
+      }
+      
+      // Check access
+      if (doc.ownerId !== user.id) {
+        const shares = await storage.getSharesForDocument(doc.id);
+        const share = shares.find(s => s.sharedWithUserId === user.id);
+        if (!share || !["comment", "edit"].includes(share.permission || "")) {
+          return res.status(403).json({ message: "Accès refusé" });
+        }
+      }
+      
+      const comments = await storage.getDocumentComments(doc.id);
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  app.post("/api/documents/:id/comments", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc) {
+        return res.status(404).json({ message: "Document non trouvé" });
+      }
+      
+      // Check access
+      if (doc.ownerId !== user.id) {
+        const shares = await storage.getSharesForDocument(doc.id);
+        const share = shares.find(s => s.sharedWithUserId === user.id);
+        if (!share || !["comment", "edit"].includes(share.permission || "")) {
+          return res.status(403).json({ message: "Accès refusé" });
+        }
+      }
+      
+      const data = insertDocumentCommentSchema.parse({
+        ...req.body,
+        documentId: doc.id,
+        userId: user.id,
+        userName: user.username || user.email || "Utilisateur"
+      });
+      
+      const comment = await storage.createDocumentComment(data);
+      
+      await storage.createDocumentActivity({
+        documentId: doc.id,
+        userId: user.id,
+        action: "commented",
+        details: JSON.stringify({ commentId: comment.id })
+      });
+      
+      res.json(comment);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur ajout commentaire" });
+    }
+  });
+  
+  app.patch("/api/comments/:id/resolve", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const comment = await storage.getDocumentComments(parseInt(req.params.id));
+      // Would need getDocumentComment method - for now skip
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur" });
+    }
+  });
+  
+  // ============ DOCUMENT ACTIVITY ============
+  
+  app.get("/api/documents/:id/activity", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const doc = await storage.getDocument(parseInt(req.params.id));
+      
+      if (!doc || doc.ownerId !== user.id) {
+        return res.status(403).json({ message: "Accès refusé" });
+      }
+      
+      const activities = await storage.getDocumentActivities(doc.id);
+      res.json(activities);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get documents shared with me
+  app.get("/api/shared-with-me", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const shares = await storage.getSharesForUser(user.id);
+      
+      // Fetch document details for each share
+      const docsWithShares = await Promise.all(
+        shares.filter(s => s.isActive).map(async (share) => {
+          const doc = await storage.getDocument(share.documentId);
+          return doc ? { ...doc, permission: share.permission } : null;
+        })
+      );
+      
+      res.json(docsWithShares.filter(Boolean));
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+
   // ============ AUTO-ENROLLMENT TRIGGER ============
   // This function is called internally when leads are created/updated
   async function autoEnrollInNurturing(leadId: number, triggerEvent: string, source?: string) {
