@@ -4,7 +4,8 @@ import OpenAI from "openai";
 import { storage } from "./storage";
 import { 
   insertFormationSchema, insertFaqSchema, insertLeadSchema, insertLeadActivitySchema, 
-  insertEnrollmentSchema, insertModuleProgressSchema,
+  insertEnrollmentSchema, insertModuleProgressSchema, insertLessonProgressSchema,
+  insertCourseModuleSchema, insertCourseLessonSchema,
   insertNurturingSequenceSchema, insertNurturingStepSchema, insertLeadNurturingSchema,
   insertDocumentSchema, insertDocumentFolderSchema, insertDocumentShareSchema, insertDocumentCommentSchema, insertDocumentActivitySchema
 } from "@shared/schema";
@@ -1023,6 +1024,306 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     } catch (error) {
       console.error("Error processing nurturing actions:", error);
       res.status(500).json({ error: "Failed to process nurturing actions" });
+    }
+  });
+  
+  // ============ E-LEARNING API ============
+  
+  // Get all published formations with module count for catalog
+  app.get("/api/elearning/courses", async (req: Request, res: Response) => {
+    try {
+      const formations = await storage.getPublishedFormations();
+      const coursesWithModules = await Promise.all(
+        formations.map(async (formation) => {
+          const modules = await storage.getPublishedCourseModules(formation.id);
+          const lessonCounts = await Promise.all(
+            modules.map(async (m) => {
+              const lessons = await storage.getPublishedCourseLessons(m.id);
+              return lessons.length;
+            })
+          );
+          const totalLessons = lessonCounts.reduce((a, b) => a + b, 0);
+          return {
+            ...formation,
+            moduleCount: modules.length,
+            lessonCount: totalLessons
+          };
+        })
+      );
+      res.json(coursesWithModules);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get single course with modules and lessons (student view)
+  app.get("/api/elearning/courses/:id", async (req: Request, res: Response) => {
+    try {
+      const formation = await storage.getFormation(parseInt(req.params.id));
+      if (!formation) {
+        return res.status(404).json({ message: "Formation non trouvée" });
+      }
+      
+      const modules = await storage.getPublishedCourseModules(formation.id);
+      const modulesWithLessons = await Promise.all(
+        modules.map(async (module) => {
+          const lessons = await storage.getPublishedCourseLessons(module.id);
+          return { ...module, lessons };
+        })
+      );
+      
+      res.json({ ...formation, modules: modulesWithLessons });
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get user's enrollments with progress
+  app.get("/api/elearning/enrollments", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const enrollments = await storage.getUserEnrollments(user.id);
+      
+      const enrollmentsWithProgress = await Promise.all(
+        enrollments.map(async (enrollment) => {
+          const formation = await storage.getFormation(enrollment.formationId);
+          const modules = await storage.getCourseModules(enrollment.formationId);
+          
+          let totalLessons = 0;
+          let completedLessons = 0;
+          
+          for (const module of modules) {
+            const lessons = await storage.getCourseLessons(module.id);
+            totalLessons += lessons.length;
+            
+            for (const lesson of lessons) {
+              const progress = await storage.getLessonProgress(user.id, lesson.id);
+              if (progress?.isCompleted) completedLessons++;
+            }
+          }
+          
+          const progressPercent = totalLessons > 0 
+            ? Math.round((completedLessons / totalLessons) * 100) 
+            : 0;
+          
+          return {
+            ...enrollment,
+            formation,
+            progress: {
+              completedLessons,
+              totalLessons,
+              percent: progressPercent
+            }
+          };
+        })
+      );
+      
+      res.json(enrollmentsWithProgress);
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get lesson progress for a module
+  app.get("/api/elearning/modules/:moduleId/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const moduleId = parseInt(req.params.moduleId);
+      const progress = await storage.getUserProgressForModule(user.id, moduleId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching module progress:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Update lesson progress (video watch position)
+  app.post("/api/elearning/lessons/:lessonId/progress", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const lessonId = parseInt(req.params.lessonId);
+      const { watchedPercent, lastPosition } = req.body;
+      
+      const lesson = await storage.getCourseLesson(lessonId);
+      if (!lesson) {
+        return res.status(404).json({ message: "Leçon non trouvée" });
+      }
+      
+      // Check enrollment
+      const module = await storage.getCourseModule(lesson.moduleId);
+      if (!module) {
+        return res.status(404).json({ message: "Module non trouvé" });
+      }
+      
+      const enrollment = await storage.getEnrollment(user.id, module.formationId);
+      if (!enrollment) {
+        return res.status(403).json({ message: "Non inscrit à cette formation" });
+      }
+      
+      // Mark as completed if watched >= 90%
+      const isCompleted = watchedPercent >= 90;
+      
+      const progress = await storage.updateLessonProgress(user.id, lessonId, {
+        watchedPercent,
+        lastPosition,
+        isCompleted,
+        completedAt: isCompleted ? new Date() : undefined
+      });
+      
+      res.json(progress);
+    } catch (error) {
+      console.error("Error updating lesson progress:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Get single lesson with progress
+  app.get("/api/elearning/lessons/:lessonId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const lessonId = parseInt(req.params.lessonId);
+      
+      const lesson = await storage.getCourseLesson(lessonId);
+      if (!lesson) {
+        return res.status(404).json({ message: "Leçon non trouvée" });
+      }
+      
+      // Check enrollment for non-free content
+      const module = await storage.getCourseModule(lesson.moduleId);
+      if (!module) {
+        return res.status(404).json({ message: "Module non trouvé" });
+      }
+      
+      if (!lesson.isFree) {
+        const enrollment = await storage.getEnrollment(user.id, module.formationId);
+        if (!enrollment || enrollment.status !== "active") {
+          return res.status(403).json({ 
+            message: "Contenu réservé aux étudiants inscrits",
+            requiresEnrollment: true
+          });
+        }
+      }
+      
+      const progress = await storage.getLessonProgress(user.id, lessonId);
+      
+      res.json({ 
+        ...lesson, 
+        progress: progress || { watchedPercent: 0, lastPosition: 0, isCompleted: false }
+      });
+    } catch (error) {
+      console.error("Error fetching lesson:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // ============ ADMIN: Course Module Management ============
+  
+  // Get all modules for a formation (admin)
+  app.get("/api/admin/formations/:formationId/modules", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const modules = await storage.getCourseModules(parseInt(req.params.formationId));
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching modules:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Create module
+  app.post("/api/admin/modules", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = insertCourseModuleSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Données invalides", errors: parsed.error.flatten() });
+      }
+      
+      const module = await storage.createCourseModule(parsed.data);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating module:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Update module
+  app.patch("/api/admin/modules/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const module = await storage.updateCourseModule(parseInt(req.params.id), req.body);
+      if (!module) {
+        return res.status(404).json({ message: "Module non trouvé" });
+      }
+      res.json(module);
+    } catch (error) {
+      console.error("Error updating module:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Delete module
+  app.delete("/api/admin/modules/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      await storage.deleteCourseModule(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting module:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // ============ ADMIN: Course Lesson Management ============
+  
+  // Get all lessons for a module (admin)
+  app.get("/api/admin/modules/:moduleId/lessons", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const lessons = await storage.getCourseLessons(parseInt(req.params.moduleId));
+      res.json(lessons);
+    } catch (error) {
+      console.error("Error fetching lessons:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Create lesson
+  app.post("/api/admin/lessons", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const parsed = insertCourseLessonSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Données invalides", errors: parsed.error.flatten() });
+      }
+      
+      const lesson = await storage.createCourseLesson(parsed.data);
+      res.status(201).json(lesson);
+    } catch (error) {
+      console.error("Error creating lesson:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Update lesson
+  app.patch("/api/admin/lessons/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const lesson = await storage.updateCourseLesson(parseInt(req.params.id), req.body);
+      if (!lesson) {
+        return res.status(404).json({ message: "Leçon non trouvée" });
+      }
+      res.json(lesson);
+    } catch (error) {
+      console.error("Error updating lesson:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Delete lesson
+  app.delete("/api/admin/lessons/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      await storage.deleteCourseLesson(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      res.status(500).json({ message: "Erreur serveur" });
     }
   });
   
