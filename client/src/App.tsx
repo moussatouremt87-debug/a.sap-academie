@@ -20,6 +20,8 @@ import Nurturing from "@/pages/nurturing";
 import MentionsLegales from "@/pages/mentions-legales";
 import StudentPortal from "@/pages/student-portal";
 import Inscription from "@/pages/inscription";
+import Documents from "@/pages/documents";
+import SharedDocument from "@/pages/shared-document";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +38,8 @@ function Router() {
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/espace-apprenant" component={StudentPortal} />
       <Route path="/inscription" component={Inscription} />
+      <Route path="/documents" component={Documents} />
+      <Route path="/shared/:token" component={SharedDocument} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -44,7 +48,7 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
-  const isCrmPage = location === "/crm" || location === "/nurturing";
+  const isCrmPage = location === "/crm" || location === "/nurturing" || location === "/documents";
   const isStudentPortal = location === "/espace-apprenant";
   const isInscriptionPage = location.startsWith("/inscription");
 

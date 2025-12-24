@@ -12,7 +12,7 @@ import crypto from "crypto";
 import { z } from "zod";
 import { getAvailableSlots, createGoogleMeetEvent } from "./googleCalendar";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { registerObjectStorageRoutes, objectStorageClient } from "./replit_integrations/object_storage";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -1199,6 +1199,44 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
     }
   });
   
+  // Hash password helper
+  function hashPassword(password: string): string {
+    return crypto.createHash("sha256").update(password + process.env.SESSION_SECRET).digest("hex");
+  }
+  
+  function verifyPassword(password: string, hash: string): boolean {
+    const inputHash = hashPassword(password);
+    return crypto.timingSafeEqual(Buffer.from(inputHash), Buffer.from(hash));
+  }
+  
+  // Rate limiting store for password attempts
+  const passwordAttempts = new Map<string, { count: number; lastAttempt: number }>();
+  
+  function checkRateLimit(token: string): boolean {
+    const now = Date.now();
+    const attempt = passwordAttempts.get(token);
+    
+    if (!attempt) {
+      passwordAttempts.set(token, { count: 1, lastAttempt: now });
+      return true;
+    }
+    
+    // Reset if more than 15 minutes passed
+    if (now - attempt.lastAttempt > 15 * 60 * 1000) {
+      passwordAttempts.set(token, { count: 1, lastAttempt: now });
+      return true;
+    }
+    
+    // Block if more than 5 attempts
+    if (attempt.count >= 5) {
+      return false;
+    }
+    
+    attempt.count++;
+    attempt.lastAttempt = now;
+    return true;
+  }
+  
   // Create share
   app.post("/api/documents/:id/shares", isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -1211,11 +1249,15 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
       
       const shareToken = crypto.randomBytes(32).toString("hex");
       
+      // Hash password if provided
+      const passwordHash = req.body.password ? hashPassword(req.body.password) : null;
+      
       const data = insertDocumentShareSchema.parse({
         ...req.body,
         documentId: doc.id,
         sharedById: user.id,
-        shareToken
+        shareToken,
+        password: passwordHash
       });
       
       const share = await storage.createDocumentShare(data);
@@ -1302,6 +1344,114 @@ Réponds en JSON avec les clés: summary, recommendation, timing, script`;
         permission: share.permission,
         hasPassword: !!share.password
       });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Verify password for protected share
+  app.post("/api/shared/:token/verify", async (req: Request, res: Response) => {
+    try {
+      const token = req.params.token;
+      
+      const share = await storage.getDocumentShareByToken(token);
+      
+      if (!share || !share.isActive) {
+        return res.status(404).json({ message: "Lien invalide" });
+      }
+      
+      // No password required - always valid
+      if (!share.password) {
+        return res.json({ valid: true });
+      }
+      
+      // Rate limiting only applies to password-protected shares
+      if (!checkRateLimit(token)) {
+        return res.status(429).json({ message: "Trop de tentatives. Réessayez dans 15 minutes." });
+      }
+      
+      const { password } = req.body;
+      if (!password || !verifyPassword(password, share.password)) {
+        return res.status(401).json({ message: "Mot de passe incorrect" });
+      }
+      
+      // Reset rate limit on success
+      passwordAttempts.delete(token);
+      
+      res.json({ valid: true });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  });
+  
+  // Download via share link with password verification - streams file directly
+  app.post("/api/shared/:token/download", async (req: Request, res: Response) => {
+    try {
+      const token = req.params.token;
+      
+      const share = await storage.getDocumentShareByToken(token);
+      
+      if (!share || !share.isActive) {
+        return res.status(404).json({ message: "Lien invalide" });
+      }
+      
+      // Check expiration
+      if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "Lien expiré" });
+      }
+      
+      // Check download limit
+      if (share.maxDownloads && (share.downloadCount || 0) >= share.maxDownloads) {
+        return res.status(410).json({ message: "Limite de téléchargements atteinte" });
+      }
+      
+      // Verify password if required (with rate limiting)
+      if (share.password) {
+        if (!checkRateLimit(token)) {
+          return res.status(429).json({ message: "Trop de tentatives. Réessayez dans 15 minutes." });
+        }
+        
+        const { password } = req.body;
+        if (!password || !verifyPassword(password, share.password)) {
+          return res.status(401).json({ message: "Mot de passe requis" });
+        }
+        
+        // Reset rate limit on success
+        passwordAttempts.delete(token);
+      }
+      
+      const doc = await storage.getDocument(share.documentId);
+      if (!doc) {
+        return res.status(404).json({ message: "Document non trouvé" });
+      }
+      
+      // Update download count
+      await storage.updateDocumentShare(share.id, {
+        downloadCount: (share.downloadCount || 0) + 1
+      });
+      
+      // Log download activity
+      await storage.createDocumentActivity({
+        documentId: doc.id,
+        action: "downloaded",
+        details: JSON.stringify({ via: "share_link", shareId: share.id }),
+        ipAddress: req.ip,
+        userAgent: req.headers["user-agent"]
+      });
+      
+      // Get file from object storage and stream to response
+      try {
+        const bucket = objectStorageClient.bucket(process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || "");
+        const file = bucket.file(doc.objectPath);
+        
+        res.setHeader("Content-Type", doc.mimeType);
+        res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(doc.name)}"`);
+        
+        await objectStorageClient.downloadObject(file, res);
+      } catch (downloadError) {
+        console.error("Error streaming file:", downloadError);
+        res.status(500).json({ message: "Erreur de téléchargement" });
+      }
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur" });
     }
