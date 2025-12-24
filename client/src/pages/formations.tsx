@@ -13,8 +13,8 @@ import type { Formation } from "@shared/schema";
 import remoteWorkImage from "@assets/Gemini_Generated_Image_ktbxeiktbxeiktbx_1766483159474.png";
 
 const categories = ["Tous", "FI", "MM", "SD", "ABAP", "Analytics", "Basis", "PP", "QM"];
-const levels = ["Tous", "Debutant", "Intermediaire", "Avance"];
-const formats = ["Tous", "Online", "Presentiel", "Hybride"];
+const levels = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
+const formats = ["Tous", "En ligne", "Présentiel", "Hybride"];
 
 const badgeVariants: Record<string, "default" | "secondary" | "outline"> = {
   Certifiant: "default",
@@ -23,15 +23,20 @@ const badgeVariants: Record<string, "default" | "secondary" | "outline"> = {
 };
 
 const levelTranslationKeys: Record<string, string> = {
-  Debutant: "formations.level.debutant",
-  Intermediaire: "formations.level.intermediaire",
-  Avance: "formations.level.avance",
+  "Débutant": "formations.level.debutant",
+  "Intermédiaire": "formations.level.intermediaire",
+  "Avancé": "formations.level.avance",
+  "Debutant": "formations.level.debutant",
+  "Intermediaire": "formations.level.intermediaire",
+  "Avance": "formations.level.avance",
 };
 
 const formatTranslationKeys: Record<string, string> = {
-  Online: "formations.format.online",
-  Presentiel: "formations.format.presentiel",
-  Hybride: "formations.format.hybride",
+  "En ligne": "formations.format.online",
+  "Présentiel": "formations.format.presentiel",
+  "Hybride": "formations.format.hybride",
+  "Online": "formations.format.online",
+  "Presentiel": "formations.format.presentiel",
 };
 
 const badgeTranslationKeys: Record<string, string> = {
@@ -129,6 +134,24 @@ export default function Formations() {
   const [format, setFormat] = useState("Tous");
   const [showFilters, setShowFilters] = useState(false);
 
+  const normalizeLevel = (lvl: string) => {
+    const map: Record<string, string> = {
+      "Débutant": "Débutant", "Debutant": "Débutant",
+      "Intermédiaire": "Intermédiaire", "Intermediaire": "Intermédiaire",
+      "Avancé": "Avancé", "Avance": "Avancé"
+    };
+    return map[lvl] || lvl;
+  };
+
+  const normalizeFormat = (fmt: string) => {
+    const map: Record<string, string> = {
+      "En ligne": "En ligne", "Online": "En ligne",
+      "Présentiel": "Présentiel", "Presentiel": "Présentiel",
+      "Hybride": "Hybride"
+    };
+    return map[fmt] || fmt;
+  };
+
   const { data: formations, isLoading } = useQuery<Formation[]>({
     queryKey: ["/api/formations"],
   });
@@ -136,8 +159,8 @@ export default function Formations() {
   const filteredFormations = formations?.filter((f) => {
     if (search && !f.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== "Tous" && f.category !== category) return false;
-    if (level !== "Tous" && f.level !== level) return false;
-    if (format !== "Tous" && f.format !== format) return false;
+    if (level !== "Tous" && normalizeLevel(f.level) !== level) return false;
+    if (format !== "Tous" && normalizeFormat(f.format) !== format) return false;
     return true;
   });
 
@@ -240,18 +263,22 @@ export default function Formations() {
             <div className={`flex flex-wrap items-center gap-2 ${showFilters ? "flex" : "hidden lg:flex"}`}>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-[130px]" data-testid="select-category">
-                  <SelectValue placeholder={t("formations.category")} />
+                  <SelectValue placeholder={t("formations.category")}>
+                    {category === "Tous" ? t("formations.allCategories") : category}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat === "Tous" ? t("formations.all") : cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>{cat === "Tous" ? t("formations.allCategories") : cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={level} onValueChange={setLevel}>
                 <SelectTrigger className="w-[140px]" data-testid="select-level">
-                  <SelectValue placeholder={t("formations.level")} />
+                  <SelectValue placeholder={t("formations.level")}>
+                    {getLevelLabel(level)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {levels.map((lvl) => (
@@ -262,7 +289,9 @@ export default function Formations() {
 
               <Select value={format} onValueChange={setFormat}>
                 <SelectTrigger className="w-[130px]" data-testid="select-format">
-                  <SelectValue placeholder={t("formations.format")} />
+                  <SelectValue placeholder={t("formations.format")}>
+                    {getFormatLabel(format)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {formats.map((fmt) => (

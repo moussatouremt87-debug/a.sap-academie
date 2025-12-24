@@ -75,6 +75,156 @@ const translations: Record<Language, Record<string, string>> = {
     "expertises.cat.business": "Business Services",
     "expertises.cat.business.desc": "Services d'appui business pour optimiser vos opérations et ressources.",
     
+    "expertises.service.conseil-strategique": "Conseil stratégique",
+    "expertises.service.conseil-strategique.desc": "Définition de la vision et de la feuille de route pour atteindre vos objectifs business. Analyse approfondie de votre contexte et recommandations actionnables.",
+    "expertises.service.conseil-strategique.benefits": "Vision claire,Alignement stratégique,Décisions éclairées",
+    "expertises.service.conseil-strategique.deliverables": "Diagnostic stratégique,Feuille de route,Plan d'action",
+    
+    "expertises.service.veille-strategique": "Étude & veille stratégique",
+    "expertises.service.veille-strategique.desc": "Surveillance continue de votre environnement concurrentiel et technologique. Identification des tendances et opportunités pour anticiper les évolutions du marché.",
+    "expertises.service.veille-strategique.benefits": "Anticipation des tendances,Avantage concurrentiel,Décisions éclairées",
+    "expertises.service.veille-strategique.deliverables": "Rapports de veille mensuels,Analyses sectorielles,Alertes personnalisées",
+    
+    "expertises.service.pilotage-transformation": "Pilotage transformation",
+    "expertises.service.pilotage-transformation.desc": "Gouvernance et suivi de vos programmes de transformation. Coordination des parties prenantes et gestion des risques pour garantir l'atteinte des objectifs.",
+    "expertises.service.pilotage-transformation.benefits": "Maîtrise des délais et budgets,Gestion proactive des risques,Visibilité en temps réel",
+    "expertises.service.pilotage-transformation.deliverables": "PMO dédié,Reporting projet,Comités de pilotage",
+    
+    "expertises.service.politiques-publiques": "Politiques publiques",
+    "expertises.service.politiques-publiques.desc": "Accompagnement des institutions publiques dans la conception et mise en oeuvre de leurs politiques. Expertise en transformation du secteur public.",
+    "expertises.service.politiques-publiques.benefits": "Conformité réglementaire,Optimisation des ressources,Impact mesurable",
+    "expertises.service.politiques-publiques.deliverables": "Études d'impact,Plans de mise en oeuvre,Évaluation des politiques",
+    
+    "expertises.service.conduite-changement": "Conduite du changement",
+    "expertises.service.conduite-changement.desc": "Accompagnement humain des transformations. Formation, communication et engagement des équipes pour assurer l'adoption des nouveaux processus.",
+    "expertises.service.conduite-changement.benefits": "Adhésion des équipes,Réduction des résistances,Adoption accélérée",
+    "expertises.service.conduite-changement.deliverables": "Plan de change management,Formations,Communication interne",
+    
+    "expertises.service.gestion-projet": "Gestion de projet",
+    "expertises.service.gestion-projet.desc": "Pilotage opérationnel de vos projets avec des méthodologies éprouvées (Agile, Prince2, PMI). Garantie de livraison dans les délais et budgets.",
+    "expertises.service.gestion-projet.benefits": "Respect des engagements,Qualité des livrables,Maîtrise des coûts",
+    "expertises.service.gestion-projet.deliverables": "Planning projet,Suivi d'avancement,Documentation projet",
+    
+    "expertises.service.schema-directeur-si": "Schéma Directeur SI",
+    "expertises.service.schema-directeur-si.desc": "Élaboration de votre feuille de route technologique sur 3-5 ans. Alignement du SI avec la stratégie métier et priorisation des investissements.",
+    "expertises.service.schema-directeur-si.benefits": "Vision SI claire,ROI optimisé,Évolutivité garantie",
+    "expertises.service.schema-directeur-si.deliverables": "SDSI complet,Trajectoire de transformation,Budget pluriannuel",
+    
+    "expertises.service.urbanisation-si": "Urbanisation SI",
+    "expertises.service.urbanisation-si.desc": "Rationalisation et optimisation de votre architecture applicative. Réduction de la dette technique et amélioration de l'agilité du SI.",
+    "expertises.service.urbanisation-si.benefits": "SI cohérent et agile,Coûts optimisés,Interopérabilité",
+    "expertises.service.urbanisation-si.deliverables": "Cartographie applicative,Plan d'urbanisation,Règles d'architecture",
+    
+    "expertises.service.amoa-amoe": "AMOA / AMOE",
+    "expertises.service.amoa-amoe.desc": "Assistance à maîtrise d'ouvrage et d'oeuvre pour vos projets SI. Interface entre métiers et IT, cadrage et suivi des réalisations.",
+    "expertises.service.amoa-amoe.benefits": "Besoins bien exprimés,Qualité des livrables,Coordination fluide",
+    "expertises.service.amoa-amoe.deliverables": "Cahier des charges,Recette fonctionnelle,Suivi projet",
+    
+    "expertises.service.transformation-digitale": "Transformation digitale",
+    "expertises.service.transformation-digitale.desc": "Accompagnement global dans votre transformation numérique. Digitalisation des processus, nouveaux business models et expérience client.",
+    "expertises.service.transformation-digitale.benefits": "Compétitivité accrue,Nouveaux revenus,Efficacité opérationnelle",
+    "expertises.service.transformation-digitale.deliverables": "Diagnostic digital,Roadmap transformation,POC et pilotes",
+    
+    "expertises.service.dematerialisation": "Dématérialisation",
+    "expertises.service.dematerialisation.desc": "Numérisation de vos documents et processus papier. Mise en place de workflows digitaux et archivage électronique.",
+    "expertises.service.dematerialisation.benefits": "Gain de temps,Réduction des coûts,Traçabilité",
+    "expertises.service.dematerialisation.deliverables": "Solution GED,Workflows dématérialisés,Archivage légal",
+    
+    "expertises.service.audit-si": "Audit SI",
+    "expertises.service.audit-si.desc": "Évaluation complète de votre système d'information. Identification des forces, faiblesses et recommandations d'amélioration.",
+    "expertises.service.audit-si.benefits": "Vision objective,Risques identifiés,Plan d'action clair",
+    "expertises.service.audit-si.deliverables": "Rapport d'audit,Analyse des écarts,Recommandations priorisées",
+    
+    "expertises.service.securite-reseaux": "Sécurité systèmes et réseaux",
+    "expertises.service.securite-reseaux.desc": "Protection de votre SI contre les cybermenaces. Audit de sécurité, mise en conformité et formation des équipes.",
+    "expertises.service.securite-reseaux.benefits": "Protection des données,Conformité RGPD,Résilience",
+    "expertises.service.securite-reseaux.deliverables": "Audit sécurité,PSSI,Tests d'intrusion",
+    
+    "expertises.service.infogerance-tma": "Infogérance & TMA",
+    "expertises.service.infogerance-tma.desc": "Prise en charge de l'exploitation et maintenance de votre SI. Support utilisateur et évolutions applicatives.",
+    "expertises.service.infogerance-tma.benefits": "Disponibilité garantie,Coûts maîtrisés,Focus métier",
+    "expertises.service.infogerance-tma.deliverables": "Contrat SLA,Support N1/N2/N3,Reporting mensuel",
+    
+    "expertises.service.hebergement": "Hébergement & infrastructures",
+    "expertises.service.hebergement.desc": "Solutions d'hébergement sécurisées et haute disponibilité. Cloud privé, public ou hybride selon vos besoins.",
+    "expertises.service.hebergement.benefits": "Haute disponibilité,Scalabilité,Sécurité renforcée",
+    "expertises.service.hebergement.deliverables": "Infrastructure cloud,PRA/PCA,Supervision 24/7",
+    
+    "expertises.service.sap-consulting": "SAP Consulting",
+    "expertises.service.sap-consulting.desc": "Conseil expert pour optimiser votre investissement SAP. Audit de votre existant, recommandations d'évolution et accompagnement stratégique.",
+    "expertises.service.sap-consulting.benefits": "ROI maximisé,Best practices SAP,Évolutivité",
+    "expertises.service.sap-consulting.deliverables": "Audit SAP,Roadmap évolution,Business case",
+    
+    "expertises.service.sap-integration": "SAP Integration",
+    "expertises.service.sap-integration.desc": "Implémentation complète de SAP dans votre organisation. Méthodologie SAP Activate, paramétrage et déploiement.",
+    "expertises.service.sap-integration.benefits": "Délais maîtrisés,Qualité garantie,Adoption réussie",
+    "expertises.service.sap-integration.deliverables": "Blueprint,Configuration,Formation utilisateurs",
+    
+    "expertises.service.vente-erp": "Vente solutions ERP",
+    "expertises.service.vente-erp.desc": "Conseil et vente de licences SAP et solutions ERP partenaires. Accompagnement dans le choix de la solution adaptée.",
+    "expertises.service.vente-erp.benefits": "Solution adaptée,Tarifs compétitifs,Support continu",
+    "expertises.service.vente-erp.deliverables": "Étude comparative,Proposition commerciale,Contrat licence",
+    
+    "expertises.service.parametrage": "Paramétrage & personnalisation",
+    "expertises.service.parametrage.desc": "Adaptation de SAP à vos processus métier spécifiques. Développements ABAP et configuration avancée.",
+    "expertises.service.parametrage.benefits": "SAP sur-mesure,Processus optimisés,Productivité accrue",
+    "expertises.service.parametrage.deliverables": "Spécifications,Développements,Documentation",
+    
+    "expertises.service.maintenance": "Maintenance & support",
+    "expertises.service.maintenance.desc": "Support continu de votre environnement SAP. Résolution des incidents, évolutions et optimisation des performances.",
+    "expertises.service.maintenance.benefits": "Continuité de service,Expertise dédiée,Évolutions continues",
+    "expertises.service.maintenance.deliverables": "Contrat support,Hotline,Évolutions mineures",
+    
+    "expertises.service.sap-training-entreprises": "SAP Training entreprises",
+    "expertises.service.sap-training-entreprises.desc": "Formations SAP sur-mesure pour vos équipes. Programmes adaptés à vos modules et processus métier.",
+    "expertises.service.sap-training-entreprises.benefits": "Équipes autonomes,Productivité accrue,Maîtrise de l'outil",
+    "expertises.service.sap-training-entreprises.deliverables": "Programme formation,Sessions pratiques,Certification",
+    
+    "expertises.service.formation-particuliers": "Formation SAP Particuliers",
+    "expertises.service.formation-particuliers.desc": "Programmes de reconversion professionnelle vers les métiers SAP. Formations certifiantes pour lancer votre carrière dans l'écosystème SAP.",
+    "expertises.service.formation-particuliers.benefits": "Certification officielle,Employabilité garantie,Accompagnement carrière",
+    "expertises.service.formation-particuliers.deliverables": "Formation complète,Préparation certification,Aide au placement",
+    
+    "expertises.service.formation-entreprises": "Formation SAP Entreprises",
+    "expertises.service.formation-entreprises.desc": "Formations SAP sur-mesure pour vos collaborateurs. Montée en compétences de vos équipes sur les modules SAP utilisés.",
+    "expertises.service.formation-entreprises.benefits": "Équipes performantes,ROI formation,Sessions flexibles",
+    "expertises.service.formation-entreprises.deliverables": "Programme adapté,Formation sur site,Suivi post-formation",
+    
+    "expertises.service.coaching": "Coaching & accompagnement",
+    "expertises.service.coaching.desc": "Accompagnement individuel pour consultants SAP juniors ou en transition. Mentoring par des experts seniors.",
+    "expertises.service.coaching.benefits": "Progression rapide,Expertise senior,Réseau professionnel",
+    "expertises.service.coaching.deliverables": "Sessions de coaching,Feedback personnalisé,Plan de développement",
+    
+    "expertises.service.allocation-ressources": "Allocation ressources",
+    "expertises.service.allocation-ressources.desc": "Mise à disposition de consultants experts pour vos projets. Flexibilité et expertise pour renforcer vos équipes.",
+    "expertises.service.allocation-ressources.benefits": "Flexibilité,Expertise immédiate,Coûts maîtrisés",
+    "expertises.service.allocation-ressources.deliverables": "Profils qualifiés,Contrat régie,Suivi mission",
+    
+    "expertises.service.recrutement-it": "Recrutement IT",
+    "expertises.service.recrutement-it.desc": "Service de recrutement spécialisé dans les profils IT et SAP. Sourcing, évaluation et accompagnement à l'intégration.",
+    "expertises.service.recrutement-it.benefits": "Candidats qualifiés,Gain de temps,Intégration réussie",
+    "expertises.service.recrutement-it.deliverables": "Shortlist candidats,Évaluation technique,Onboarding",
+    
+    "expertises.service.representation-commerciale": "Représentation commerciale",
+    "expertises.service.representation-commerciale.desc": "Représentation de votre entreprise sur le marché ouest-africain. Prospection, négociation et développement commercial.",
+    "expertises.service.representation-commerciale.benefits": "Accès au marché,Réseau local,Croissance accélérée",
+    "expertises.service.representation-commerciale.deliverables": "Stratégie commerciale,Actions de prospection,Reporting",
+    
+    "expertises.service.implantation-senegal": "Implantation au Sénégal",
+    "expertises.service.implantation-senegal.desc": "Accompagnement complet pour votre implantation au Sénégal. Aspects juridiques, administratifs et opérationnels.",
+    "expertises.service.implantation-senegal.benefits": "Implantation sécurisée,Connaissance locale,Démarrage rapide",
+    "expertises.service.implantation-senegal.deliverables": "Étude de marché,Création entité,Support opérationnel",
+    
+    "expertises.service.mise-en-relation": "Mise en relation business",
+    "expertises.service.mise-en-relation.desc": "Facilitation de partenariats et opportunités d'affaires. Accès à notre réseau de décideurs et entreprises.",
+    "expertises.service.mise-en-relation.benefits": "Opportunités business,Partenariats stratégiques,Crédibilité locale",
+    "expertises.service.mise-en-relation.deliverables": "Introductions qualifiées,Événements networking,Suivi opportunités",
+    
+    "expertises.service.materiel-it": "Achat/vente/location matériel IT",
+    "expertises.service.materiel-it.desc": "Fourniture de matériel informatique et équipements IT. Solutions d'achat, location ou leasing selon vos besoins.",
+    "expertises.service.materiel-it.benefits": "Tarifs négociés,Qualité garantie,Flexibilité financière",
+    "expertises.service.materiel-it.deliverables": "Catalogue produits,Devis compétitifs,Support technique",
+    
     "formations.title": "Formations SAP",
     "formations.subtitle": "Développez vos compétences avec nos formations certifiantes. Pour particuliers en reconversion ou professionnels en entreprise.",
     "formations.investment.title": "Investissez dans votre avenir",
@@ -87,7 +237,8 @@ const translations: Record<Language, Record<string, string>> = {
     "formations.level": "Niveau",
     "formations.price": "Prix",
     "formations.viewDetails": "Voir les détails",
-    "formations.all": "Toutes",
+    "formations.all": "Tous",
+    "formations.allCategories": "Toutes",
     "formations.search": "Rechercher une formation...",
     "formations.category": "Catégorie",
     "formations.format": "Format",
@@ -312,6 +463,156 @@ const translations: Record<Language, Record<string, string>> = {
     "expertises.cat.business": "Business Services",
     "expertises.cat.business.desc": "Business support services to optimize your operations and resources.",
     
+    "expertises.service.conseil-strategique": "Strategic Consulting",
+    "expertises.service.conseil-strategique.desc": "Defining the vision and roadmap to achieve your business objectives. In-depth analysis of your context and actionable recommendations.",
+    "expertises.service.conseil-strategique.benefits": "Clear vision,Strategic alignment,Informed decisions",
+    "expertises.service.conseil-strategique.deliverables": "Strategic diagnosis,Roadmap,Action plan",
+    
+    "expertises.service.veille-strategique": "Strategic Watch & Study",
+    "expertises.service.veille-strategique.desc": "Continuous monitoring of your competitive and technological environment. Identifying trends and opportunities to anticipate market changes.",
+    "expertises.service.veille-strategique.benefits": "Trend anticipation,Competitive advantage,Informed decisions",
+    "expertises.service.veille-strategique.deliverables": "Monthly watch reports,Sector analyses,Custom alerts",
+    
+    "expertises.service.pilotage-transformation": "Transformation Management",
+    "expertises.service.pilotage-transformation.desc": "Governance and monitoring of your transformation programs. Stakeholder coordination and risk management to ensure objectives are met.",
+    "expertises.service.pilotage-transformation.benefits": "Time and budget control,Proactive risk management,Real-time visibility",
+    "expertises.service.pilotage-transformation.deliverables": "Dedicated PMO,Project reporting,Steering committees",
+    
+    "expertises.service.politiques-publiques": "Public Policies",
+    "expertises.service.politiques-publiques.desc": "Supporting public institutions in designing and implementing their policies. Expertise in public sector transformation.",
+    "expertises.service.politiques-publiques.benefits": "Regulatory compliance,Resource optimization,Measurable impact",
+    "expertises.service.politiques-publiques.deliverables": "Impact studies,Implementation plans,Policy evaluation",
+    
+    "expertises.service.conduite-changement": "Change Management",
+    "expertises.service.conduite-changement.desc": "Human support for transformations. Training, communication and team engagement to ensure adoption of new processes.",
+    "expertises.service.conduite-changement.benefits": "Team buy-in,Reduced resistance,Accelerated adoption",
+    "expertises.service.conduite-changement.deliverables": "Change management plan,Training,Internal communication",
+    
+    "expertises.service.gestion-projet": "Project Management",
+    "expertises.service.gestion-projet.desc": "Operational management of your projects with proven methodologies (Agile, Prince2, PMI). Guaranteed delivery on time and within budget.",
+    "expertises.service.gestion-projet.benefits": "Commitment compliance,Deliverable quality,Cost control",
+    "expertises.service.gestion-projet.deliverables": "Project planning,Progress tracking,Project documentation",
+    
+    "expertises.service.schema-directeur-si": "IT Master Plan",
+    "expertises.service.schema-directeur-si.desc": "Developing your 3-5 year technology roadmap. Aligning IT with business strategy and prioritizing investments.",
+    "expertises.service.schema-directeur-si.benefits": "Clear IT vision,Optimized ROI,Guaranteed scalability",
+    "expertises.service.schema-directeur-si.deliverables": "Complete IT master plan,Transformation trajectory,Multi-year budget",
+    
+    "expertises.service.urbanisation-si": "IT Architecture",
+    "expertises.service.urbanisation-si.desc": "Rationalization and optimization of your application architecture. Reducing technical debt and improving IT agility.",
+    "expertises.service.urbanisation-si.benefits": "Coherent and agile IT,Optimized costs,Interoperability",
+    "expertises.service.urbanisation-si.deliverables": "Application mapping,Architecture plan,Architecture rules",
+    
+    "expertises.service.amoa-amoe": "Business/Technical Analysis",
+    "expertises.service.amoa-amoe.desc": "Business and technical project assistance. Interface between business and IT, scoping and monitoring of deliveries.",
+    "expertises.service.amoa-amoe.benefits": "Well-expressed needs,Quality deliverables,Smooth coordination",
+    "expertises.service.amoa-amoe.deliverables": "Specifications,Functional testing,Project monitoring",
+    
+    "expertises.service.transformation-digitale": "Digital Transformation",
+    "expertises.service.transformation-digitale.desc": "Comprehensive support for your digital transformation. Process digitalization, new business models and customer experience.",
+    "expertises.service.transformation-digitale.benefits": "Increased competitiveness,New revenues,Operational efficiency",
+    "expertises.service.transformation-digitale.deliverables": "Digital diagnosis,Transformation roadmap,POC and pilots",
+    
+    "expertises.service.dematerialisation": "Dematerialization",
+    "expertises.service.dematerialisation.desc": "Digitization of your documents and paper processes. Setting up digital workflows and electronic archiving.",
+    "expertises.service.dematerialisation.benefits": "Time savings,Cost reduction,Traceability",
+    "expertises.service.dematerialisation.deliverables": "DMS solution,Dematerialized workflows,Legal archiving",
+    
+    "expertises.service.audit-si": "IT Audit",
+    "expertises.service.audit-si.desc": "Complete evaluation of your information system. Identification of strengths, weaknesses and improvement recommendations.",
+    "expertises.service.audit-si.benefits": "Objective vision,Identified risks,Clear action plan",
+    "expertises.service.audit-si.deliverables": "Audit report,Gap analysis,Prioritized recommendations",
+    
+    "expertises.service.securite-reseaux": "Systems & Network Security",
+    "expertises.service.securite-reseaux.desc": "Protecting your IT against cyber threats. Security audit, compliance and team training.",
+    "expertises.service.securite-reseaux.benefits": "Data protection,GDPR compliance,Resilience",
+    "expertises.service.securite-reseaux.deliverables": "Security audit,Security policy,Penetration testing",
+    
+    "expertises.service.infogerance-tma": "IT Management & Support",
+    "expertises.service.infogerance-tma.desc": "Taking over the operation and maintenance of your IT. User support and application upgrades.",
+    "expertises.service.infogerance-tma.benefits": "Guaranteed availability,Controlled costs,Business focus",
+    "expertises.service.infogerance-tma.deliverables": "SLA contract,L1/L2/L3 support,Monthly reporting",
+    
+    "expertises.service.hebergement": "Hosting & Infrastructure",
+    "expertises.service.hebergement.desc": "Secure, high-availability hosting solutions. Private, public or hybrid cloud to meet your needs.",
+    "expertises.service.hebergement.benefits": "High availability,Scalability,Enhanced security",
+    "expertises.service.hebergement.deliverables": "Cloud infrastructure,DR/BC plan,24/7 monitoring",
+    
+    "expertises.service.sap-consulting": "SAP Consulting",
+    "expertises.service.sap-consulting.desc": "Expert advice to optimize your SAP investment. Audit of your existing system, evolution recommendations and strategic support.",
+    "expertises.service.sap-consulting.benefits": "Maximized ROI,SAP best practices,Scalability",
+    "expertises.service.sap-consulting.deliverables": "SAP audit,Evolution roadmap,Business case",
+    
+    "expertises.service.sap-integration": "SAP Integration",
+    "expertises.service.sap-integration.desc": "Complete SAP implementation in your organization. SAP Activate methodology, configuration and deployment.",
+    "expertises.service.sap-integration.benefits": "Controlled deadlines,Guaranteed quality,Successful adoption",
+    "expertises.service.sap-integration.deliverables": "Blueprint,Configuration,User training",
+    
+    "expertises.service.vente-erp": "ERP Solutions Sales",
+    "expertises.service.vente-erp.desc": "SAP license and partner ERP solutions consulting and sales. Support in choosing the right solution.",
+    "expertises.service.vente-erp.benefits": "Suitable solution,Competitive pricing,Ongoing support",
+    "expertises.service.vente-erp.deliverables": "Comparative study,Commercial proposal,License contract",
+    
+    "expertises.service.parametrage": "Configuration & Customization",
+    "expertises.service.parametrage.desc": "Adapting SAP to your specific business processes. ABAP developments and advanced configuration.",
+    "expertises.service.parametrage.benefits": "Custom SAP,Optimized processes,Increased productivity",
+    "expertises.service.parametrage.deliverables": "Specifications,Developments,Documentation",
+    
+    "expertises.service.maintenance": "Maintenance & Support",
+    "expertises.service.maintenance.desc": "Ongoing support for your SAP environment. Incident resolution, upgrades and performance optimization.",
+    "expertises.service.maintenance.benefits": "Service continuity,Dedicated expertise,Continuous improvements",
+    "expertises.service.maintenance.deliverables": "Support contract,Hotline,Minor upgrades",
+    
+    "expertises.service.sap-training-entreprises": "SAP Corporate Training",
+    "expertises.service.sap-training-entreprises.desc": "Customized SAP training for your teams. Programs tailored to your modules and business processes.",
+    "expertises.service.sap-training-entreprises.benefits": "Autonomous teams,Increased productivity,Tool mastery",
+    "expertises.service.sap-training-entreprises.deliverables": "Training program,Practical sessions,Certification",
+    
+    "expertises.service.formation-particuliers": "SAP Individual Training",
+    "expertises.service.formation-particuliers.desc": "Professional retraining programs for SAP careers. Certified training to launch your career in the SAP ecosystem.",
+    "expertises.service.formation-particuliers.benefits": "Official certification,Guaranteed employability,Career support",
+    "expertises.service.formation-particuliers.deliverables": "Complete training,Certification prep,Job placement assistance",
+    
+    "expertises.service.formation-entreprises": "SAP Corporate Training",
+    "expertises.service.formation-entreprises.desc": "Customized SAP training for your employees. Skill development for your teams on SAP modules in use.",
+    "expertises.service.formation-entreprises.benefits": "High-performing teams,Training ROI,Flexible sessions",
+    "expertises.service.formation-entreprises.deliverables": "Tailored program,On-site training,Post-training follow-up",
+    
+    "expertises.service.coaching": "Coaching & Support",
+    "expertises.service.coaching.desc": "Individual support for junior or transitioning SAP consultants. Mentoring by senior experts.",
+    "expertises.service.coaching.benefits": "Rapid progression,Senior expertise,Professional network",
+    "expertises.service.coaching.deliverables": "Coaching sessions,Personalized feedback,Development plan",
+    
+    "expertises.service.allocation-ressources": "Resource Allocation",
+    "expertises.service.allocation-ressources.desc": "Providing expert consultants for your projects. Flexibility and expertise to strengthen your teams.",
+    "expertises.service.allocation-ressources.benefits": "Flexibility,Immediate expertise,Controlled costs",
+    "expertises.service.allocation-ressources.deliverables": "Qualified profiles,Contract,Mission monitoring",
+    
+    "expertises.service.recrutement-it": "IT Recruitment",
+    "expertises.service.recrutement-it.desc": "Recruitment service specialized in IT and SAP profiles. Sourcing, evaluation and integration support.",
+    "expertises.service.recrutement-it.benefits": "Qualified candidates,Time savings,Successful integration",
+    "expertises.service.recrutement-it.deliverables": "Candidate shortlist,Technical evaluation,Onboarding",
+    
+    "expertises.service.representation-commerciale": "Commercial Representation",
+    "expertises.service.representation-commerciale.desc": "Representing your company in the West African market. Prospecting, negotiation and business development.",
+    "expertises.service.representation-commerciale.benefits": "Market access,Local network,Accelerated growth",
+    "expertises.service.representation-commerciale.deliverables": "Commercial strategy,Prospecting actions,Reporting",
+    
+    "expertises.service.implantation-senegal": "Senegal Establishment",
+    "expertises.service.implantation-senegal.desc": "Complete support for your establishment in Senegal. Legal, administrative and operational aspects.",
+    "expertises.service.implantation-senegal.benefits": "Secure establishment,Local knowledge,Quick start",
+    "expertises.service.implantation-senegal.deliverables": "Market study,Entity creation,Operational support",
+    
+    "expertises.service.mise-en-relation": "Business Connection",
+    "expertises.service.mise-en-relation.desc": "Facilitating partnerships and business opportunities. Access to our network of decision-makers and companies.",
+    "expertises.service.mise-en-relation.benefits": "Business opportunities,Strategic partnerships,Local credibility",
+    "expertises.service.mise-en-relation.deliverables": "Qualified introductions,Networking events,Opportunity tracking",
+    
+    "expertises.service.materiel-it": "IT Equipment Sales/Rental",
+    "expertises.service.materiel-it.desc": "Supply of IT hardware and equipment. Purchase, rental or leasing solutions to meet your needs.",
+    "expertises.service.materiel-it.benefits": "Negotiated prices,Guaranteed quality,Financial flexibility",
+    "expertises.service.materiel-it.deliverables": "Product catalog,Competitive quotes,Technical support",
+    
     "formations.title": "SAP Training",
     "formations.subtitle": "Develop your skills with our certified training programs. For individuals seeking career change or business professionals.",
     "formations.investment.title": "Invest in your future",
@@ -325,6 +626,7 @@ const translations: Record<Language, Record<string, string>> = {
     "formations.price": "Price",
     "formations.viewDetails": "View details",
     "formations.all": "All",
+    "formations.allCategories": "All",
     "formations.search": "Search for training...",
     "formations.category": "Category",
     "formations.format": "Format",
