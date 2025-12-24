@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
@@ -19,64 +19,97 @@ import {
   BookOpen,
   LogOut,
   User,
-  ArrowLeft
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/auth-utils";
-import type { Formation, CourseModule } from "@shared/schema";
+import { VideoPlayer } from "@/components/video-player";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-interface EnrichedEnrollment {
+interface CourseLesson {
+  id: number;
+  moduleId: number;
+  title: string;
+  description: string | null;
+  order: number;
+  videoUrl: string | null;
+  videoProvider: string;
+  thumbnailUrl: string | null;
+  durationSeconds: number | null;
+  isFree: boolean;
+  isPublished: boolean;
+  progress?: {
+    watchedPercent: number;
+    lastPosition: number;
+    isCompleted: boolean;
+  };
+}
+
+interface CourseModule {
+  id: number;
+  formationId: number;
+  title: string;
+  description: string | null;
+  order: number;
+  isPublished: boolean;
+  lessons: CourseLesson[];
+}
+
+interface EnrollmentWithProgress {
   id: number;
   userId: string;
   formationId: number;
   status: string;
   enrolledAt: string;
-  formation: Formation;
-  modules: CourseModule[];
+  formation: {
+    id: number;
+    title: string;
+    category: string;
+  };
   progress: {
-    completed: number;
-    total: number;
+    completedLessons: number;
+    totalLessons: number;
     percent: number;
   };
 }
 
-interface EnrichedModule extends CourseModule {
-  hasAccess: boolean;
-  progress: { completed: boolean; watchedSeconds: number } | null;
-  videoUrl: string | null;
-}
-
-interface CourseData {
-  formation: Formation;
-  enrollment: any;
-  modules: EnrichedModule[];
-  isEnrolled: boolean;
+interface CourseWithModules {
+  id: number;
+  title: string;
+  description: string | null;
+  category: string;
+  modules: CourseModule[];
 }
 
 export default function StudentPortal() {
   const { t } = useTranslation();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
-  const [selectedModule, setSelectedModule] = useState<EnrichedModule | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<CourseLesson | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set());
 
-  const { data: enrollments, isLoading: enrollmentsLoading } = useQuery<EnrichedEnrollment[]>({
-    queryKey: ["/api/student/enrollments"],
+  const { data: enrollments, isLoading: enrollmentsLoading } = useQuery<EnrollmentWithProgress[]>({
+    queryKey: ["/api/elearning/enrollments"],
     enabled: isAuthenticated,
   });
 
-  const { data: courseData, isLoading: courseLoading } = useQuery<CourseData>({
-    queryKey: ["/api/student/courses", selectedCourse],
-    enabled: !!selectedCourse && isAuthenticated,
+  const { data: courseData, isLoading: courseLoading } = useQuery<CourseWithModules>({
+    queryKey: ["/api/elearning/courses", selectedCourseId],
+    enabled: !!selectedCourseId,
   });
 
   const updateProgress = useMutation({
-    mutationFn: async (data: { moduleId: number; completed?: boolean; watchedSeconds?: number }) => {
-      return apiRequest("POST", "/api/student/progress", data);
+    mutationFn: async (data: { lessonId: number; watchedPercent: number; lastPosition: number }) => {
+      return apiRequest("POST", `/api/elearning/lessons/${data.lessonId}/progress`, {
+        watchedPercent: data.watchedPercent,
+        lastPosition: data.lastPosition
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/student/courses", selectedCourse] });
-      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/elearning/enrollments"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -84,6 +117,38 @@ export default function StudentPortal() {
       }
     }
   });
+
+  const toggleModule = (moduleId: number) => {
+    setExpandedModules(prev => {
+      const next = new Set(prev);
+      if (next.has(moduleId)) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (courseData?.modules && courseData.modules.length > 0) {
+      setExpandedModules(new Set([courseData.modules[0].id]));
+    }
+  }, [courseData]);
+
+  const handleLessonProgress = (lessonId: number, percent: number, position: number) => {
+    updateProgress.mutate({ lessonId, watchedPercent: percent, lastPosition: position });
+  };
+
+  const handleLessonComplete = (lessonId: number) => {
+    updateProgress.mutate({ lessonId, watchedPercent: 100, lastPosition: 0 });
+  };
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return null;
+    const mins = Math.floor(seconds / 60);
+    return `${mins} min`;
+  };
 
   if (authLoading) {
     return (
@@ -130,50 +195,14 @@ export default function StudentPortal() {
     );
   }
 
-  const renderVideoPlayer = (module: EnrichedModule) => {
-    if (!module.videoUrl) {
-      return (
-        <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-          <Lock className="h-12 w-12 text-muted-foreground" />
-        </div>
-      );
-    }
-
-    const getEmbedUrl = (url: string) => {
-      if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const videoId = url.includes("youtu.be") 
-          ? url.split("/").pop() 
-          : new URL(url).searchParams.get("v");
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-      if (url.includes("vimeo.com")) {
-        const videoId = url.split("/").pop();
-        return `https://player.vimeo.com/video/${videoId}`;
-      }
-      return url;
-    };
-
-    return (
-      <div className="aspect-video bg-black rounded-lg overflow-hidden">
-        <iframe
-          src={getEmbedUrl(module.videoUrl)}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title={module.title}
-        />
-      </div>
-    );
-  };
-
-  if (selectedCourse && courseData) {
+  if (selectedCourseId && courseData) {
     return (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
           <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
             <Button 
               variant="ghost" 
-              onClick={() => { setSelectedCourse(null); setSelectedModule(null); }}
+              onClick={() => { setSelectedCourseId(null); setSelectedLesson(null); }}
               data-testid="button-back-to-courses"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -198,52 +227,53 @@ export default function StudentPortal() {
         <div className="container mx-auto px-4 py-6">
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-4">
-              <h1 className="text-2xl font-bold">{courseData.formation.title}</h1>
+              <h1 className="text-2xl font-bold">{courseData.title}</h1>
               
-              {selectedModule ? (
+              {selectedLesson && selectedLesson.videoUrl ? (
                 <div className="space-y-4">
-                  {renderVideoPlayer(selectedModule)}
+                  <VideoPlayer
+                    videoUrl={selectedLesson.videoUrl}
+                    videoProvider={selectedLesson.videoProvider as "youtube" | "vimeo" | "custom"}
+                    title={selectedLesson.title}
+                    initialPosition={selectedLesson.progress?.lastPosition || 0}
+                    onProgress={(percent, position) => handleLessonProgress(selectedLesson.id, percent, position)}
+                    onComplete={() => handleLessonComplete(selectedLesson.id)}
+                  />
                   
                   <Card>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <CardTitle className="text-lg">{selectedModule.title}</CardTitle>
-                        {selectedModule.hasAccess && (
-                          <Button
-                            size="sm"
-                            variant={selectedModule.progress?.completed ? "secondary" : "default"}
-                            onClick={() => updateProgress.mutate({ 
-                              moduleId: selectedModule.id, 
-                              completed: !selectedModule.progress?.completed 
-                            })}
-                            disabled={updateProgress.isPending}
-                            data-testid={`button-complete-module-${selectedModule.id}`}
-                          >
-                            {selectedModule.progress?.completed ? (
-                              <>
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                {t("student.completed")}
-                              </>
-                            ) : (
-                              t("student.markComplete")
-                            )}
-                          </Button>
+                        <CardTitle className="text-lg">{selectedLesson.title}</CardTitle>
+                        {selectedLesson.progress?.isCompleted && (
+                          <Badge variant="secondary">
+                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            {t("student.completed")}
+                          </Badge>
                         )}
                       </div>
                     </CardHeader>
-                    {selectedModule.description && (
+                    {selectedLesson.description && (
                       <CardContent>
-                        <p className="text-muted-foreground">{selectedModule.description}</p>
+                        <p className="text-muted-foreground">{selectedLesson.description}</p>
                       </CardContent>
                     )}
                   </Card>
                 </div>
+              ) : selectedLesson ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">
+                      {t("student.noVideo")}
+                    </p>
+                  </CardContent>
+                </Card>
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      {t("student.selectModule")}
+                      {t("student.selectLesson")}
                     </p>
                   </CardContent>
                 </Card>
@@ -253,60 +283,90 @@ export default function StudentPortal() {
             <div>
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{t("student.modules")}</CardTitle>
+                  <CardTitle className="text-lg">{t("student.courseContent")}</CardTitle>
                   <CardDescription>
-                    {courseData.modules.filter(m => m.progress?.completed).length} / {courseData.modules.length} {t("student.completed")}
+                    {courseData.modules.length} {t("student.modules")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[400px]">
+                  <ScrollArea className="h-[500px]">
                     <div className="p-4 space-y-2">
                       {courseLoading ? (
-                        Array.from({ length: 4 }).map((_, i) => (
+                        Array.from({ length: 3 }).map((_, i) => (
                           <Skeleton key={i} className="h-16 w-full" />
                         ))
                       ) : (
-                        courseData.modules.map((module, index) => (
-                          <button
+                        courseData.modules.map((module, moduleIndex) => (
+                          <Collapsible 
                             key={module.id}
-                            onClick={() => setSelectedModule(module)}
-                            className={`w-full text-left p-3 rounded-lg hover-elevate transition-colors ${
-                              selectedModule?.id === module.id 
-                                ? "bg-accent text-accent-foreground" 
-                                : "bg-muted/50"
-                            }`}
-                            data-testid={`button-module-${module.id}`}
+                            open={expandedModules.has(module.id)}
+                            onOpenChange={() => toggleModule(module.id)}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 mt-0.5">
-                                {module.progress?.completed ? (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                ) : module.hasAccess ? (
-                                  <Play className="h-5 w-5" />
+                            <CollapsibleTrigger asChild>
+                              <button
+                                className="w-full text-left p-3 rounded-lg bg-muted/50 hover-elevate flex items-center gap-2"
+                                data-testid={`button-module-${module.id}`}
+                              >
+                                {expandedModules.has(module.id) ? (
+                                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
                                 ) : (
-                                  <Lock className="h-5 w-5 text-muted-foreground" />
+                                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
                                 )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">
-                                  {index + 1}. {module.title}
-                                </p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {module.duration && (
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {module.duration} min
-                                    </span>
-                                  )}
-                                  {module.isFree && !courseData.isEnrolled && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {t("student.free")}
-                                    </Badge>
-                                  )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">
+                                    {moduleIndex + 1}. {module.title}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {module.lessons.length} {t("student.lessons")}
+                                  </p>
                                 </div>
-                              </div>
-                            </div>
-                          </button>
+                              </button>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                              {module.lessons.map((lesson, lessonIndex) => (
+                                <button
+                                  key={lesson.id}
+                                  onClick={() => setSelectedLesson(lesson)}
+                                  className={`w-full text-left p-2 rounded-md transition-colors ${
+                                    selectedLesson?.id === lesson.id 
+                                      ? "bg-accent text-accent-foreground" 
+                                      : "hover-elevate"
+                                  }`}
+                                  data-testid={`button-lesson-${lesson.id}`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <div className="flex-shrink-0 mt-0.5">
+                                      {lesson.progress?.isCompleted ? (
+                                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                      ) : lesson.videoUrl ? (
+                                        <Play className="h-4 w-4" />
+                                      ) : (
+                                        <Lock className="h-4 w-4 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm truncate">
+                                        {moduleIndex + 1}.{lessonIndex + 1} {lesson.title}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        {formatDuration(lesson.durationSeconds) && (
+                                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            {formatDuration(lesson.durationSeconds)}
+                                          </span>
+                                        )}
+                                        {lesson.isFree && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            {t("student.free")}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </CollapsibleContent>
+                          </Collapsible>
                         ))
                       )}
                     </div>
@@ -393,7 +453,7 @@ export default function StudentPortal() {
                   <Card 
                     key={enrollment.id} 
                     className="hover-elevate cursor-pointer"
-                    onClick={() => setSelectedCourse(enrollment.formationId)}
+                    onClick={() => setSelectedCourseId(enrollment.formationId)}
                     data-testid={`card-enrollment-${enrollment.id}`}
                   >
                     <CardHeader>
@@ -412,9 +472,9 @@ export default function StudentPortal() {
                         </div>
                         <Progress value={enrollment.progress.percent} />
                       </div>
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between gap-2 text-sm flex-wrap">
                         <span className="text-muted-foreground">
-                          {enrollment.progress.completed} / {enrollment.progress.total} {t("student.modules").toLowerCase()}
+                          {enrollment.progress.completedLessons} / {enrollment.progress.totalLessons} {t("student.lessons")}
                         </span>
                         <Button size="sm" data-testid={`button-continue-${enrollment.id}`}>
                           <Play className="mr-2 h-4 w-4" />

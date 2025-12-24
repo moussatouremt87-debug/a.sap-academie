@@ -427,6 +427,10 @@ const translations: Record<Language, Record<string, string>> = {
     "student.hello": "Bonjour",
     "student.learner": "Apprenant",
     "student.free": "Gratuit",
+    "student.lessons": "leçons",
+    "student.courseContent": "Contenu du cours",
+    "student.selectLesson": "Sélectionnez une leçon pour commencer",
+    "student.noVideo": "Cette leçon n'a pas de vidéo disponible",
     
     "common.learnMore": "En savoir plus",
     "common.getStarted": "Commencer",
@@ -851,6 +855,10 @@ const translations: Record<Language, Record<string, string>> = {
     "student.hello": "Hello",
     "student.learner": "Learner",
     "student.free": "Free",
+    "student.lessons": "lessons",
+    "student.courseContent": "Course Content",
+    "student.selectLesson": "Select a lesson to start",
+    "student.noVideo": "This lesson has no video available",
     
     "common.learnMore": "Learn more",
     "common.getStarted": "Get started",
