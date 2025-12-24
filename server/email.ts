@@ -3,7 +3,12 @@ import { Resend } from 'resend';
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'A.SAP Consulting <noreply@asap-consulting.com>';
-const APP_URL = process.env.APP_URL || 'https://asap-consulting.com';
+
+// APP_URL should be configured in environment for production deployment
+const APP_URL = process.env.APP_URL;
+if (!APP_URL) {
+  console.warn('[Email] APP_URL not configured - email links may not work correctly');
+}
 
 interface EmailResult {
   success: boolean;
@@ -78,7 +83,7 @@ export async function sendEnrollmentConfirmation(
                 <li>Accéder aux ressources pédagogiques</li>
               </ul>
               
-              <a href="${APP_URL}/espace-apprenant" class="button">
+              <a href="${APP_URL || '#'}/espace-apprenant" class="button">
                 Accéder à mon espace
               </a>
               
