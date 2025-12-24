@@ -1,0 +1,89 @@
+Crée une vidéo ultra-réaliste de 8 secondes pour A.SAP Consulting, l'expert SAP du continent africain.
+CONCEPT : "DE LA STRATÉGIE À L'EXPERTISE"
+DURÉE TOTALE : 8 SECONDES
+[0-2s] OUVERTURE DYNAMIQUE
+
+Animation rapide : Continent africain en 3D qui s'illumine de points lumineux connectés
+Logo A.SAP Consulting apparaît au centre
+Texte overlay : "A.SAP Consulting - L'Expert SAP d'Afrique"
+
+[2-4s] TRANSFORMATION DIGITALE
+
+Split screen (écran divisé en 2) :
+
+GAUCHE : Consultant A.SAP Consulting en costume présentant dashboard SAP à client dans bureau moderne africain
+DROITE : Architecture SAP qui se déploie en 3D (modules FI-CO-MM-SD s'interconnectant)
+
+
+Texte animé : "Transformation Digitale"
+
+[4-6s] FORMATION EXPERT
+
+Transition fluide vers plateforme e-learning :
+
+Interface de visioconférence avec formateur dynamique
+6-8 vignettes de participants africains connectés et attentifs
+Écran partagé montrant interface SAP en cours
+
+
+Texte animé : "Formation Expert SAP"
+
+[6-8s] CALL TO ACTION PUISSANT
+
+Zoom out rapide montrant les deux aspects (conseil + formation) fusionnant
+Texte final en gros caractères :
+
+"A.SAP CONSULTING"
+"Votre Partenaire SAP en Afrique"
+
+
+Logo final avec tagline : "Expertise • Formation • Certification"
+
+STYLE VISUEL :
+
+Palette : Bleu SAP (#0070C0), orange africain, blanc
+Transitions ultra-rapides mais fluides (whoosh, fade)
+Typographie moderne, bold, très lisible
+Éclairage professionnel, ambiance premium
+
+ÉLÉMENTS TECHNIQUES :
+
+PAS DE VOIX-OFF (trop court)
+Musique : beat corporate énergique avec percussion afro (8 secondes exactes)
+Effets sonores : whoosh pour transitions, notification pour textes
+Rythme : 1 plan toutes les 2 secondes maximum
+Résolution : 4K, format 16:9
+Optimisé pour boucle (loop)
+
+MESSAGES TEXTE CLÉS (en superposition) :
+
+"A.SAP Consulting - Expert SAP Afrique"
+"Transformation Digitale"
+"Formation Expert SAP"
+"Votre Partenaire SAP"
+
+ATMOSPHÈRE :
+
+Ultra-dynamique et moderne
+Professionnelle et panafricaine
+Impactante malgré la brièveté
+
+
+ALTERNATIVE : SÉRIE DE 3 VIDÉOS DE 8 SECONDES
+VIDÉO 1 - "Transformation Digitale"
+
+[0-3s] Consultant A.SAP Consulting en réunion stratégique avec client
+[3-6s] Déploiement SAP en 3D (serveurs, modules, intégration)
+[6-8s] "A.SAP Consulting | Transformation Digitale SAP"
+
+VIDÉO 2 - "Formation Expert"
+
+[0-3s] Plateforme e-learning avec formateur et participants panafricains
+[3-6s] Modules SAP en action (FI, CO, MM, SD)
+[6-8s] "A.SAP Consulting | Devenez Expert SAP Certifié"
+
+VIDÉO 3 - "Votre Partenaire"
+
+[0-3s] Success stories : graphiques de performance, équipes satisfaites
+[3-6s] Carte Afrique avec réseau de clients
+[6-8s] "A.SAP Consulting | L'Expert SAP de l'Afrique"
