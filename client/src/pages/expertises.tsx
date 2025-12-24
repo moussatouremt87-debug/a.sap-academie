@@ -4,7 +4,7 @@ import {
   Lightbulb, Building, Monitor, GraduationCap, Briefcase,
   TrendingUp, Search, Users, FileText, Shield, Server, Database,
   Settings, Wrench, BookOpen, UserCheck, Handshake, MapPin, ShoppingCart,
-  Sparkles, ArrowRight, CheckCircle2, X, MessageCircle, Rocket
+  Sparkles, ArrowRight, CheckCircle2, MessageCircle, Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n";
 import transformationImage from "@assets/Gemini_Generated_Image_e2646ke2646ke264_(1)_1766483159475.png";
 
 interface Service {
@@ -35,11 +36,11 @@ interface ExpertiseCategory {
   services: Service[];
 }
 
-const expertiseCategories: ExpertiseCategory[] = [
+const getCategoryData = (t: (key: string) => string): ExpertiseCategory[] => [
   {
     id: "conseil",
-    title: "Conseil, Stratégie & Transformation",
-    description: "Accompagnement stratégique pour piloter vos transformations avec succès.",
+    title: t("expertises.cat.conseil"),
+    description: t("expertises.cat.conseil.desc"),
     icon: Lightbulb,
     color: "bg-primary/10 text-primary",
     services: [
@@ -89,8 +90,8 @@ const expertiseCategories: ExpertiseCategory[] = [
   },
   {
     id: "transformation-si",
-    title: "Transformation SI & Digitale",
-    description: "Modernisation complète de vos systèmes d'information et processus digitaux.",
+    title: t("expertises.cat.transformation-si"),
+    description: t("expertises.cat.transformation-si.desc"),
     icon: Monitor,
     color: "bg-gold/20 text-gold-foreground dark:text-gold",
     services: [
@@ -161,8 +162,8 @@ const expertiseCategories: ExpertiseCategory[] = [
   },
   {
     id: "sap",
-    title: "SAP, ERP & Solutions",
-    description: "Expertise complète SAP : intégration, personnalisation et support continu.",
+    title: t("expertises.cat.sap"),
+    description: t("expertises.cat.sap.desc"),
     icon: Database,
     color: "bg-primary/10 text-primary",
     services: [
@@ -212,8 +213,8 @@ const expertiseCategories: ExpertiseCategory[] = [
   },
   {
     id: "formation",
-    title: "Formation & Compétences",
-    description: "Programmes de formation SAP certifiants pour particuliers et entreprises.",
+    title: t("expertises.cat.formation"),
+    description: t("expertises.cat.formation.desc"),
     icon: GraduationCap,
     color: "bg-gold/20 text-gold-foreground dark:text-gold",
     services: [
@@ -242,8 +243,8 @@ const expertiseCategories: ExpertiseCategory[] = [
   },
   {
     id: "business",
-    title: "Business Services",
-    description: "Services d'appui business pour optimiser vos opérations et ressources.",
+    title: t("expertises.cat.business"),
+    description: t("expertises.cat.business.desc"),
     icon: Briefcase,
     color: "bg-primary/10 text-primary",
     services: [
@@ -294,18 +295,19 @@ const expertiseCategories: ExpertiseCategory[] = [
 ];
 
 export default function Expertises() {
+  const { t } = useTranslation();
   const [selectedService, setSelectedService] = useState<{category: ExpertiseCategory, service: Service} | null>(null);
+  const expertiseCategories = getCategoryData(t);
 
   return (
     <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-expertises-title">
-            Nos Expertises
+            {t("expertises.title")}
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/80">
-            Un éventail complet de services pour accompagner votre transformation digitale,
-            de la stratégie à l'implémentation.
+            {t("expertises.subtitle")}
           </p>
         </div>
       </section>
@@ -320,27 +322,25 @@ export default function Expertises() {
         <div className="absolute inset-0 bg-gradient-to-br from-dark-blue/90 via-primary/85 to-primary/90" />
         <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 bg-white/20 text-white border-white/30">Transformation Digitale</Badge>
+            <Badge className="mb-4 bg-white/20 text-white border-white/30">{t("expertises.transformation.badge")}</Badge>
             <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-              De l'<span className="text-gold">industrie</span> au <span className="text-gold">digital</span>
+              {t("expertises.transformation.title").split(" ").slice(0, 2).join(" ")} <span className="text-gold">{t("expertises.transformation.title").split(" ").slice(2, 3)}</span> {t("expertises.transformation.title").split(" ").slice(3, 4)} <span className="text-gold">{t("expertises.transformation.title").split(" ").slice(4).join(" ")}</span>
             </h2>
             <p className="mb-8 text-white/80 text-lg">
-              Nous accompagnons les entreprises dans leur transition vers le numérique, 
-              en préservant leur expertise métier tout en les dotant des outils 
-              et processus modernes pour rester compétitives.
+              {t("expertises.transformation.desc")}
             </p>
             <div className="flex flex-wrap justify-center gap-6 mb-8">
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Digitalisation des processus</span>
+                <span>{t("expertises.transformation.digitalization")}</span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Intégration SAP</span>
+                <span>{t("expertises.transformation.sap")}</span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Accompagnement au changement</span>
+                <span>{t("expertises.transformation.change")}</span>
               </div>
             </div>
           </div>
@@ -376,7 +376,7 @@ export default function Expertises() {
                         <div className="flex-1">
                           <span className="font-medium">{service.name}</span>
                           <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                            Cliquez pour en savoir plus
+                            {t("expertises.clickMore")}
                           </p>
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
@@ -388,7 +388,7 @@ export default function Expertises() {
                   <Link href="/agent">
                     <Button variant="outline" data-testid={`button-agent-${category.id}`}>
                       <MessageCircle className="mr-2 h-4 w-4" />
-                      Parler à un commercial
+                      {t("expertises.talkToSales")}
                     </Button>
                   </Link>
                 </div>
@@ -426,7 +426,7 @@ export default function Expertises() {
                 <div>
                   <h4 className="mb-3 font-semibold flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-primary" />
-                    Bénéfices clés
+                    {t("expertises.keyBenefits")}
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedService.service.benefits.map((benefit, i) => (
@@ -436,7 +436,7 @@ export default function Expertises() {
                 </div>
 
                 <div>
-                  <h4 className="mb-3 font-semibold">Livrables</h4>
+                  <h4 className="mb-3 font-semibold">{t("expertises.deliverables")}</h4>
                   <ul className="space-y-2">
                     {selectedService.service.deliverables.map((deliverable, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -451,7 +451,7 @@ export default function Expertises() {
                   <Link href="/agent" className="flex-1">
                     <Button className="w-full bg-gold text-gold-foreground" data-testid="button-dialog-agent">
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Discuter de ce service
+                      {t("expertises.discussService")}
                     </Button>
                   </Link>
                   <Button 
@@ -459,7 +459,7 @@ export default function Expertises() {
                     onClick={() => setSelectedService(null)}
                     data-testid="button-dialog-close"
                   >
-                    Fermer
+                    {t("expertises.close")}
                   </Button>
                 </div>
               </div>
@@ -471,16 +471,15 @@ export default function Expertises() {
       <section className="border-t bg-muted/30 py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-            Besoin d'un <span className="text-gold">accompagnement personnalisé</span> ?
+            {t("expertises.cta.title").split(" ").slice(0, -1).join(" ")} <span className="text-gold">{t("expertises.cta.title").split(" ").slice(-1)}</span>
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Nos commerciaux analysent votre besoin et vous orientent vers l'expertise adaptée.
-            Commencez la conversation pour découvrir nos solutions.
+            {t("expertises.cta.subtitle")}
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-expertises">
               <Rocket className="mr-2 h-5 w-5" />
-              Contacter un commercial
+              {t("expertises.cta.button")}
             </Button>
           </Link>
         </div>

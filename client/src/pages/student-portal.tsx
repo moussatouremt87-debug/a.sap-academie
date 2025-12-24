@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useTranslation } from "@/lib/i18n";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -53,6 +54,7 @@ interface CourseData {
 }
 
 export default function StudentPortal() {
+  const { t } = useTranslation();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
@@ -100,9 +102,9 @@ export default function StudentPortal() {
         <Card className="w-full max-w-md mx-4">
           <CardHeader className="text-center">
             <GraduationCap className="h-12 w-12 mx-auto text-primary mb-4" />
-            <CardTitle>Espace Apprenant</CardTitle>
+            <CardTitle>{t("student.title")}</CardTitle>
             <CardDescription>
-              Connectez-vous pour accéder à vos formations
+              {t("student.loginSubtitle")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -111,7 +113,7 @@ export default function StudentPortal() {
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
-              Se connecter
+              {t("student.login")}
             </Button>
             <Button 
               variant="outline" 
@@ -120,7 +122,7 @@ export default function StudentPortal() {
               data-testid="button-home"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'accueil
+              {t("student.backHome")}
             </Button>
           </CardContent>
         </Card>
@@ -175,7 +177,7 @@ export default function StudentPortal() {
               data-testid="button-back-to-courses"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Mes formations
+              {t("student.myCourses")}
             </Button>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground hidden sm:block">
@@ -220,10 +222,10 @@ export default function StudentPortal() {
                             {selectedModule.progress?.completed ? (
                               <>
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Terminé
+                                {t("student.completed")}
                               </>
                             ) : (
-                              "Marquer comme terminé"
+                              t("student.markComplete")
                             )}
                           </Button>
                         )}
@@ -241,7 +243,7 @@ export default function StudentPortal() {
                   <CardContent className="py-12 text-center">
                     <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground">
-                      Sélectionnez un module pour commencer
+                      {t("student.selectModule")}
                     </p>
                   </CardContent>
                 </Card>
@@ -251,9 +253,9 @@ export default function StudentPortal() {
             <div>
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Modules</CardTitle>
+                  <CardTitle className="text-lg">{t("student.modules")}</CardTitle>
                   <CardDescription>
-                    {courseData.modules.filter(m => m.progress?.completed).length} / {courseData.modules.length} terminés
+                    {courseData.modules.filter(m => m.progress?.completed).length} / {courseData.modules.length} {t("student.completed")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -298,7 +300,7 @@ export default function StudentPortal() {
                                   )}
                                   {module.isFree && !courseData.isEnrolled && (
                                     <Badge variant="secondary" className="text-xs">
-                                      Gratuit
+                                      {t("student.free")}
                                     </Badge>
                                   )}
                                 </div>
@@ -324,7 +326,7 @@ export default function StudentPortal() {
         <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <GraduationCap className="h-6 w-6 text-primary" />
-            <span className="font-semibold">Espace Apprenant</span>
+            <span className="font-semibold">{t("student.title")}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -333,7 +335,7 @@ export default function StudentPortal() {
               onClick={() => setLocation("/")}
               data-testid="button-back-site"
             >
-              Retour au site
+              {t("student.backToSite")}
             </Button>
             <Button 
               variant="ghost" 
@@ -354,7 +356,7 @@ export default function StudentPortal() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">
-              Bonjour, {user?.firstName || "Apprenant"}
+              {t("student.hello")}, {user?.firstName || t("student.learner")}
             </h1>
             <p className="text-muted-foreground">{user?.email}</p>
           </div>
@@ -363,10 +365,10 @@ export default function StudentPortal() {
         <Tabs defaultValue="courses" className="space-y-6">
           <TabsList>
             <TabsTrigger value="courses" data-testid="tab-courses">
-              Mes Formations
+              {t("student.myCourses")}
             </TabsTrigger>
             <TabsTrigger value="browse" data-testid="tab-browse">
-              Catalogue
+              {t("student.catalog")}
             </TabsTrigger>
           </TabsList>
 
@@ -405,18 +407,18 @@ export default function StudentPortal() {
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Progression</span>
+                          <span className="text-muted-foreground">{t("student.progress")}</span>
                           <span className="font-medium">{enrollment.progress.percent}%</span>
                         </div>
                         <Progress value={enrollment.progress.percent} />
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
-                          {enrollment.progress.completed} / {enrollment.progress.total} modules
+                          {enrollment.progress.completed} / {enrollment.progress.total} {t("student.modules").toLowerCase()}
                         </span>
                         <Button size="sm" data-testid={`button-continue-${enrollment.id}`}>
                           <Play className="mr-2 h-4 w-4" />
-                          Continuer
+                          {t("student.continue")}
                         </Button>
                       </div>
                     </CardContent>
@@ -427,12 +429,12 @@ export default function StudentPortal() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <GraduationCap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-semibold mb-2">Aucune formation</h3>
+                  <h3 className="font-semibold mb-2">{t("student.noEnrollments")}</h3>
                   <p className="text-muted-foreground mb-4">
-                    Vous n'êtes inscrit à aucune formation pour le moment.
+                    {t("student.noEnrollmentsDesc")}
                   </p>
                   <Button onClick={() => setLocation("/formations")} data-testid="button-browse-catalog">
-                    Découvrir le catalogue
+                    {t("student.browseCatalog")}
                   </Button>
                 </CardContent>
               </Card>
@@ -443,12 +445,12 @@ export default function StudentPortal() {
             <Card>
               <CardContent className="py-12 text-center">
                 <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="font-semibold mb-2">Catalogue des formations</h3>
+                <h3 className="font-semibold mb-2">{t("student.catalogTitle")}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Découvrez toutes nos formations SAP disponibles.
+                  {t("student.catalogDesc")}
                 </p>
                 <Button onClick={() => setLocation("/formations")} data-testid="button-view-catalog">
-                  Voir le catalogue
+                  {t("student.viewCatalog")}
                 </Button>
               </CardContent>
             </Card>

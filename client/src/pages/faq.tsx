@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n";
 import type { Faq } from "@shared/schema";
 
-const categoryLabels: Record<string, string> = {
-  General: "Général",
-  "Agent IA": "Contact",
-  Services: "Services & Projets",
-  SAP: "SAP & SI",
-  Formation: "Formation",
-  Pricing: "Tarifs",
-  RDV: "Rendez-vous",
+const categoryLabels: Record<string, { fr: string; en: string }> = {
+  General: { fr: "Général", en: "General" },
+  "Agent IA": { fr: "Contact", en: "Contact" },
+  Services: { fr: "Services & Projets", en: "Services & Projects" },
+  SAP: { fr: "SAP & SI", en: "SAP & IS" },
+  Formation: { fr: "Formation", en: "Training" },
+  Pricing: { fr: "Tarifs", en: "Pricing" },
+  RDV: { fr: "Rendez-vous", en: "Appointments" },
 };
 
 const categoryColors: Record<string, string> = {
@@ -43,6 +44,7 @@ function FaqSkeleton() {
 }
 
 export default function FaqPage() {
+  const { t, language } = useTranslation();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -53,9 +55,11 @@ export default function FaqPage() {
   const filteredFaqs = faqs?.filter((faq) => {
     if (search) {
       const searchLower = search.toLowerCase();
+      const question = language === "fr" ? faq.questionFr : (faq.questionEn || faq.questionFr);
+      const answer = language === "fr" ? faq.answerFr : (faq.answerEn || faq.answerFr);
       if (
-        !faq.questionFr.toLowerCase().includes(searchLower) &&
-        !faq.answerFr.toLowerCase().includes(searchLower)
+        !question.toLowerCase().includes(searchLower) &&
+        !answer.toLowerCase().includes(searchLower)
       ) {
         return false;
       }
@@ -66,7 +70,7 @@ export default function FaqPage() {
     return true;
   });
 
-  const categories = faqs ? [...new Set(faqs.map((f) => f.category))] : [];
+  const categories = faqs ? Array.from(new Set(faqs.map((f) => f.category))) : [];
 
   const groupedFaqs = filteredFaqs?.reduce((acc, faq) => {
     if (!acc[faq.category]) {
@@ -76,16 +80,23 @@ export default function FaqPage() {
     return acc;
   }, {} as Record<string, Faq[]>);
 
+  const getCategoryLabel = (cat: string) => {
+    const labels = categoryLabels[cat];
+    if (labels) {
+      return language === "fr" ? labels.fr : labels.en;
+    }
+    return cat;
+  };
+
   return (
     <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-faq-title">
-            Foire Aux Questions
+            {t("faq.title")}
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/80">
-            Trouvez rapidement les réponses à vos questions sur nos services,
-            formations et méthodes de travail.
+            {t("faq.subtitle")}
           </p>
         </div>
       </section>
@@ -97,7 +108,7 @@ export default function FaqPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher dans la FAQ..."
+                  placeholder={t("faq.search")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="h-12 pl-10 text-base"
@@ -113,7 +124,7 @@ export default function FaqPage() {
                 onClick={() => setSelectedCategory(null)}
                 data-testid="button-category-all"
               >
-                Toutes
+                {t("faq.all")}
               </Button>
               {categories.map((cat) => (
                 <Button
@@ -123,7 +134,7 @@ export default function FaqPage() {
                   onClick={() => setSelectedCategory(cat)}
                   data-testid={`button-category-${cat.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  {categoryLabels[cat] || cat}
+                  {getCategoryLabel(cat)}
                 </Button>
               ))}
             </div>
@@ -136,10 +147,10 @@ export default function FaqPage() {
                   <div key={category} data-testid={`faq-category-${category.toLowerCase().replace(/\s+/g, '-')}`}>
                     <div className="mb-4 flex items-center gap-2">
                       <Badge variant="secondary" className={categoryColors[category]}>
-                        {categoryLabels[category] || category}
+                        {getCategoryLabel(category)}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
-                        ({categoryFaqs.length} question{categoryFaqs.length > 1 ? "s" : ""})
+                        ({categoryFaqs.length} {t("faq.questions")})
                       </span>
                     </div>
                     <Accordion type="single" collapsible className="space-y-2">
@@ -151,23 +162,25 @@ export default function FaqPage() {
                           data-testid={`faq-item-${faq.id}`}
                         >
                           <AccordionTrigger className="text-left hover:no-underline">
-                            <span className="font-medium">{faq.questionFr}</span>
+                            <span className="font-medium">
+                              {language === "fr" ? faq.questionFr : (faq.questionEn || faq.questionFr)}
+                            </span>
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="pb-2 pt-1">
                               <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                {faq.answerFr}
+                                {language === "fr" ? faq.answerFr : (faq.answerEn || faq.answerFr)}
                               </p>
                               <div className="mt-4 flex items-center gap-4 border-t pt-4">
-                                <span className="text-sm text-muted-foreground">Cette réponse vous a-t-elle aidé ?</span>
+                                <span className="text-sm text-muted-foreground">{t("faq.helpful")}</span>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="sm">
                                     <ThumbsUp className="mr-1 h-4 w-4" />
-                                    Oui
+                                    {t("faq.yes")}
                                   </Button>
                                   <Button variant="ghost" size="sm">
                                     <ThumbsDown className="mr-1 h-4 w-4" />
-                                    Non
+                                    {t("faq.no")}
                                   </Button>
                                 </div>
                               </div>
@@ -182,15 +195,14 @@ export default function FaqPage() {
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <HelpCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold">Aucune question trouvée</h3>
+                <h3 className="mb-2 text-lg font-semibold">{t("faq.noResults")}</h3>
                 <p className="mb-6 max-w-md text-muted-foreground">
-                  Votre question ne figure pas dans notre FAQ ?
-                  Un commercial peut vous aider.
+                  {t("faq.noResultsDesc")}
                 </p>
                 <Link href="/agent">
                   <Button>
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Parler à un commercial
+                    {t("faq.talkToSales")}
                   </Button>
                 </Link>
               </div>
@@ -202,16 +214,15 @@ export default function FaqPage() {
       <section className="border-t bg-muted/30 py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-            Vous n'avez pas trouvé de <span className="text-gold">réponse</span> ?
+            {t("faq.cta.title").split(" ").slice(0, -1).join(" ")} <span className="text-gold">{t("faq.cta.title").split(" ").slice(-1)}</span>
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Nos commerciaux sont disponibles pour répondre à toutes vos questions
-            et vous accompagner dans vos démarches.
+            {t("faq.cta.subtitle")}
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-faq">
               <MessageCircle className="mr-2 h-5 w-5" />
-              Poser ma question à un commercial
+              {t("faq.cta.button")}
             </Button>
           </Link>
         </div>

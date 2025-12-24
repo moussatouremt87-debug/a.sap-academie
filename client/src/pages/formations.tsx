@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, Clock, BarChart3, Users, Award, Search, X, Home, Laptop, CheckCircle2, MessageCircle, Rocket, PlayCircle } from "lucide-react";
+import { Filter, Clock, BarChart3, Users, Award, Search, X, CheckCircle2, MessageCircle, Rocket, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation, type Language } from "@/lib/i18n";
 import type { Formation } from "@shared/schema";
 import remoteWorkImage from "@assets/Gemini_Generated_Image_ktbxeiktbxeiktbx_1766483159474.png";
 
@@ -15,23 +16,52 @@ const categories = ["Tous", "FI", "MM", "SD", "ABAP", "Analytics", "Basis", "PP"
 const levels = ["Tous", "Debutant", "Intermediaire", "Avance"];
 const formats = ["Tous", "Online", "Presentiel", "Hybride"];
 
-const badgeVariants: Record<string, { variant: "default" | "secondary" | "outline"; label: string }> = {
-  Certifiant: { variant: "default", label: "Certifiant" },
-  Nouveau: { variant: "secondary", label: "Nouveau" },
-  Populaire: { variant: "outline", label: "Populaire" },
+const badgeVariants: Record<string, "default" | "secondary" | "outline"> = {
+  Certifiant: "default",
+  Nouveau: "secondary",
+  Populaire: "outline",
 };
 
-function FormationCard({ formation }: { formation: Formation }) {
-  const badge = formation.badge ? badgeVariants[formation.badge] : null;
+const levelTranslationKeys: Record<string, string> = {
+  Debutant: "formations.level.debutant",
+  Intermediaire: "formations.level.intermediaire",
+  Avance: "formations.level.avance",
+};
+
+const formatTranslationKeys: Record<string, string> = {
+  Online: "formations.format.online",
+  Presentiel: "formations.format.presentiel",
+  Hybride: "formations.format.hybride",
+};
+
+const badgeTranslationKeys: Record<string, string> = {
+  Certifiant: "formations.badge.certifiant",
+  Nouveau: "formations.badge.nouveau",
+  Populaire: "formations.badge.populaire",
+};
+
+function FormationCard({ formation, t, language }: { formation: Formation; t: (key: string) => string; language: Language }) {
+  const badgeVariant = formation.badge ? badgeVariants[formation.badge] : null;
+  const badgeLabel = formation.badge && badgeTranslationKeys[formation.badge] 
+    ? t(badgeTranslationKeys[formation.badge]) 
+    : formation.badge;
+
+  const levelLabel = formation.level && levelTranslationKeys[formation.level]
+    ? t(levelTranslationKeys[formation.level])
+    : formation.level;
+
+  const formatLabel = formation.format && formatTranslationKeys[formation.format]
+    ? t(formatTranslationKeys[formation.format])
+    : formation.format;
   
   return (
     <Card className="flex flex-col h-full" data-testid={`card-formation-${formation.id}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2">{formation.title}</CardTitle>
-          {badge && (
-            <Badge variant={badge.variant} className="flex-shrink-0">
-              {badge.label}
+          {badgeVariant && badgeLabel && (
+            <Badge variant={badgeVariant} className="flex-shrink-0">
+              {badgeLabel}
             </Badge>
           )}
         </div>
@@ -42,11 +72,11 @@ function FormationCard({ formation }: { formation: Formation }) {
           </span>
           <span className="flex items-center gap-1">
             <BarChart3 className="h-3.5 w-3.5" />
-            {formation.level}
+            {levelLabel}
           </span>
           <span className="flex items-center gap-1">
             <Users className="h-3.5 w-3.5" />
-            {formation.format}
+            {formatLabel}
           </span>
         </div>
       </CardHeader>
@@ -58,10 +88,10 @@ function FormationCard({ formation }: { formation: Formation }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between gap-4 border-t pt-4">
         <div className="text-lg font-bold text-primary">
-          {(formation.price / 100).toLocaleString("fr-FR")} EUR
+          {(formation.price / 100).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} EUR
         </div>
         <Link href={`/formations/${formation.id}`}>
-          <Button size="sm" data-testid={`button-formation-${formation.id}`}>S'inscrire</Button>
+          <Button size="sm" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
         </Link>
       </CardFooter>
     </Card>
@@ -92,6 +122,7 @@ function FormationSkeleton() {
 }
 
 export default function Formations() {
+  const { t, language } = useTranslation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Tous");
   const [level, setLevel] = useState("Tous");
@@ -119,16 +150,25 @@ export default function Formations() {
     setFormat("Tous");
   };
 
+  const getLevelLabel = (lvl: string) => {
+    if (lvl === "Tous") return t("formations.all");
+    return levelTranslationKeys[lvl] ? t(levelTranslationKeys[lvl]) : lvl;
+  };
+
+  const getFormatLabel = (fmt: string) => {
+    if (fmt === "Tous") return t("formations.all");
+    return formatTranslationKeys[fmt] ? t(formatTranslationKeys[fmt]) : fmt;
+  };
+
   return (
     <div className="min-h-screen">
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-formations-title">
-            Formations SAP
+            {t("formations.title")}
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/80">
-            Développez vos compétences avec nos formations certifiantes.
-            Pour particuliers en reconversion ou professionnels en entreprise.
+            {t("formations.subtitle")}
           </p>
         </div>
       </section>
@@ -144,26 +184,26 @@ export default function Formations() {
               </div>
               <div className="text-center md:text-left">
                 <h2 className="text-xl font-bold mb-2" data-testid="text-roi-title">
-                  Investissez dans votre avenir
+                  {t("formations.investment.title")}
                 </h2>
                 <p className="text-muted-foreground mb-3">
-                  Un consultant SAP est l'un des profils IT les mieux rémunérés. Le TJM moyen :
+                  {t("formations.investment.subtitle")}
                 </p>
                 <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
                   <div className="bg-muted/50 rounded-lg px-4 py-2">
-                    <span className="font-semibold text-primary">Junior</span>
+                    <span className="font-semibold text-primary">{t("formations.junior")}</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">250-400€/jour</span>
+                    <span className="font-bold">250-400€{t("formations.perDay")}</span>
                   </div>
                   <div className="bg-muted/50 rounded-lg px-4 py-2">
-                    <span className="font-semibold text-primary">Confirmé</span>
+                    <span className="font-semibold text-primary">{t("formations.confirmed")}</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">450-650€/jour</span>
+                    <span className="font-bold">450-650€{t("formations.perDay")}</span>
                   </div>
                   <div className="bg-gold/10 rounded-lg px-4 py-2">
-                    <span className="font-semibold text-gold">Senior</span>
+                    <span className="font-semibold text-gold">{t("formations.senior")}</span>
                     <span className="text-muted-foreground mx-2">:</span>
-                    <span className="font-bold">700€+/jour</span>
+                    <span className="font-bold">700€+{t("formations.perDay")}</span>
                   </div>
                 </div>
               </div>
@@ -179,7 +219,7 @@ export default function Formations() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher une formation..."
+                  placeholder={t("formations.search")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -200,33 +240,33 @@ export default function Formations() {
             <div className={`flex flex-wrap items-center gap-2 ${showFilters ? "flex" : "hidden lg:flex"}`}>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-[130px]" data-testid="select-category">
-                  <SelectValue placeholder="Catégorie" />
+                  <SelectValue placeholder={t("formations.category")} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>{cat === "Tous" ? t("formations.all") : cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={level} onValueChange={setLevel}>
                 <SelectTrigger className="w-[140px]" data-testid="select-level">
-                  <SelectValue placeholder="Niveau" />
+                  <SelectValue placeholder={t("formations.level")} />
                 </SelectTrigger>
                 <SelectContent>
                   {levels.map((lvl) => (
-                    <SelectItem key={lvl} value={lvl}>{lvl}</SelectItem>
+                    <SelectItem key={lvl} value={lvl}>{getLevelLabel(lvl)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
               <Select value={format} onValueChange={setFormat}>
                 <SelectTrigger className="w-[130px]" data-testid="select-format">
-                  <SelectValue placeholder="Format" />
+                  <SelectValue placeholder={t("formations.format")} />
                 </SelectTrigger>
                 <SelectContent>
                   {formats.map((fmt) => (
-                    <SelectItem key={fmt} value={fmt}>{fmt}</SelectItem>
+                    <SelectItem key={fmt} value={fmt}>{getFormatLabel(fmt)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -234,7 +274,7 @@ export default function Formations() {
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} data-testid="button-clear-filters">
                   <X className="mr-1 h-4 w-4" />
-                  Effacer
+                  {t("formations.clear")}
                 </Button>
               )}
             </div>
@@ -249,30 +289,29 @@ export default function Formations() {
           ) : filteredFormations && filteredFormations.length > 0 ? (
             <>
               <p className="mb-6 text-sm text-muted-foreground" data-testid="text-formations-count">
-                {filteredFormations.length} formation{filteredFormations.length > 1 ? "s" : ""} trouvée{filteredFormations.length > 1 ? "s" : ""}
+                {filteredFormations.length} {t("formations.found")}
               </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredFormations.map((formation) => (
-                  <FormationCard key={formation.id} formation={formation} />
+                  <FormationCard key={formation.id} formation={formation} t={t} language={language} />
                 ))}
               </div>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Award className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">Aucune formation trouvée</h3>
+              <h3 className="mb-2 text-lg font-semibold">{t("formations.noResults")}</h3>
               <p className="mb-6 max-w-md text-muted-foreground">
-                Aucune formation ne correspond à vos critères.
-                Essayez de modifier vos filtres ou contactez un commercial.
+                {t("formations.noResultsDesc")}
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={clearFilters}>
-                  Effacer les filtres
+                  {t("formations.clearFilters")}
                 </Button>
                 <Link href="/agent">
                   <Button>
                     <MessageCircle className="mr-2 h-4 w-4" />
-                    Parler à un commercial
+                    {t("expertises.talkToSales")}
                   </Button>
                 </Link>
               </div>
@@ -291,33 +330,31 @@ export default function Formations() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/85 to-dark-blue/90" />
         <div className="container relative mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-4 bg-white/20 text-white border-white/30">Formation flexible</Badge>
+            <Badge className="mb-4 bg-white/20 text-white border-white/30">{t("formations.flexible.badge")}</Badge>
             <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-              Conciliez <span className="text-gold">vie pro et perso</span>
+              {t("formations.flexible.title").split(" ").slice(0, 1).join(" ")} <span className="text-gold">{t("formations.flexible.title").split(" ").slice(1).join(" ")}</span>
             </h2>
             <p className="mb-8 text-white/80 text-lg">
-              Nos formations SAP en ligne s'adaptent à votre emploi du temps. 
-              Que vous soyez parent, salarié ou entrepreneur, apprenez à votre rythme 
-              sans sacrifier votre vie personnelle.
+              {t("formations.flexible.desc")}
             </p>
             <div className="flex flex-wrap justify-center gap-6 mb-8">
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Accès 24h/24</span>
+                <span>{t("formations.flexible.access")}</span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Sessions en direct ou replay</span>
+                <span>{t("formations.flexible.sessions")}</span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="h-5 w-5 text-gold flex-shrink-0" />
-                <span>Accompagnement personnalisé</span>
+                <span>{t("formations.flexible.support")}</span>
               </div>
             </div>
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-remote">
                 <PlayCircle className="mr-2 h-5 w-5" />
-                En savoir plus
+                {t("common.learnMore")}
               </Button>
             </Link>
           </div>
@@ -327,16 +364,15 @@ export default function Formations() {
       <section className="border-t bg-muted/30 py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-            Besoin d'une formation <span className="text-gold">sur mesure</span> ?
+            {t("formations.cta.title").split(" ").slice(0, -2).join(" ")} <span className="text-gold">{t("formations.cta.title").split(" ").slice(-2).join(" ")}</span>
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-muted-foreground">
-            Nous créons des programmes adaptés aux besoins spécifiques de votre entreprise.
-            Contactez un commercial pour discuter de vos objectifs.
+            {t("formations.cta.subtitle")}
           </p>
           <Link href="/agent">
             <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-formations">
               <Rocket className="mr-2 h-5 w-5" />
-              Demander un programme personnalisé
+              {t("formations.cta.button")}
             </Button>
           </Link>
         </div>

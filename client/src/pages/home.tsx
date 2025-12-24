@@ -2,43 +2,46 @@ import { Link } from "wouter";
 import { ArrowRight, Sparkles, Cpu, Database, GraduationCap, FolderKanban, Compass, MessageCircle, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n";
 import heroVideo from "@assets/generated_videos/corporate_consulting_meeting_ambiance.mp4";
 
-const problemCards = [
-  {
-    icon: Cpu,
-    title: "Je veux transformer mon SI",
-    description: "Modernisez votre système d'information avec une approche structurée et agile.",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    icon: Database,
-    title: "Je veux déployer/optimiser SAP",
-    description: "Intégration, paramétrage et optimisation de votre environnement SAP.",
-    color: "bg-gold/20 text-gold-foreground dark:text-gold",
-  },
-  {
-    icon: GraduationCap,
-    title: "Je veux former mes équipes",
-    description: "Formations certifiantes SAP pour particuliers et entreprises.",
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    icon: FolderKanban,
-    title: "Je veux gérer un projet SI",
-    description: "Pilotage de bout en bout de vos projets de transformation digitale.",
-    color: "bg-gold/20 text-gold-foreground dark:text-gold",
-  },
-];
-
-const stats = [
-  { value: "15+", label: "Années d'expertise" },
-  { value: "200+", label: "Projets réalisés" },
-  { value: "50+", label: "Consultants certifiés" },
-  { value: "98%", label: "Clients satisfaits" },
-];
-
 export default function Home() {
+  const { t } = useTranslation();
+
+  const problemCards = [
+    {
+      icon: Cpu,
+      title: t("home.problem.si"),
+      description: t("home.problem.siDesc"),
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      icon: Database,
+      title: t("home.problem.sap"),
+      description: t("home.problem.sapDesc"),
+      color: "bg-gold/20 text-gold-foreground dark:text-gold",
+    },
+    {
+      icon: GraduationCap,
+      title: t("home.problem.training"),
+      description: t("home.problem.trainingDesc"),
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      icon: FolderKanban,
+      title: t("home.problem.project"),
+      description: t("home.problem.projectDesc"),
+      color: "bg-gold/20 text-gold-foreground dark:text-gold",
+    },
+  ];
+
+  const stats = [
+    { value: "15+", label: t("home.stats.years") },
+    { value: "200+", label: t("home.stats.projects") },
+    { value: "50+", label: t("home.stats.consultants") },
+    { value: "98%", label: t("home.stats.satisfaction") },
+  ];
+
   return (
     <div className="flex flex-col">
       <section className="relative overflow-hidden py-20 md:py-32">
@@ -56,23 +59,22 @@ export default function Home() {
         <div className="container relative mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl" data-testid="text-hero-title">
-              Conseil, Transformation <span className="text-gold">& SAP</span>
+              {t("home.hero.title").split("&")[0]}<span className="text-gold">& SAP</span>
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-testid="text-hero-description">
-              A.SAP Consulting accompagne votre transformation digitale avec expertise et innovation.
-              Nos commerciaux vous guident vers les solutions adaptées à vos besoins.
+              {t("home.hero.subtitle")}
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/agent">
                 <Button size="lg" className="bg-gold text-gold-foreground text-lg px-8" data-testid="button-hero-agent">
                   <MessageCircle className="mr-2 h-5 w-5" />
-                  Parler à un commercial
+                  {t("home.hero.cta")}
                 </Button>
               </Link>
               <Link href="/expertises">
                 <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white backdrop-blur-sm text-lg px-8" data-testid="button-hero-expertises">
                   <Compass className="mr-2 h-5 w-5" />
-                  Découvrir nos expertises
+                  {t("home.hero.discover")}
                 </Button>
               </Link>
             </div>
@@ -85,10 +87,10 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-3xl font-bold md:text-4xl" data-testid="text-problems-title">
-              Quel est votre <span className="text-primary">besoin</span> ?
+              {t("home.problems.title").split(" ").slice(0, -1).join(" ")} <span className="text-primary">{t("home.problems.title").split(" ").slice(-1)}</span>
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Sélectionnez votre problématique pour être orienté vers la meilleure solution.
+              {t("home.problems.subtitle")}
             </p>
           </div>
           <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
@@ -131,16 +133,15 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-              Prêt à <span className="text-gold">transformer</span> votre entreprise ?
+              {t("home.cta.title").split(" ").slice(0, -1).join(" ")} <span className="text-gold">{t("home.cta.title").split(" ").slice(-1)}</span>
             </h2>
             <p className="mb-8 text-muted-foreground">
-              Notre équipe commerciale est disponible pour analyser votre besoin et vous proposer
-              les meilleures solutions. Commencez la conversation dès maintenant.
+              {t("home.cta.subtitle")}
             </p>
             <Link href="/agent">
               <Button size="lg" className="bg-gold text-gold-foreground" data-testid="button-cta-bottom">
                 <Rocket className="mr-2 h-5 w-5" />
-                Contacter un commercial
+                {t("home.cta.button")}
               </Button>
             </Link>
           </div>
