@@ -173,21 +173,21 @@ export default function Home() {
           <p className="text-center text-sm text-muted-foreground mb-8 uppercase tracking-wider font-medium">
             {language === "fr" ? "Ils nous font confiance" : "They trust us"}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
-            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-sap">
-              <img src={logoSap} alt="SAP" className="max-h-12 max-w-full object-contain" />
+          <div className="flex flex-wrap items-center justify-center gap-12 md:gap-20">
+            <div data-testid="partner-sap">
+              <img src={logoSap} alt="SAP" className="h-10 w-auto object-contain" />
             </div>
-            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-atos">
-              <img src={logoAtos} alt="Atos" className="max-h-10 max-w-full object-contain" />
+            <div data-testid="partner-atos">
+              <img src={logoAtos} alt="Atos" className="h-8 w-auto object-contain" />
             </div>
-            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-dpworld">
-              <img src={logoDpWorld} alt="DP World" className="max-h-14 max-w-full object-contain" />
+            <div data-testid="partner-dpworld">
+              <img src={logoDpWorld} alt="DP World" className="h-12 w-auto object-contain" />
             </div>
-            <div className="h-16 w-40 flex items-center justify-center" data-testid="partner-pasteur">
-              <img src={logoPasteur} alt="Institut Pasteur de Dakar" className="max-h-14 max-w-full object-contain" />
+            <div data-testid="partner-pasteur">
+              <img src={logoPasteur} alt="Institut Pasteur de Dakar" className="h-12 w-auto object-contain" />
             </div>
-            <div className="h-16 w-40 flex items-center justify-center bg-background/50 rounded-lg px-4" data-testid="partner-guinee">
-              <span className="text-xs font-semibold text-muted-foreground text-center leading-tight">Ministère des Finances<br/>Guinée Conakry</span>
+            <div data-testid="partner-guinee">
+              <span className="text-sm font-medium text-muted-foreground text-center leading-tight">Ministère des Finances<br/>Guinée Conakry</span>
             </div>
           </div>
         </div>
