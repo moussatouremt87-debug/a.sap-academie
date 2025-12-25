@@ -13,6 +13,7 @@ import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
 import Formations from "@/pages/formations";
+import FormationDetail from "@/pages/formation-detail";
 import FaqPage from "@/pages/faq";
 import PourquoiAsap from "@/pages/pourquoi-asap";
 import CRM from "@/pages/crm";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/agent" component={Agent} />
       <Route path="/expertises" component={Expertises} />
       <Route path="/formations" component={Formations} />
+      <Route path="/formation/:id" component={FormationDetail} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
       <Route path="/crm" component={CRM} />

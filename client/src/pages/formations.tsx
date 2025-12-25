@@ -104,7 +104,7 @@ function FormationCard({ formation, t, language }: { formation: Formation; t: (k
             <Button size="sm" className="bg-gold text-gold-foreground" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
           </Link>
         </div>
-        <Link href={`/inscription?formation=${formation.id}`} className="w-full">
+        <Link href={`/formation/${formation.id}`} className="w-full">
           <Button variant="outline" size="sm" className="w-full" data-testid={`button-more-${formation.id}`}>
             {t("common.learnMore")}
           </Button>
