@@ -26,11 +26,11 @@ export function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">{t("footer.services")}</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/expertises" className="hover:text-foreground transition-colors">Conseil & Stratégie</Link></li>
-              <li><Link href="/expertises" className="hover:text-foreground transition-colors">Transformation SI</Link></li>
-              <li><Link href="/expertises" className="hover:text-foreground transition-colors">SAP Consulting</Link></li>
+              <li><Link href="/expertises#sap" className="hover:text-foreground transition-colors">SAP Consulting</Link></li>
               <li><Link href="/formations" className="hover:text-foreground transition-colors">{t("nav.formations")}</Link></li>
-              <li><Link href="/expertises" className="hover:text-foreground transition-colors">Business Services</Link></li>
+              <li><Link href="/expertises#conseil" className="hover:text-foreground transition-colors">Conseil & Assistance</Link></li>
+              <li><Link href="/expertises#transformation-si" className="hover:text-foreground transition-colors">Transformation SI</Link></li>
+              <li><Link href="/expertises#business" className="hover:text-foreground transition-colors">Business Services</Link></li>
             </ul>
           </div>
 

@@ -180,6 +180,11 @@ const translations: Record<Language, Record<string, string>> = {
     "expertises.service.sap-training-entreprises.benefits": "Équipes autonomes,Productivité accrue,Maîtrise de l'outil",
     "expertises.service.sap-training-entreprises.deliverables": "Programme formation,Sessions pratiques,Certification",
     
+    "expertises.service.amoa": "AMOA",
+    "expertises.service.amoa.desc": "Assistance à Maîtrise d'Ouvrage pour vos projets SAP. Interface entre métiers et équipes techniques, cadrage des besoins et suivi des réalisations.",
+    "expertises.service.amoa.benefits": "Besoins bien exprimés,Qualité des livrables,Coordination fluide",
+    "expertises.service.amoa.deliverables": "Cahier des charges,Recette fonctionnelle,Suivi projet SAP",
+    
     "expertises.service.formation-particuliers": "Formation SAP Particuliers",
     "expertises.service.formation-particuliers.desc": "Programmes de reconversion professionnelle vers les métiers SAP. Formations certifiantes pour lancer votre carrière dans l'écosystème SAP.",
     "expertises.service.formation-particuliers.benefits": "Certification officielle,Employabilité garantie,Accompagnement carrière",
@@ -607,6 +612,11 @@ const translations: Record<Language, Record<string, string>> = {
     "expertises.service.sap-training-entreprises.desc": "Customized SAP training for your teams. Programs tailored to your modules and business processes.",
     "expertises.service.sap-training-entreprises.benefits": "Autonomous teams,Increased productivity,Tool mastery",
     "expertises.service.sap-training-entreprises.deliverables": "Training program,Practical sessions,Certification",
+    
+    "expertises.service.amoa": "AMOA",
+    "expertises.service.amoa.desc": "Project Ownership Assistance for your SAP projects. Interface between business and technical teams, requirements scoping and delivery monitoring.",
+    "expertises.service.amoa.benefits": "Well-expressed needs,Quality deliverables,Smooth coordination",
+    "expertises.service.amoa.deliverables": "Specifications,Functional testing,SAP project monitoring",
     
     "expertises.service.formation-particuliers": "SAP Individual Training",
     "expertises.service.formation-particuliers.desc": "Professional retraining programs for SAP careers. Certified training to launch your career in the SAP ecosystem.",

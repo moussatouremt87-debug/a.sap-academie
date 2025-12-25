@@ -74,23 +74,23 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/90 to-dark-blue/95" />
         <div className="container relative mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
-            <h1 className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl" data-testid="text-hero-title">
-              {t("home.hero.title").split("&")[0]}<span className="text-gold">& SAP</span>
+            <h1 className="mb-4 text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl leading-tight" data-testid="text-hero-title">
+              Développement et intégration des systèmes d'information <span className="text-gold">SAP ERP</span>
             </h1>
-            <p className="mx-auto mb-10 max-w-2xl text-lg text-white/80 md:text-xl" data-testid="text-hero-description">
-              {t("home.hero.subtitle")}
+            <p className="mx-auto mb-8 max-w-2xl text-base text-white/90 sm:text-lg md:text-xl font-medium" data-testid="text-hero-description">
+              Conseil et Gestion de projet
             </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/agent">
-                <Button size="lg" className="bg-gold text-gold-foreground text-lg px-8" data-testid="button-hero-agent">
-                  <MessageCircle className="mr-2 h-5 w-5" />
-                  {t("home.hero.cta")}
-                </Button>
-              </Link>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Link href="/expertises">
-                <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white backdrop-blur-sm text-lg px-8" data-testid="button-hero-expertises">
+                <Button size="lg" variant="outline" className="border-white/30 bg-white/10 text-white backdrop-blur-sm text-base sm:text-lg px-6 sm:px-8 w-full sm:w-auto" data-testid="button-hero-expertises">
                   <Compass className="mr-2 h-5 w-5" />
                   {t("home.hero.discover")}
+                </Button>
+              </Link>
+              <Link href="/agent">
+                <Button size="lg" className="bg-gold text-gold-foreground text-base sm:text-lg px-6 sm:px-8 w-full sm:w-auto" data-testid="button-hero-agent">
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  {t("home.hero.cta")}
                 </Button>
               </Link>
             </div>
@@ -160,6 +160,41 @@ export default function Home() {
                 {t("home.cta.button")}
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t bg-muted/30 py-12">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-sm text-muted-foreground mb-8 uppercase tracking-wider font-medium">
+            {language === "fr" ? "Ils nous font confiance" : "They trust us"}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70 grayscale hover:grayscale-0 transition-all">
+            <div className="flex flex-col items-center gap-2" data-testid="partner-atos">
+              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
+                <span className="text-lg font-bold text-foreground">ATOS</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2" data-testid="partner-dpworld">
+              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
+                <span className="text-sm font-bold text-foreground">DP World</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2" data-testid="partner-sap">
+              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
+                <span className="text-xl font-bold text-primary">SAP</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2" data-testid="partner-pasteur">
+              <div className="h-12 w-32 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
+                <span className="text-xs font-semibold text-foreground text-center leading-tight">Institut Pasteur<br/>Dakar</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2" data-testid="partner-guinee">
+              <div className="h-12 w-36 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
+                <span className="text-xs font-semibold text-foreground text-center leading-tight">Min. Finances<br/>Guinée Conakry</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

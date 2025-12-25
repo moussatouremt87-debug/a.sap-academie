@@ -34,9 +34,22 @@ interface ExpertiseCategory {
 
 const categoryData: ExpertiseCategory[] = [
   {
+    id: "sap",
+    icon: Database,
+    color: "bg-primary/10 text-primary",
+    services: [
+      { id: "sap-consulting", icon: Lightbulb },
+      { id: "sap-integration", icon: Settings },
+      { id: "vente-erp", icon: ShoppingCart },
+      { id: "parametrage", icon: Wrench },
+      { id: "maintenance", icon: Wrench },
+      { id: "amoa", icon: Users },
+    ],
+  },
+  {
     id: "conseil",
     icon: Lightbulb,
-    color: "bg-primary/10 text-primary",
+    color: "bg-gold/20 text-gold-foreground dark:text-gold",
     services: [
       { id: "conseil-strategique", icon: TrendingUp },
       { id: "veille-strategique", icon: Search },
@@ -49,7 +62,7 @@ const categoryData: ExpertiseCategory[] = [
   {
     id: "transformation-si",
     icon: Monitor,
-    color: "bg-gold/20 text-gold-foreground dark:text-gold",
+    color: "bg-primary/10 text-primary",
     services: [
       { id: "schema-directeur-si", icon: FileText },
       { id: "urbanisation-si", icon: Building },
@@ -60,19 +73,6 @@ const categoryData: ExpertiseCategory[] = [
       { id: "securite-reseaux", icon: Shield },
       { id: "infogerance-tma", icon: Wrench },
       { id: "hebergement", icon: Server },
-    ],
-  },
-  {
-    id: "sap",
-    icon: Database,
-    color: "bg-primary/10 text-primary",
-    services: [
-      { id: "sap-consulting", icon: Lightbulb },
-      { id: "sap-integration", icon: Settings },
-      { id: "vente-erp", icon: ShoppingCart },
-      { id: "parametrage", icon: Wrench },
-      { id: "maintenance", icon: Wrench },
-      { id: "sap-training-entreprises", icon: GraduationCap },
     ],
   },
   {

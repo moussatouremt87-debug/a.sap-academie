@@ -92,15 +92,22 @@ function FormationCard({ formation, t, language }: { formation: Formation; t: (k
           {formation.category}
         </Badge>
       </CardContent>
-      <CardFooter className="flex items-center justify-between gap-4 border-t pt-4">
-        <div className="text-lg font-bold text-primary">
-          {t("formations.priceFrom")} {(formation.duration >= 90 
-            ? Math.round(formation.price / 3 / 1000 / 100) * 100 
-            : Math.round(formation.price / 656 / 100) * 100
-          ).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} €
+      <CardFooter className="flex flex-col gap-3 border-t pt-4">
+        <div className="flex items-center justify-between gap-4 w-full">
+          <div className="text-lg font-bold text-primary">
+            {t("formations.priceFrom")} {(formation.duration >= 90 
+              ? Math.round(formation.price / 3 / 1000 / 100) * 100 
+              : Math.round(formation.price / 656 / 100) * 100
+            ).toLocaleString(language === "fr" ? "fr-FR" : "en-US")} €
+          </div>
+          <Link href={`/inscription?formation=${formation.id}`}>
+            <Button size="sm" className="bg-gold text-gold-foreground" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
+          </Link>
         </div>
-        <Link href={`/inscription?formation=${formation.id}`}>
-          <Button size="sm" className="bg-gold text-gold-foreground" data-testid={`button-formation-${formation.id}`}>{t("formations.register")}</Button>
+        <Link href={`/inscription?formation=${formation.id}`} className="w-full">
+          <Button variant="outline" size="sm" className="w-full" data-testid={`button-more-${formation.id}`}>
+            {t("common.learnMore")}
+          </Button>
         </Link>
       </CardFooter>
     </Card>
@@ -208,7 +215,7 @@ export default function Formations() {
       <section className="bg-gradient-to-br from-primary via-primary to-dark-blue py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl lg:text-5xl" data-testid="text-formations-title">
-            {t("formations.title")}
+            SAP Training Enterprise Formation
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/80">
             {t("formations.subtitle")}
