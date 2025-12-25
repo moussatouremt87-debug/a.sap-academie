@@ -9,6 +9,7 @@ import logoAtos from "@assets/OIP_1766654334099.webp";
 import logoDpWorld from "@assets/OIP_(2)_1766654334098.webp";
 import logoSap from "@assets/sap-logo-269309_1766654334110.png";
 import logoPasteur from "@assets/OIP_(1)_1766654334097.webp";
+import logoMinistere from "@assets/logo_ministere_guinee.jpg";
 
 export default function Home() {
   const { t, language } = useTranslation();
@@ -187,7 +188,7 @@ export default function Home() {
               <img src={logoPasteur} alt="Institut Pasteur de Dakar" className="h-12 w-auto object-contain" />
             </div>
             <div data-testid="partner-guinee">
-              <span className="text-sm font-medium text-muted-foreground text-center leading-tight">Ministère des Finances<br/>Guinée Conakry</span>
+              <img src={logoMinistere} alt="Ministère des Finances Guinée Conakry" className="h-12 w-auto object-contain" />
             </div>
           </div>
         </div>
