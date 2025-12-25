@@ -5,6 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n";
 import { SEO, generateBreadcrumbSchema } from "@/components/seo";
 import heroVideo from "@assets/generated_videos/corporate_consulting_meeting_ambiance.mp4";
+import logoAtos from "@assets/OIP_1766654334099.webp";
+import logoDpWorld from "@assets/OIP_(2)_1766654334098.webp";
+import logoSap from "@assets/sap-logo-269309_1766654334110.png";
+import logoPasteur from "@assets/OIP_(1)_1766654334097.webp";
 
 export default function Home() {
   const { t, language } = useTranslation();
@@ -169,31 +173,21 @@ export default function Home() {
           <p className="text-center text-sm text-muted-foreground mb-8 uppercase tracking-wider font-medium">
             {language === "fr" ? "Ils nous font confiance" : "They trust us"}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70 grayscale hover:grayscale-0 transition-all">
-            <div className="flex flex-col items-center gap-2" data-testid="partner-atos">
-              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
-                <span className="text-lg font-bold text-foreground">ATOS</span>
-              </div>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-sap">
+              <img src={logoSap} alt="SAP" className="max-h-12 max-w-full object-contain" />
             </div>
-            <div className="flex flex-col items-center gap-2" data-testid="partner-dpworld">
-              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
-                <span className="text-sm font-bold text-foreground">DP World</span>
-              </div>
+            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-atos">
+              <img src={logoAtos} alt="Atos" className="max-h-10 max-w-full object-contain" />
             </div>
-            <div className="flex flex-col items-center gap-2" data-testid="partner-sap">
-              <div className="h-12 w-24 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
-                <span className="text-xl font-bold text-primary">SAP</span>
-              </div>
+            <div className="h-16 w-32 flex items-center justify-center" data-testid="partner-dpworld">
+              <img src={logoDpWorld} alt="DP World" className="max-h-14 max-w-full object-contain" />
             </div>
-            <div className="flex flex-col items-center gap-2" data-testid="partner-pasteur">
-              <div className="h-12 w-32 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
-                <span className="text-xs font-semibold text-foreground text-center leading-tight">Institut Pasteur<br/>Dakar</span>
-              </div>
+            <div className="h-16 w-40 flex items-center justify-center" data-testid="partner-pasteur">
+              <img src={logoPasteur} alt="Institut Pasteur de Dakar" className="max-h-14 max-w-full object-contain" />
             </div>
-            <div className="flex flex-col items-center gap-2" data-testid="partner-guinee">
-              <div className="h-12 w-36 flex items-center justify-center bg-background rounded-lg px-3 py-2 border">
-                <span className="text-xs font-semibold text-foreground text-center leading-tight">Min. Finances<br/>Guinée Conakry</span>
-              </div>
+            <div className="h-16 w-40 flex items-center justify-center bg-background/50 rounded-lg px-4" data-testid="partner-guinee">
+              <span className="text-xs font-semibold text-muted-foreground text-center leading-tight">Ministère des Finances<br/>Guinée Conakry</span>
             </div>
           </div>
         </div>
