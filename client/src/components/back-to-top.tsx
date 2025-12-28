@@ -31,7 +31,7 @@ export function BackToTop() {
       onClick={scrollToTop}
       size="icon"
       variant="outline"
-      className={`fixed bottom-6 right-6 z-50 shadow-lg transition-opacity duration-300 ${
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 shadow-lg transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
       aria-label="Retour en haut"
