@@ -26,6 +26,10 @@ import SharedDocument from "@/pages/shared-document";
 import AdminElearning from "@/pages/admin-elearning";
 import NotFound from "@/pages/not-found";
 
+// ── E-Learning Pages ────────────────────────────────
+import Courses from "@/pages/courses";
+import CourseDetail from "@/pages/course-detail";
+
 function Router() {
   return (
     <Switch>
@@ -45,6 +49,11 @@ function Router() {
       <Route path="/documents" component={Documents} />
       <Route path="/shared/:token" component={SharedDocument} />
       <Route path="/admin/elearning" component={AdminElearning} />
+
+      {/* ── E-Learning Routes ──────────────────── */}
+      <Route path="/courses" component={Courses} />
+      <Route path="/courses/:id" component={CourseDetail} />
+
       <Route component={NotFound} />
     </Switch>
   );
