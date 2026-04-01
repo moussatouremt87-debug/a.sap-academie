@@ -26,9 +26,17 @@ import SharedDocument from "@/pages/shared-document";
 import AdminElearning from "@/pages/admin-elearning";
 import NotFound from "@/pages/not-found";
 
-// ── E-Learning Pages ────────────────────────────────
+// ── E-Learning Pages (Sprint 1) ──────────────────────
 import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/course-detail";
+
+// ── E-Learning Pages (Sprint 2) ──────────────────────
+import Dashboard from "@/pages/dashboard";
+import LessonViewer from "@/pages/lesson-viewer";
+import Quiz from "@/pages/quiz";
+import Certificates from "@/pages/certificates";
+import Leaderboard from "@/pages/leaderboard";
+import Forum from "@/pages/forum";
 
 function Router() {
   return (
@@ -50,9 +58,17 @@ function Router() {
       <Route path="/shared/:token" component={SharedDocument} />
       <Route path="/admin/elearning" component={AdminElearning} />
 
-      {/* ── E-Learning Routes ──────────────────── */}
+      {/* ── E-Learning Routes (Sprint 1) ──────────── */}
       <Route path="/courses" component={Courses} />
       <Route path="/courses/:id" component={CourseDetail} />
+
+      {/* ── E-Learning Routes (Sprint 2) ──────────── */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/courses/:id/learn/:lessonId" component={LessonViewer} />
+      <Route path="/quiz/:quizId" component={Quiz} />
+      <Route path="/certificates" component={Certificates} />
+      <Route path="/leaderboard" component={Leaderboard} />
+      <Route path="/forum" component={Forum} />
 
       <Route component={NotFound} />
     </Switch>
@@ -66,7 +82,11 @@ function AppLayout() {
   const isStudentPortal = location === "/espace-apprenant" || location === "/e-learning";
   const isInscriptionPage = location.startsWith("/inscription");
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage) {
+  // E-learning pages with their own layout (no header/footer)
+  const isLessonViewer = location.match(/^\/courses\/\d+\/learn\/\d+/);
+  const isQuizPage = location.startsWith("/quiz/");
+
+  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage) {
     return (
       <>
         <Router />
