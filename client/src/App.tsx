@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { BackToTop } from "@/components/back-to-top";
+
 import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
@@ -37,6 +38,10 @@ import Quiz from "@/pages/quiz";
 import Certificates from "@/pages/certificates";
 import Leaderboard from "@/pages/leaderboard";
 import Forum from "@/pages/forum";
+
+// ── Agent IA & Modules SAP (Sprint 3) ────────────────
+import AiTutor from "@/pages/ai-tutor";
+import SapModules from "@/pages/sap-modules";
 
 function Router() {
   return (
@@ -70,6 +75,10 @@ function Router() {
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/forum" component={Forum} />
 
+      {/* ── Agent IA & Modules SAP (Sprint 3) ─────── */}
+      <Route path="/ai-tutor" component={AiTutor} />
+      <Route path="/sap-modules" component={SapModules} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -86,7 +95,10 @@ function AppLayout() {
   const isLessonViewer = location.match(/^\/courses\/\d+\/learn\/\d+/);
   const isQuizPage = location.startsWith("/quiz/");
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage) {
+  // AI Tutor has its own immersive layout
+  const isAiTutor = location === "/ai-tutor";
+
+  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor) {
     return (
       <>
         <Router />
