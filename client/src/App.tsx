@@ -9,7 +9,6 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { BackToTop } from "@/components/back-to-top";
-
 import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
@@ -42,6 +41,11 @@ import Forum from "@/pages/forum";
 // ── Agent IA & Modules SAP (Sprint 3) ────────────────
 import AiTutor from "@/pages/ai-tutor";
 import SapModules from "@/pages/sap-modules";
+
+// ── Growth Engine & Nurturing (Sprint 4) ─────────────
+import BlogPage from "@/pages/blog";
+import ParrainagePage from "@/pages/parrainage";
+import EmailNurturingPage from "@/pages/email-nurturing";
 
 function Router() {
   return (
@@ -79,6 +83,11 @@ function Router() {
       <Route path="/ai-tutor" component={AiTutor} />
       <Route path="/sap-modules" component={SapModules} />
 
+      {/* ── Growth Engine & Nurturing (Sprint 4) ──── */}
+      <Route path="/blog" component={BlogPage} />
+      <Route path="/parrainage" component={ParrainagePage} />
+      <Route path="/email-nurturing" component={EmailNurturingPage} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -98,7 +107,10 @@ function AppLayout() {
   // AI Tutor has its own immersive layout
   const isAiTutor = location === "/ai-tutor";
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor) {
+  // Email nurturing dashboard has its own layout
+  const isEmailNurturing = location === "/email-nurturing";
+
+  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing) {
     return (
       <>
         <Router />
