@@ -47,6 +47,11 @@ import BlogPage from "@/pages/blog";
 import ParrainagePage from "@/pages/parrainage";
 import EmailNurturingPage from "@/pages/email-nurturing";
 
+// ── Infrastructure & Sécurité (Sprint 5) ────────────
+import AuthPage from "@/pages/auth";
+import AdminDashboard from "@/pages/admin-dashboard";
+import SeoPerformancePage from "@/pages/seo-performance";
+
 function Router() {
   return (
     <Switch>
@@ -88,6 +93,12 @@ function Router() {
       <Route path="/parrainage" component={ParrainagePage} />
       <Route path="/email-nurturing" component={EmailNurturingPage} />
 
+
+      {/* ── Infrastructure & Sécurité (Sprint 5) ──────── */}
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/admin-dashboard" component={AdminDashboard} />
+      <Route path="/seo-performance" component={SeoPerformancePage} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -109,8 +120,11 @@ function AppLayout() {
 
   // Email nurturing dashboard has its own layout
   const isEmailNurturing = location === "/email-nurturing";
+  const isAuthPage = location === "/auth";
+  const isAdminDashboard = location === "/admin-dashboard";
+  const isSeoPerformance = location === "/seo-performance";
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing) {
+  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing || isAuthPage || isAdminDashboard || isSeoPerformance) {
     return (
       <>
         <Router />
