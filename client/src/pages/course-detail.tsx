@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   MessageCircle,
   Linkedin,
-  MessageCircleShare,
+  Share2,
 } from "lucide-react";
 import { SEO } from "@/components/seo";
 import { Card, CardContent } from "@/components/ui/card";
@@ -432,7 +432,7 @@ export default function CourseDetailPage() {
                         size="sm"
                         className="flex-1 flex items-center justify-center gap-2"
                       >
-                        <MessageCircleShare className="w-4 h-4" />
+                        <Share2 className="w-4 h-4" />
                         <span className="text-xs">WhatsApp</span>
                       </Button>
                     </div>
