@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import {
   BookOpen,
   Trophy,
@@ -72,7 +73,7 @@ interface DashboardData {
 /* ────────────────────── mock data ────────────────────────── */
 const MOCK_DASHBOARD: DashboardData = {
   user: {
-    name: "Moussa",
+    name: userName,
     xp: 2450,
     level: 8,
     streak: 12,
@@ -290,6 +291,25 @@ function XpRow({ event }: { event: XpEvent }) {
    DASHBOARD PAGE
    ════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
+  const { user, profile, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!loading && !user) navigate("/auth");
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const userName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Apprenant";
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
