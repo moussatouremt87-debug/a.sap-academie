@@ -42,7 +42,7 @@ export default function FormationDetail() {
   const { data: formation, isLoading } = useQuery<Formation>({
     queryKey: ["/api/formations"],
     enabled: !!params?.id,
-    select: (data) => Array.isArray(data) ? data.find((f) => f.id === Number(params?.id)) : data,
+    select: (data) => Array.isArray(data) ? data.find((f) => String(f.id) === String(params?.id)) : data,
   });
 
   if (isLoading) {
