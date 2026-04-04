@@ -1,1446 +1,686 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
-import {
-  Users, UserPlus, Calendar, Clock, Phone, Mail,
-  Building2, AlertCircle, CheckCircle2, ArrowRight,
-  Filter, Search, Sparkles, MessageSquare, FileText,
-  RefreshCw, ChevronDown, ChevronUp, LogOut, Loader2,
-  LayoutDashboard, Kanban, BarChart3, Settings, X,
-  TrendingUp, Target, Zap, Copy, PhoneCall, MailOpen,
-  CalendarCheck, ChevronRight, MoreHorizontal, Eye
-} from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useLanguage } from "../lib/i18n";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import type { Lead, LeadActivity, Conversation, Message } from "@shared/schema";
+import {
+  Users, UserPlus, TrendingUp, Phone, Mail, Building2,
+  Search, Filter, ChevronRight, Clock, Star, MessageSquare,
+  BarChart3, Target, ArrowUpRight, ArrowDownRight, Plus,
+  Edit2, Trash2, X, Check, Send,
+} from "lucide-react";
+import {
+  getLeads, createLead, updateLead, deleteLead,
+  getConversations, addConversation,
+  getCrmStats,
+  type Lead, type Conversation,
+} from "../lib/supabaseClient";
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; iconColor: string }> = {
-  new: { 
-    label: "Nouveau", 
-    color: "text-blue-700 dark:text-blue-300",
-    bgColor: "bg-blue-50 dark:bg-blue-950/50",
-    iconColor: "text-blue-500"
-  },
-  to_follow_up: { 
-    label: "A relancer", 
-    color: "text-amber-700 dark:text-amber-300",
-    bgColor: "bg-amber-50 dark:bg-amber-950/50",
-    iconColor: "text-amber-500"
-  },
-  in_progress: { 
-    label: "En cours", 
-    color: "text-purple-700 dark:text-purple-300",
-    bgColor: "bg-purple-50 dark:bg-purple-950/50",
-    iconColor: "text-purple-500"
-  },
-  qualified: { 
-    label: "Qualifié", 
-    color: "text-emerald-700 dark:text-emerald-300",
-    bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
-    iconColor: "text-emerald-500"
-  },
-  converted: { 
-    label: "Converti", 
-    color: "text-green-700 dark:text-green-300",
-    bgColor: "bg-green-50 dark:bg-green-950/50",
-    iconColor: "text-green-500"
-  },
-  lost: { 
-    label: "Perdu", 
-    color: "text-gray-700 dark:text-gray-300",
-    bgColor: "bg-gray-50 dark:bg-gray-950/50",
-    iconColor: "text-gray-500"
-  },
+const statusColors: Record<string, string> = {
+  Nouveau: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  contact: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  qualified: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  converted: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
 };
 
-const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
-  low: { label: "Basse", color: "text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
-  medium: { label: "Moyenne", color: "text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
-  high: { label: "Haute", color: "text-orange-600 dark:text-orange-400", dot: "bg-orange-500" },
-  urgent: { label: "Urgente", color: "text-red-600 dark:text-red-400", dot: "bg-red-500" },
+const statusLabels: Record<string, { fr: string; en: string }> = {
+  Nouveau: { fr: "Nouveau", en: "New" },
+  contact: { fr: "Contacté", en: "Contacted" },
+  qualified: { fr: "Qualifié", en: "Qualified" },
+  converted: { fr: "Converti", en: "Converted" },
 };
 
-const sourceLabels: Record<string, string> = {
-  "agent-ia": "Commercial IA",
-  "formation": "Formation",
-  "contact": "Contact direct",
-  "google_meet_booking": "RDV Google Meet",
+const priorityColors: Record<string, string> = {
+  high: "text-red-500",
+  medium: "text-yellow-500",
+  low: "text-gray-400",
 };
 
-interface AISuggestions {
-  summary: string;
-  recommendation: string;
-  timing: string;
-  script: string;
-}
-
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  trend, 
-  color = "primary" 
-}: { 
-  title: string; 
-  value: number; 
-  subtitle: string; 
-  icon: any;
-  trend?: number;
-  color?: "primary" | "blue" | "amber" | "emerald" | "purple";
-}) {
-  const colorClasses = {
-    primary: "from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10",
-    blue: "from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/10",
-    amber: "from-amber-500/10 to-amber-500/5 dark:from-amber-500/20 dark:to-amber-500/10",
-    emerald: "from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/10",
-    purple: "from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/10",
-  };
-  
-  const iconColors = {
-    primary: "text-primary",
-    blue: "text-blue-600 dark:text-blue-400",
-    amber: "text-amber-600 dark:text-amber-400",
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    purple: "text-purple-600 dark:text-purple-400",
-  };
-
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
-            <div className="flex items-center gap-2 mt-2">
-              {trend !== undefined && (
-                <span className={`text-xs font-medium flex items-center gap-0.5 ${trend >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  <TrendingUp className={`h-3 w-3 ${trend < 0 ? 'rotate-180' : ''}`} />
-                  {Math.abs(trend)}%
-                </span>
-              )}
-              <span className="text-xs text-muted-foreground">{subtitle}</span>
-            </div>
-          </div>
-          <div className={`rounded-xl p-3 bg-gradient-to-br ${colorClasses[color]}`}>
-            <Icon className={`h-5 w-5 ${iconColors[color]}`} />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function LeadCard({ 
-  lead, 
-  onClick,
-  compact = false
-}: { 
-  lead: Lead; 
-  onClick: () => void;
-  compact?: boolean;
-}) {
-  const status = statusConfig[lead.status || "new"];
-  const priority = priorityConfig[lead.priority || "medium"];
-  
-  return (
-    <div 
-      className="group p-4 rounded-lg border bg-card hover-elevate cursor-pointer transition-all"
-      onClick={onClick}
-      data-testid={`card-lead-${lead.id}`}
-    >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-10 w-10 shrink-0">
-            <AvatarFallback className="bg-primary/10 text-primary font-medium">
-              {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="font-semibold truncate">{lead.name}</p>
-            {lead.company && (
-              <p className="text-sm text-muted-foreground truncate">{lead.company}</p>
-            )}
-          </div>
-        </div>
-        <Button 
-          size="icon" 
-          variant="ghost" 
-          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-          onClick={(e) => { e.stopPropagation(); onClick(); }}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-        <Mail className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{lead.email}</span>
-      </div>
-      
-      {!compact && lead.phone && (
-        <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-          <Phone className="h-3.5 w-3.5 shrink-0" />
-          <span>{lead.phone}</span>
-        </div>
-      )}
-      
-      <div className="flex items-center justify-between gap-2 pt-3 border-t">
-        <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${status.bgColor} ${status.color}`}>
-            {status.label}
-          </span>
-          <span className="flex items-center gap-1.5 text-xs">
-            <span className={`h-2 w-2 rounded-full ${priority.dot}`} />
-            <span className={priority.color}>{priority.label}</span>
-          </span>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {lead.lastContactAt 
-            ? new Date(lead.lastContactAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })
-            : "Nouveau"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function KanbanColumn({ 
-  title, 
-  leads, 
-  icon: Icon, 
-  color,
-  onLeadClick 
-}: { 
-  title: string; 
-  leads: Lead[]; 
-  icon: any;
-  color: string;
-  onLeadClick: (lead: Lead) => void;
-}) {
-  return (
-    <div className="flex-1 min-w-[260px] sm:min-w-[280px] max-w-[320px]">
-      <div className="flex items-center gap-2 mb-4 px-1">
-        <Icon className={`h-4 w-4 ${color}`} />
-        <span className="font-semibold text-sm">{title}</span>
-        <Badge variant="secondary" className="ml-auto">{leads.length}</Badge>
-      </div>
-      <ScrollArea className="h-[60vh] sm:h-[calc(100vh-320px)]">
-        <div className="space-y-3 pr-2">
-          {leads.map((lead) => (
-            <LeadCard 
-              key={lead.id} 
-              lead={lead} 
-              onClick={() => onLeadClick(lead)}
-              compact
-            />
-          ))}
-          {leads.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Aucun lead
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
-  );
+interface CrmStats {
+  total: number;
+  nouveau: number;
+  contact: number;
+  qualified: number;
+  converted: number;
+  highPriority: number;
 }
 
 export default function CRM() {
-  const { toast } = useToast();
-  const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
-  const [view, setView] = useState<"dashboard" | "pipeline" | "list" | "conversations">("dashboard");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { language } = useLanguage();
+  const t = language === "fr";
+
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [stats, setStats] = useState<CrmStats>({ total: 0, nouveau: 0, contact: 0, qualified: 0, converted: 0, highPriority: 0 });
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [expandedConversation, setExpandedConversation] = useState<number | null>(null);
-  const [showPanel, setShowPanel] = useState(false);
-  const [newNote, setNewNote] = useState("");
-  const [aiSuggestions, setAiSuggestions] = useState<AISuggestions | null>(null);
-  const [loadingAi, setLoadingAi] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingLead, setEditingLead] = useState<Partial<Lead> | null>(null);
 
+  // Load data
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({ 
-        title: "Accès restreint", 
-        description: "Veuillez vous connecter pour accéder au CRM.",
-        variant: "destructive" 
-      });
-      setTimeout(() => { window.location.href = "/api/login"; }, 1000);
-    }
-  }, [authLoading, isAuthenticated, toast]);
+    loadData();
+  }, []);
 
-  const { data: leads = [], isLoading: leadsLoading } = useQuery<Lead[]>({
-    queryKey: ["/api/crm/leads"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: followUpLeads = [] } = useQuery<Lead[]>({
-    queryKey: ["/api/crm/leads/follow-up"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: allConversations = [], isLoading: conversationsLoading } = useQuery<(Conversation & { 
-    messages: Message[]; 
-    messageCount: number; 
-    lastMessage: Message | null;
-    lead: Lead | null;
-  })[]>({
-    queryKey: ["/api/crm/conversations"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: leadDetails, isLoading: detailsLoading } = useQuery<{ 
-    lead: Lead; 
-    activities: LeadActivity[]; 
-    conversations: (Conversation & { messages: Message[] })[] 
-  }>({
-    queryKey: ["/api/crm/leads", selectedLead?.id],
-    enabled: !!selectedLead?.id && isAuthenticated,
-  });
-
-  const updateLeadMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Lead> }) => {
-      const res = await apiRequest("PATCH", `/api/crm/leads/${id}`, data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/crm/leads"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/crm/leads/follow-up"] });
-      toast({ title: "Lead mis à jour" });
-    },
-  });
-
-  const addActivityMutation = useMutation({
-    mutationFn: async ({ leadId, type, content }: { leadId: number; type: string; content: string }) => {
-      const res = await apiRequest("POST", `/api/crm/leads/${leadId}/activities`, { type, content });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/crm/leads", selectedLead?.id] });
-      setNewNote("");
-      toast({ title: "Note ajoutée" });
-    },
-  });
-
-  const fetchAiSuggestions = async (leadId: number) => {
-    setLoadingAi(true);
+  async function loadData() {
+    setLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/crm/ai/suggestions", { leadId });
-      const data = await response.json();
-      setAiSuggestions(data as AISuggestions);
-    } catch (error) {
-      toast({ title: "Erreur", description: "Impossible d'obtenir les suggestions IA", variant: "destructive" });
-    } finally {
-      setLoadingAi(false);
+      const [leadsData, statsData] = await Promise.all([getLeads(), getCrmStats()]);
+      setLeads(leadsData);
+      setStats(statsData);
+    } catch (err) {
+      console.error("Error loading CRM data:", err);
     }
-  };
+    setLoading(false);
+  }
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch = lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (lead.company?.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || lead.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  // Load conversations when lead selected
+  useEffect(() => {
+    if (selectedLead) {
+      getConversations(selectedLead.id).then(setConversations).catch(console.error);
+    }
+  }, [selectedLead]);
 
-  const stats = {
-    total: leads.length,
-    new: leads.filter(l => l.status === "new").length,
-    toFollowUp: followUpLeads.length,
-    qualified: leads.filter(l => l.status === "qualified").length,
-    converted: leads.filter(l => l.status === "converted").length,
-    inProgress: leads.filter(l => l.status === "in_progress").length,
-  };
+  // Filter leads
+  const filteredLeads = useMemo(() => {
+    return leads.filter((lead) => {
+      const matchesSearch =
+        !search ||
+        lead.name.toLowerCase().includes(search.toLowerCase()) ||
+        (lead.company || "").toLowerCase().includes(search.toLowerCase()) ||
+        (lead.email || "").toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [leads, search, statusFilter]);
 
-  const conversionRate = stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0;
+  // Pipeline groups
+  const pipeline = useMemo(() => {
+    const groups: Record<string, Lead[]> = { Nouveau: [], contact: [], qualified: [], converted: [] };
+    leads.forEach((lead) => {
+      if (groups[lead.status]) groups[lead.status].push(lead);
+    });
+    return groups;
+  }, [leads]);
 
-  const openLeadPanel = (lead: Lead) => {
-    setSelectedLead(lead);
-    setShowPanel(true);
-    setAiSuggestions(null);
-  };
+  // Add lead
+  async function handleAddLead() {
+    if (!editingLead?.name) return;
+    try {
+      await createLead({
+        name: editingLead.name,
+        email: editingLead.email || null,
+        phone: editingLead.phone || null,
+        company: editingLead.company || null,
+        status: "Nouveau",
+        priority: "medium",
+        source: "manual",
+        notes: editingLead.notes || null,
+      });
+      setShowAddForm(false);
+      setEditingLead(null);
+      loadData();
+    } catch (err) {
+      console.error("Error creating lead:", err);
+    }
+  }
 
-  const closePanel = () => {
-    setShowPanel(false);
-    setTimeout(() => setSelectedLead(null), 300);
-  };
+  // Update lead status
+  async function handleStatusChange(lead: Lead, newStatus: string) {
+    try {
+      await updateLead(lead.id, { status: newStatus as Lead["status"] });
+      loadData();
+      if (selectedLead?.id === lead.id) {
+        setSelectedLead({ ...lead, status: newStatus as Lead["status"] });
+      }
+    } catch (err) {
+      console.error("Error updating lead:", err);
+    }
+  }
 
-  if (authLoading || !isAuthenticated) {
+  // Delete lead
+  async function handleDeleteLead(id: number) {
+    try {
+      await deleteLead(id);
+      if (selectedLead?.id === id) setSelectedLead(null);
+      loadData();
+    } catch (err) {
+      console.error("Error deleting lead:", err);
+    }
+  }
+
+  // Send conversation message
+  async function handleSendMessage() {
+    if (!newMessage.trim() || !selectedLead) return;
+    try {
+      await addConversation({ lead_id: selectedLead.id, message: newMessage.trim(), sender: "agent" });
+      setNewMessage("");
+      const convs = await getConversations(selectedLead.id);
+      setConversations(convs);
+      await updateLead(selectedLead.id, { last_contact_at: new Date().toISOString() });
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
+  }
+
+  function formatDate(dateStr: string) {
+    return new Date(dateStr).toLocaleDateString(t ? "fr-FR" : "en-US", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+  }
+
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return t ? "Aujourd'hui" : "Today";
+    if (days === 1) return t ? "Hier" : "Yesterday";
+    return t ? `Il y a ${days} jours` : `${days} days ago`;
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">
-            {authLoading ? "Chargement..." : "Redirection vers la connexion..."}
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 lg:px-6">
-          <div className="flex h-16 items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link href="/">
-                <span className="font-bold text-xl text-primary">A.SAP</span>
-              </Link>
-              <Separator orientation="vertical" className="h-6" />
-              <span className="font-semibold text-lg hidden sm:inline">SunuCRM</span>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-1 p-1 bg-muted rounded-lg">
-                <Button 
-                  variant={view === "dashboard" ? "secondary" : "ghost"} 
-                  size="sm"
-                  onClick={() => setView("dashboard")}
-                  data-testid="button-view-dashboard"
-                >
-                  <LayoutDashboard className="h-4 w-4 mr-2" />
-                  Tableau de bord
-                </Button>
-                <Button 
-                  variant={view === "pipeline" ? "secondary" : "ghost"} 
-                  size="sm"
-                  onClick={() => setView("pipeline")}
-                  data-testid="button-view-pipeline"
-                >
-                  <Kanban className="h-4 w-4 mr-2" />
-                  Pipeline
-                </Button>
-                <Button 
-                  variant={view === "list" ? "secondary" : "ghost"} 
-                  size="sm"
-                  onClick={() => setView("list")}
-                  data-testid="button-view-list"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Liste
-                </Button>
-                <Button 
-                  variant={view === "conversations" ? "secondary" : "ghost"} 
-                  size="sm"
-                  onClick={() => setView("conversations")}
-                  data-testid="button-view-conversations"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Conversations
-                </Button>
-              </div>
-
-              <div className="md:hidden">
-                <Select value={view} onValueChange={(v) => setView(v as "dashboard" | "pipeline" | "list" | "conversations")}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-mobile-view">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dashboard">
-                      <span className="flex items-center gap-2">
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="pipeline">
-                      <span className="flex items-center gap-2">
-                        <Kanban className="h-4 w-4" />
-                        Pipeline
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="list">
-                      <span className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Liste
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="conversations">
-                      <span className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        Conversations
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Link href="/nurturing">
-                <Button variant="outline" size="sm" data-testid="button-nurturing">
-                  <Zap className="h-4 w-4 mr-2" />
-                  <span className="hidden lg:inline">Nurturing</span>
-                </Button>
-              </Link>
-              
-              <Separator orientation="vertical" className="h-6 hidden md:block" />
-              
-              <div className="flex items-center gap-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.firstName || "User"} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {user?.firstName?.[0] || user?.email?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium hidden lg:inline">
-                  {user?.firstName || user?.email?.split("@")[0] || "Admin"}
-                </span>
-              </div>
-              
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => logout()}
-                data-testid="button-logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 lg:px-6 py-6">
-        {view === "dashboard" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold" data-testid="text-crm-title">
-                Tableau de bord
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">
+                {t ? "CRM - Gestion des Leads" : "CRM - Lead Management"}
               </h1>
-              <p className="text-muted-foreground">
-                Vue d'ensemble de vos prospects et performances commerciales
+              <p className="text-muted-foreground text-sm mt-1">
+                {t ? "Gérez vos prospects et opportunités commerciales" : "Manage your prospects and business opportunities"}
               </p>
             </div>
+            <Button onClick={() => { setShowAddForm(true); setEditingLead({}); }}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t ? "Nouveau Lead" : "New Lead"}
+            </Button>
+          </div>
+        </div>
+      </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard 
-                title="Total Leads" 
-                value={stats.total} 
-                subtitle="contacts"
-                icon={Users}
-                color="primary"
-              />
-              <StatCard 
-                title="Nouveaux" 
-                value={stats.new} 
-                subtitle="cette semaine"
-                icon={UserPlus}
-                color="blue"
-              />
-              <StatCard 
-                title="A Relancer" 
-                value={stats.toFollowUp} 
-                subtitle="urgents"
-                icon={AlertCircle}
-                color="amber"
-              />
-              <StatCard 
-                title="Taux Conversion" 
-                value={conversionRate} 
-                subtitle="%"
-                icon={Target}
-                color="emerald"
-              />
-            </div>
+      <div className="container mx-auto px-4 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Total" : "Total"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.nouveau}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Nouveaux" : "New"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.contact}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Contactés" : "Contacted"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Target className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.qualified}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Qualifiés" : "Qualified"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.converted}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Convertis" : "Converted"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-red-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.highPriority}</p>
+                  <p className="text-xs text-muted-foreground">{t ? "Prioritaires" : "High Priority"}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {followUpLeads.length > 0 && (
-              <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50">
-                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                      </div>
-                      Relances prioritaires
-                    </CardTitle>
-                    <Badge variant="secondary">{followUpLeads.length} leads</Badge>
+        {/* Main Tabs */}
+        <Tabs defaultValue="pipeline" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="pipeline">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Pipeline
+            </TabsTrigger>
+            <TabsTrigger value="list">
+              <Users className="w-4 h-4 mr-2" />
+              {t ? "Liste" : "List"}
+            </TabsTrigger>
+            <TabsTrigger value="conversations">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Conversations
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Pipeline View */}
+          <TabsContent value="pipeline">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Object.entries(pipeline).map(([status, statusLeads]) => (
+                <div key={status} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Badge className={statusColors[status]}>
+                        {statusLabels[status]?.[language] || status}
+                      </Badge>
+                      <span className="text-muted-foreground text-sm">({statusLeads.length})</span>
+                    </h3>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {followUpLeads.slice(0, 6).map((lead) => (
-                      <div 
+                  <div className="space-y-2">
+                    {statusLeads.map((lead) => (
+                      <Card
                         key={lead.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-background border hover-elevate cursor-pointer"
-                        onClick={() => openLeadPanel(lead)}
-                        data-testid={`button-followup-${lead.id}`}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedLead(lead)}
                       >
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
-                            {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{lead.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{lead.company || lead.email}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                      </div>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{lead.name}</p>
+                              {lead.company && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Building2 className="w-3 h-3" />
+                                  {lead.company}
+                                </p>
+                              )}
+                            </div>
+                            <Star className={`w-4 h-4 ${priorityColors[lead.priority]}`} />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {timeAgo(lead.last_contact_at)}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {statusLeads.length === 0 && (
+                      <p className="text-center text-muted-foreground text-sm py-8">
+                        {t ? "Aucun lead" : "No leads"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* List View */}
+          <TabsContent value="list">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder={t ? "Rechercher un lead..." : "Search leads..."}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {["all", "Nouveau", "contact", "qualified", "converted"].map((s) => (
+                      <Button
+                        key={s}
+                        variant={statusFilter === s ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setStatusFilter(s)}
+                      >
+                        {s === "all"
+                          ? t ? "Tous" : "All"
+                          : statusLabels[s]?.[language] || s}
+                      </Button>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="grid gap-6 lg:grid-cols-3">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-4">
-                    <CardTitle className="text-base">Leads récents</CardTitle>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setView("list")}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {filteredLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="flex items-center gap-4 p-3 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedLead(lead)}
                     >
-                      Voir tout
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {leadsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : leads.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Users className="mx-auto h-12 w-12 mb-4 opacity-30" />
-                      <p>Aucun lead pour le moment</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {leads.slice(0, 5).map((lead) => (
-                        <div 
-                          key={lead.id}
-                          className="flex items-center gap-4 p-3 rounded-lg hover-elevate cursor-pointer"
-                          onClick={() => openLeadPanel(lead)}
-                          data-testid={`row-lead-${lead.id}`}
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                              {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{lead.name}</p>
-                              <span className={`h-2 w-2 rounded-full ${priorityConfig[lead.priority || "medium"].dot}`} />
-                            </div>
-                            <p className="text-sm text-muted-foreground truncate">
-                              {lead.company || lead.email}
-                            </p>
-                          </div>
-                          <div className="hidden sm:block">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[lead.status || "new"].bgColor} ${statusConfig[lead.status || "new"].color}`}>
-                              {statusConfig[lead.status || "new"].label}
-                            </span>
-                          </div>
-                          <span className="text-xs text-muted-foreground hidden md:block">
-                            {lead.createdAt && new Date(lead.createdAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Pipeline</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { label: "Nouveaux", value: stats.new, color: "bg-blue-500" },
-                    { label: "En cours", value: stats.inProgress, color: "bg-purple-500" },
-                    { label: "Qualifiés", value: stats.qualified, color: "bg-emerald-500" },
-                    { label: "Convertis", value: stats.converted, color: "bg-green-500" },
-                  ].map((stage) => (
-                    <div key={stage.label} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{stage.label}</span>
-                        <span className="font-medium">{stage.value}</span>
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                        {lead.name.charAt(0)}
                       </div>
-                      <Progress 
-                        value={stats.total > 0 ? (stage.value / stats.total) * 100 : 0} 
-                        className="h-2"
-                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{lead.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {lead.company || lead.email || lead.phone}
+                        </p>
+                      </div>
+                      <Badge className={statusColors[lead.status]}>
+                        {statusLabels[lead.status]?.[language] || lead.status}
+                      </Badge>
+                      <Star className={`w-4 h-4 ${priorityColors[lead.priority]}`} />
+                      <span className="text-xs text-muted-foreground hidden sm:block">
+                        {timeAgo(lead.last_contact_at)}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  ))}
+                  {filteredLeads.length === 0 && (
+                    <p className="text-center text-muted-foreground py-12">
+                      {t ? "Aucun lead trouvé" : "No leads found"}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Conversations View */}
+          <TabsContent value="conversations">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[600px]">
+              {/* Lead list */}
+              <Card className="lg:col-span-1 overflow-hidden flex flex-col">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">{t ? "Contacts" : "Contacts"}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 overflow-y-auto p-2">
+                  {leads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedLead?.id === lead.id ? "bg-primary/10" : "hover:bg-accent/50"
+                      }`}
+                      onClick={() => setSelectedLead(lead)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold">
+                        {lead.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{lead.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{lead.company}</p>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        )}
 
-        {view === "pipeline" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold">Pipeline commercial</h1>
-              <p className="text-muted-foreground">
-                Visualisez et gérez vos leads par étape du parcours client
-              </p>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              <KanbanColumn 
-                title="Nouveaux"
-                leads={leads.filter(l => l.status === "new")}
-                icon={UserPlus}
-                color="text-blue-500"
-                onLeadClick={openLeadPanel}
-              />
-              <KanbanColumn 
-                title="A relancer"
-                leads={leads.filter(l => l.status === "to_follow_up")}
-                icon={AlertCircle}
-                color="text-amber-500"
-                onLeadClick={openLeadPanel}
-              />
-              <KanbanColumn 
-                title="En cours"
-                leads={leads.filter(l => l.status === "in_progress")}
-                icon={Zap}
-                color="text-purple-500"
-                onLeadClick={openLeadPanel}
-              />
-              <KanbanColumn 
-                title="Qualifiés"
-                leads={leads.filter(l => l.status === "qualified")}
-                icon={CheckCircle2}
-                color="text-emerald-500"
-                onLeadClick={openLeadPanel}
-              />
-              <KanbanColumn 
-                title="Convertis"
-                leads={leads.filter(l => l.status === "converted")}
-                icon={Target}
-                color="text-green-500"
-                onLeadClick={openLeadPanel}
-              />
-            </div>
-          </div>
-        )}
-
-        {view === "list" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold">Tous les leads</h1>
-              <p className="text-muted-foreground">
-                Gérez et filtrez l'ensemble de vos contacts commerciaux
-              </p>
-            </div>
-
-            <Card>
-              <CardHeader className="border-b">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Rechercher un lead..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                      data-testid="input-search-leads"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[150px]" data-testid="select-status-filter">
-                        <SelectValue placeholder="Statut" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tous statuts</SelectItem>
-                        {Object.entries(statusConfig).map(([key, { label }]) => (
-                          <SelectItem key={key} value={key}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                      <SelectTrigger className="w-[150px]" data-testid="select-priority-filter">
-                        <SelectValue placeholder="Priorité" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Toutes</SelectItem>
-                        {Object.entries(priorityConfig).map(([key, { label }]) => (
-                          <SelectItem key={key} value={key}>{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {leadsLoading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredLeads.length === 0 ? (
-                  <div className="text-center py-16 text-muted-foreground">
-                    <Users className="mx-auto h-12 w-12 mb-4 opacity-30" />
-                    <p>Aucun lead trouvé</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {filteredLeads.map((lead) => (
-                      <div 
-                        key={lead.id}
-                        className="flex items-center gap-4 p-4 hover-elevate cursor-pointer"
-                        onClick={() => openLeadPanel(lead)}
-                        data-testid={`row-lead-${lead.id}`}
-                      >
-                        <Avatar className="h-11 w-11 shrink-0">
-                          <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                            {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <p className="font-semibold">{lead.name}</p>
-                            <span className={`h-2 w-2 rounded-full shrink-0 ${priorityConfig[lead.priority || "medium"].dot}`} />
+              {/* Chat */}
+              <Card className="lg:col-span-2 overflow-hidden flex flex-col">
+                {selectedLead ? (
+                  <>
+                    <CardHeader className="pb-2 border-b">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                            {selectedLead.name.charAt(0)}
                           </div>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1.5 truncate">
-                              <Mail className="h-3.5 w-3.5 shrink-0" />
-                              {lead.email}
-                            </span>
-                            {lead.company && (
-                              <span className="hidden lg:flex items-center gap-1.5">
-                                <Building2 className="h-3.5 w-3.5" />
-                                {lead.company}
-                              </span>
-                            )}
+                          <div>
+                            <p className="font-medium">{selectedLead.name}</p>
+                            <p className="text-xs text-muted-foreground">{selectedLead.company}</p>
                           </div>
                         </div>
-                        <div className="hidden md:block shrink-0">
-                          <span className="text-sm text-muted-foreground">
-                            {sourceLabels[lead.source || ""] || lead.source || "N/A"}
-                          </span>
-                        </div>
-                        <div className="hidden sm:block shrink-0">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[lead.status || "new"].bgColor} ${statusConfig[lead.status || "new"].color}`}>
-                            {statusConfig[lead.status || "new"].label}
-                          </span>
-                        </div>
-                        <div className="hidden lg:flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
-                          <Clock className="h-3.5 w-3.5" />
-                          {lead.lastContactAt 
-                            ? new Date(lead.lastContactAt).toLocaleDateString("fr-FR", { day: 'numeric', month: 'short' })
-                            : "Jamais"}
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          className="shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openLeadPanel(lead);
-                          }}
-                          data-testid={`button-view-${lead.id}`}
+                        <Badge className={statusColors[selectedLead.status]}>
+                          {statusLabels[selectedLead.status]?.[language]}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {conversations.length === 0 && (
+                        <p className="text-center text-muted-foreground py-12">
+                          {t ? "Aucun message. Commencez la conversation !" : "No messages. Start the conversation!"}
+                        </p>
+                      )}
+                      {conversations.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className={`flex ${conv.sender === "agent" ? "justify-end" : "justify-start"}`}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {view === "conversations" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold">Conversations</h1>
-              <p className="text-muted-foreground">
-                Toutes les conversations des utilisateurs avec l'agent commercial IA
-              </p>
-            </div>
-
-            <Card>
-              <CardHeader className="border-b">
-                <div className="flex items-center justify-between gap-4">
-                  <CardTitle className="text-base">
-                    {allConversations.length} conversation{allConversations.length !== 1 ? "s" : ""}
-                  </CardTitle>
-                  <Badge variant="secondary">
-                    {allConversations.filter(c => !c.leadId).length} non liée{allConversations.filter(c => !c.leadId).length !== 1 ? "s" : ""}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {conversationsLoading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : allConversations.length === 0 ? (
-                  <div className="text-center py-16 text-muted-foreground">
-                    <MessageSquare className="mx-auto h-12 w-12 mb-4 opacity-30" />
-                    <p>Aucune conversation pour le moment</p>
-                    <p className="text-sm mt-2">Les conversations des visiteurs apparaîtront ici</p>
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {allConversations.map((conv) => (
-                      <div 
-                        key={conv.id}
-                        className="p-4 hover-elevate cursor-pointer"
-                        onClick={() => setExpandedConversation(expandedConversation === conv.id ? null : conv.id)}
-                        data-testid={`row-conversation-${conv.id}`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="p-2.5 rounded-lg bg-primary/10 shrink-0">
-                            <MessageSquare className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-semibold">{conv.title || `Conversation #${conv.id}`}</p>
-                              {conv.commercialName && (
-                                <Badge variant="outline" className="text-xs">{conv.commercialName}</Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
-                              <span>{conv.messageCount} message{conv.messageCount !== 1 ? "s" : ""}</span>
-                              <span>
-                                {new Date(conv.createdAt).toLocaleDateString("fr-FR", { 
-                                  day: 'numeric', 
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </span>
-                            </div>
-                            {conv.lastMessage && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                <span className="font-medium">{conv.lastMessage.role === "user" ? "Visiteur:" : "IA:"}</span>{" "}
-                                {conv.lastMessage.content.substring(0, 150)}...
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 flex flex-col items-end gap-2">
-                            {conv.lead ? (
-                              <Badge 
-                                className="cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openLeadPanel(conv.lead!);
-                                }}
-                              >
-                                {conv.lead.name}
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary">Non lié</Badge>
-                            )}
-                            {expandedConversation === conv.id ? (
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            )}
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 text-sm ${
+                              conv.sender === "agent"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted"
+                            }`}
+                          >
+                            <p>{conv.message}</p>
+                            <p className={`text-xs mt-1 ${
+                              conv.sender === "agent" ? "text-primary-foreground/70" : "text-muted-foreground"
+                            }`}>
+                              {formatDate(conv.created_at)}
+                            </p>
                           </div>
                         </div>
-                        
-                        {expandedConversation === conv.id && conv.messages.length > 0 && (
-                          <div className="mt-4 ml-12 space-y-3 border-l-2 pl-4">
-                            {conv.messages.slice(-10).map((msg, idx) => (
-                              <div key={idx} className={`p-3 rounded-lg text-sm ${msg.role === "user" ? "bg-muted" : "bg-primary/5"}`}>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className={`font-medium ${msg.role === "user" ? "text-foreground" : "text-primary"}`}>
-                                    {msg.role === "user" ? "Visiteur" : "Agent IA"}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                </div>
-                                <p className="whitespace-pre-wrap">{msg.content}</p>
-                              </div>
-                            ))}
-                            {conv.messages.length > 10 && (
-                              <p className="text-xs text-muted-foreground text-center py-2">
-                                ... {conv.messages.length - 10} messages précédents masqués
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </CardContent>
+                    <div className="border-t p-3 flex gap-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder={t ? "Écrire un message..." : "Write a message..."}
+                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                      />
+                      <Button onClick={handleSendMessage} size="icon">
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p>{t ? "Sélectionnez un contact" : "Select a contact"}</p>
+                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </main>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
 
-      <div 
-        className={`fixed inset-0 z-50 bg-black/50 transition-opacity ${showPanel ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={closePanel}
-      />
-      
-      <div className={`fixed right-0 top-0 z-50 h-full w-full max-w-xl bg-background border-l shadow-xl transition-transform duration-300 ${showPanel ? 'translate-x-0' : 'translate-x-full'}`}>
-        {selectedLead && (
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between gap-4 p-4 border-b bg-muted/30">
-              <div className="flex items-center gap-3 min-w-0">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {selectedLead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-lg truncate">{selectedLead.name}</h2>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {selectedLead.company || selectedLead.email}
-                  </p>
-                </div>
-              </div>
-              <Button size="icon" variant="ghost" onClick={closePanel}>
-                <X className="h-5 w-5" />
+      {/* Lead Detail Sidebar */}
+      {selectedLead && (
+        <div className="fixed inset-y-0 right-0 w-full sm:w-96 bg-card border-l shadow-xl z-50 overflow-y-auto">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">{t ? "Détail du Lead" : "Lead Detail"}</h2>
+              <Button variant="ghost" size="icon" onClick={() => setSelectedLead(null)}>
+                <X className="w-4 h-4" />
               </Button>
             </div>
 
-            <div className="flex items-center gap-2 p-4 border-b">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusConfig[selectedLead.status || "new"].bgColor} ${statusConfig[selectedLead.status || "new"].color}`}>
-                {statusConfig[selectedLead.status || "new"].label}
-              </span>
-              <span className="flex items-center gap-1.5 text-xs">
-                <span className={`h-2 w-2 rounded-full ${priorityConfig[selectedLead.priority || "medium"].dot}`} />
-                <span className={priorityConfig[selectedLead.priority || "medium"].color}>
-                  Priorité {priorityConfig[selectedLead.priority || "medium"].label.toLowerCase()}
-                </span>
-              </span>
-              <span className="ml-auto text-xs text-muted-foreground">
-                Créé le {selectedLead.createdAt && new Date(selectedLead.createdAt).toLocaleDateString("fr-FR")}
-              </span>
+            <div className="space-y-4">
+              {/* Lead info */}
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold mx-auto mb-2">
+                  {selectedLead.name.charAt(0)}
+                </div>
+                <h3 className="text-xl font-semibold">{selectedLead.name}</h3>
+                {selectedLead.company && (
+                  <p className="text-muted-foreground flex items-center justify-center gap-1">
+                    <Building2 className="w-4 h-4" />
+                    {selectedLead.company}
+                  </p>
+                )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">{t ? "Statut" : "Status"}</label>
+                <div className="flex gap-2 flex-wrap">
+                  {["Nouveau", "contact", "qualified", "converted"].map((s) => (
+                    <Button
+                      key={s}
+                      variant={selectedLead.status === s ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleStatusChange(selectedLead, s)}
+                    >
+                      {statusLabels[s]?.[language] || s}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact info */}
+              <div className="space-y-2">
+                {selectedLead.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <a href={`mailto:${selectedLead.email}`} className="text-primary hover:underline">
+                      {selectedLead.email}
+                    </a>
+                  </div>
+                )}
+                {selectedLead.phone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <a href={`tel:${selectedLead.phone}`} className="text-primary hover:underline">
+                      {selectedLead.phone}
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t ? "Source" : "Source"}</span>
+                  <span className="capitalize">{selectedLead.source}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t ? "Priorité" : "Priority"}</span>
+                  <span className="flex items-center gap-1">
+                    <Star className={`w-3 h-3 ${priorityColors[selectedLead.priority]}`} />
+                    <span className="capitalize">{selectedLead.priority}</span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t ? "Créé le" : "Created"}</span>
+                  <span>{formatDate(selectedLead.created_at)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t ? "Dernier contact" : "Last contact"}</span>
+                  <span>{timeAgo(selectedLead.last_contact_at)}</span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedLead.notes && (
+                <div>
+                  <label className="text-sm font-medium mb-1 block">{t ? "Notes" : "Notes"}</label>
+                  <p className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
+                    {selectedLead.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleDeleteLead(selectedLead.id)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t ? "Supprimer" : "Delete"}
+                </Button>
+              </div>
             </div>
-
-            <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto">
-                <TabsTrigger 
-                  value="info" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
-                >
-                  Infos
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="conversations"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
-                >
-                  Conversations
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="ai"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
-                >
-                  <Sparkles className="h-4 w-4 mr-1.5" />
-                  IA
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="actions"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent py-3 px-4"
-                >
-                  Actions
-                </TabsTrigger>
-              </TabsList>
-
-              <ScrollArea className="flex-1">
-                <TabsContent value="info" className="m-0 p-4">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Contact</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                          <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm">{selectedLead.email}</span>
-                        </div>
-                        {selectedLead.phone && (
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm">{selectedLead.phone}</span>
-                          </div>
-                        )}
-                        {selectedLead.company && (
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm">{selectedLead.company}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {selectedLead.notes && (
-                      <div>
-                        <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Notes</h4>
-                        <p className="text-sm p-3 rounded-lg bg-muted/50">{selectedLead.notes}</p>
-                      </div>
-                    )}
-
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Historique</h4>
-                      {detailsLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                        </div>
-                      ) : !leadDetails?.activities?.length ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">Aucune activité</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {leadDetails.activities.map((activity) => {
-                            const activityIcons: Record<string, { icon: typeof Mail; color: string }> = {
-                              note: { icon: FileText, color: "text-slate-500" },
-                              call: { icon: PhoneCall, color: "text-green-500" },
-                              email: { icon: MailOpen, color: "text-blue-500" },
-                              meeting: { icon: CalendarCheck, color: "text-purple-500" },
-                              follow_up: { icon: Clock, color: "text-amber-500" },
-                              status_change: { icon: RefreshCw, color: "text-orange-500" },
-                              nurturing: { icon: Zap, color: "text-primary" },
-                            };
-                            const config = activityIcons[activity.type] || { icon: FileText, color: "text-muted-foreground" };
-                            const ActivityIcon = config.icon;
-                            
-                            return (
-                              <div key={activity.id} className="flex gap-3">
-                                <div className={`mt-0.5 p-1.5 rounded-full bg-muted shrink-0`}>
-                                  <ActivityIcon className={`h-3 w-3 ${config.color}`} />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm">
-                                    <span className="font-medium capitalize">{activity.type.replace("_", " ")}</span>
-                                    {" - "}{activity.content}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    {new Date(activity.createdAt).toLocaleString("fr-FR")}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="conversations" className="m-0 p-4">
-                  {detailsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : !leadDetails?.conversations?.length ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <MessageSquare className="mx-auto h-10 w-10 mb-3 opacity-30" />
-                      <p className="text-sm">Aucune conversation</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {leadDetails.conversations.map((conv) => (
-                        <div key={conv.id} className="border rounded-lg overflow-hidden">
-                          <div 
-                            className="flex items-center gap-3 p-3 bg-muted/30 cursor-pointer hover-elevate"
-                            onClick={() => setExpandedConversation(
-                              expandedConversation === conv.id ? null : conv.id
-                            )}
-                          >
-                            <MessageSquare className="h-4 w-4 text-primary shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{conv.title}</p>
-                              {conv.commercialName && (
-                                <p className="text-xs text-muted-foreground">{conv.commercialName}</p>
-                              )}
-                            </div>
-                            <span className="text-xs text-muted-foreground shrink-0">
-                              {new Date(conv.createdAt).toLocaleDateString("fr-FR")}
-                            </span>
-                            {expandedConversation === conv.id ? (
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                          {expandedConversation === conv.id && (
-                            <div className="p-3 space-y-2 max-h-60 overflow-y-auto border-t">
-                              {conv.messages.map((msg) => (
-                                <div 
-                                  key={msg.id}
-                                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                                >
-                                  <div 
-                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                                      msg.role === "user" 
-                                        ? "bg-primary text-primary-foreground" 
-                                        : "bg-muted"
-                                    }`}
-                                  >
-                                    {msg.content}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="ai" className="m-0 p-4">
-                  {!aiSuggestions && !loadingAi && (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mb-4">
-                        <Sparkles className="h-8 w-8 text-primary" />
-                      </div>
-                      <h3 className="font-semibold mb-2">Analyse IA</h3>
-                      <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
-                        Obtenez des recommandations personnalisées pour ce lead
-                      </p>
-                      <Button 
-                        onClick={() => fetchAiSuggestions(selectedLead.id)}
-                        disabled={loadingAi}
-                        data-testid="button-get-ai-suggestions"
-                      >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Analyser ce lead
-                      </Button>
-                    </div>
-                  )}
-
-                  {loadingAi && (
-                    <div className="text-center py-12">
-                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary mb-4" />
-                      <p className="text-sm text-muted-foreground">Analyse en cours...</p>
-                    </div>
-                  )}
-
-                  {aiSuggestions && (
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-lg border bg-muted/30">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-primary" />
-                          <h4 className="font-semibold text-sm">Résumé</h4>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{aiSuggestions.summary}</p>
-                      </div>
-
-                      <div className="p-4 rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          <h4 className="font-semibold text-sm">Action recommandée</h4>
-                        </div>
-                        <p className="text-sm">{aiSuggestions.recommendation}</p>
-                      </div>
-
-                      <div className="p-4 rounded-lg border bg-amber-50/50 dark:bg-amber-950/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-amber-600" />
-                          <h4 className="font-semibold text-sm">Meilleur moment</h4>
-                        </div>
-                        <p className="text-sm">{aiSuggestions.timing}</p>
-                      </div>
-
-                      <div className="p-4 rounded-lg border">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <MessageSquare className="h-4 w-4 text-purple-600" />
-                            <h4 className="font-semibold text-sm">Script de relance</h4>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(aiSuggestions.script);
-                              toast({ title: "Script copié" });
-                            }}
-                            data-testid="button-copy-script"
-                          >
-                            <Copy className="h-3.5 w-3.5 mr-1.5" />
-                            Copier
-                          </Button>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap">{aiSuggestions.script}</p>
-                      </div>
-
-                      <Button 
-                        variant="outline" 
-                        onClick={() => fetchAiSuggestions(selectedLead.id)}
-                        className="w-full"
-                        data-testid="button-refresh-ai"
-                      >
-                        <RefreshCw className="mr-2 h-4 w-4" />
-                        Rafraîchir
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="actions" className="m-0 p-4">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Statut</h4>
-                      <Select 
-                        value={selectedLead.status || "new"}
-                        onValueChange={(value) => {
-                          updateLeadMutation.mutate({ id: selectedLead.id, data: { status: value } });
-                          setSelectedLead({ ...selectedLead, status: value });
-                        }}
-                      >
-                        <SelectTrigger data-testid="select-change-status">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusConfig).map(([key, { label }]) => (
-                            <SelectItem key={key} value={key}>{label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Priorité</h4>
-                      <Select 
-                        value={selectedLead.priority || "medium"}
-                        onValueChange={(value) => {
-                          updateLeadMutation.mutate({ id: selectedLead.id, data: { priority: value } });
-                          setSelectedLead({ ...selectedLead, priority: value });
-                        }}
-                      >
-                        <SelectTrigger data-testid="select-change-priority">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(priorityConfig).map(([key, { label }]) => (
-                            <SelectItem key={key} value={key}>{label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Planifier relance</h4>
-                      <Input 
-                        type="datetime-local"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            const date = new Date(e.target.value);
-                            updateLeadMutation.mutate({ 
-                              id: selectedLead.id, 
-                              data: { nextFollowUpAt: date } 
-                            });
-                            toast({ title: "Relance planifiée" });
-                          }
-                        }}
-                        data-testid="input-schedule-followup"
-                      />
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Ajouter une note</h4>
-                      <Textarea
-                        placeholder="Votre note..."
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                        className="mb-3"
-                        rows={3}
-                        data-testid="textarea-note"
-                      />
-                      <Button 
-                        onClick={() => {
-                          if (newNote.trim()) {
-                            addActivityMutation.mutate({
-                              leadId: selectedLead.id,
-                              type: "note",
-                              content: newNote.trim()
-                            });
-                          }
-                        }}
-                        disabled={!newNote.trim() || addActivityMutation.isPending}
-                        className="w-full"
-                        data-testid="button-add-note"
-                      >
-                        Ajouter
-                      </Button>
-                    </div>
-
-                    <Separator />
-
-                    <div>
-                      <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Actions rapides</h4>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-col h-auto py-4 gap-2"
-                          onClick={() => {
-                            addActivityMutation.mutate({
-                              leadId: selectedLead.id,
-                              type: "call",
-                              content: "Appel passé"
-                            });
-                          }}
-                          data-testid="button-log-call"
-                        >
-                          <PhoneCall className="h-5 w-5" />
-                          <span className="text-xs">Appel</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-col h-auto py-4 gap-2"
-                          onClick={() => {
-                            addActivityMutation.mutate({
-                              leadId: selectedLead.id,
-                              type: "email",
-                              content: "Email envoyé"
-                            });
-                          }}
-                          data-testid="button-log-email"
-                        >
-                          <MailOpen className="h-5 w-5" />
-                          <span className="text-xs">Email</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-col h-auto py-4 gap-2"
-                          onClick={() => {
-                            addActivityMutation.mutate({
-                              leadId: selectedLead.id,
-                              type: "meeting",
-                              content: "RDV effectué"
-                            });
-                          }}
-                          data-testid="button-log-meeting"
-                        >
-                          <CalendarCheck className="h-5 w-5" />
-                          <span className="text-xs">RDV</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
-              </ScrollArea>
-            </Tabs>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Add Lead Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{t ? "Nouveau Lead" : "New Lead"}</CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => { setShowAddForm(false); setEditingLead(null); }}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                placeholder={t ? "Nom complet *" : "Full name *"}
+                value={editingLead?.name || ""}
+                onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })}
+              />
+              <Input
+                placeholder="Email"
+                type="email"
+                value={editingLead?.email || ""}
+                onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })}
+              />
+              <Input
+                placeholder={t ? "Téléphone" : "Phone"}
+                value={editingLead?.phone || ""}
+                onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })}
+              />
+              <Input
+                placeholder={t ? "Entreprise" : "Company"}
+                value={editingLead?.company || ""}
+                onChange={(e) => setEditingLead({ ...editingLead, company: e.target.value })}
+              />
+              <Input
+                placeholder="Notes"
+                value={editingLead?.notes || ""}
+                onChange={(e) => setEditingLead({ ...editingLead, notes: e.target.value })}
+              />
+              <Button onClick={handleAddLead} className="w-full" disabled={!editingLead?.name}>
+                <Check className="w-4 h-4 mr-2" />
+                {t ? "Ajouter le Lead" : "Add Lead"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
