@@ -157,9 +157,7 @@ const ChatMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
 
   return (
     <div className={"flex " + (isUser ? "justify-end" : "justify-start") + " mb-4"}>
-      <div
         <div className={"max-w-[85%] rounded-lg p-4 " + (isUser ? "bg-blue-600 text-white rounded-br-none" : "bg-gradient-to-br from-slate-800 to-slate-900 text-slate-50 rounded-bl-none")}>
-      >
         <div className="text-sm whitespace-pre-wrap break-words">
           {message.role === 'ai' ? (
             <MarkdownContent content={message.content} />
