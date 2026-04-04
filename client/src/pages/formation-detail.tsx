@@ -183,7 +183,7 @@ export default function FormationDetail() {
                           <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-medium shrink-0">
                             {idx + 1}
                           </span>
-                          <span>{mod}</span>
+                          <span>{mod.title}</span>
                         </li>
                       ))}
                     </ul>
