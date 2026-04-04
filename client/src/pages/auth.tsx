@@ -54,10 +54,9 @@ function LoginForm() {
     setError("");
 
     const { error: authError } = await signIn(formData.email, formData.password);
+
     if (authError) {
-      setError(authError === "Invalid login credentials"
-        ? "Email ou mot de passe incorrect"
-        : authError);
+      setError(authError === "Invalid login credentials" ? "Email ou mot de passe incorrect" : authError);
       setIsLoading(false);
     } else {
       setLocation("/dashboard");
@@ -98,7 +97,7 @@ function LoginForm() {
             type="button"
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
-            Mot de passe oubliÃ© ?
+            Mot de passe oublié ?
           </button>
         </div>
         <div className="relative">
@@ -213,7 +212,7 @@ function RegisterForm() {
     if (score <= 1) return { score, label: "Faible", color: "bg-red-500" };
     if (score === 2) return { score, label: "Moyen", color: "bg-yellow-500" };
     if (score === 3) return { score, label: "Fort", color: "bg-green-400" };
-    return { score, label: "TrÃ¨s fort", color: "bg-green-600" };
+    return { score, label: "Très fort", color: "bg-green-600" };
   };
 
   const strength = passwordStrength(formData.password || "");
@@ -258,7 +257,7 @@ function RegisterForm() {
       setError(authError);
       setIsLoading(false);
     } else {
-      setSuccess("Compte crÃ©Ã© ! VÃ©rifiez votre email pour confirmer votre inscription.");
+      setSuccess("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
       setIsLoading(false);
     }
   };
@@ -273,7 +272,7 @@ function RegisterForm() {
           onClick={() => setLocation("/auth")}
           className="mt-2"
         >
-          Retour Ã  la connexion
+          Retour à la connexion
         </Button>
       </div>
     );
@@ -314,12 +313,12 @@ function RegisterForm() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="reg-firstname">PrÃ©nom</Label>
+              <Label htmlFor="reg-firstname">Prénom</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="reg-firstname"
-                  placeholder="PrÃ©nom"
+                  placeholder="Prénom"
                   className="pl-10"
                   value={formData.firstName}
                   onChange={(e) =>
@@ -352,13 +351,13 @@ function RegisterForm() {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="SÃ©lectionnez votre profil" />
+                <SelectValue placeholder="Sélectionnez votre profil" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="etudiant">
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-4 h-4" />
-                    Ãtudiant / Apprenant
+                    Étudiant / Apprenant
                   </div>
                 </SelectItem>
                 <SelectItem value="formateur">
@@ -388,7 +387,8 @@ function RegisterForm() {
             onClick={() => setStep(1)}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-2"
           >
-            <ArrowLeft className="w-3 h-3" /> Retour
+            <ArrowLeft className="w-3 h-3" />
+            Retour
           </button>
 
           <div className="space-y-2">
@@ -483,8 +483,9 @@ function RegisterForm() {
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
             <Shield className="w-4 h-4 shrink-0 mt-0.5" />
             <p>
-              En crÃ©ant un compte, vous acceptez nos conditions d'utilisation et
-              notre politique de confidentialitÃ©. Vos donnÃ©es sont protÃ©gÃ©es.
+              En créant un compte, vous acceptez nos conditions d'utilisation
+              et notre politique de confidentialité. Vos données sont
+              protégées.
             </p>
           </div>
 
@@ -496,10 +497,10 @@ function RegisterForm() {
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                CrÃ©ation en cours...
+                Création en cours...
               </div>
             ) : (
-              "CrÃ©er mon compte"
+              "Créer mon compte"
             )}
           </Button>
         </>
@@ -526,6 +527,7 @@ export default function AuthPage() {
           <div className="absolute top-20 left-20 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
         </div>
+
         <div className="relative z-10">
           <button
             onClick={() => setLocation("/")}
@@ -534,17 +536,19 @@ export default function AuthPage() {
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
               <GraduationCap className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold">A.SAP AcadÃ©mie</span>
+            <span className="text-xl font-bold">A.SAP Académie</span>
           </button>
+
           <h1 className="text-4xl font-bold leading-tight mb-6">
-            Formez-vous aux mÃ©tiers SAP les plus demandÃ©s en Afrique
+            Formez-vous aux métiers SAP les plus demandés en Afrique
           </h1>
           <p className="text-lg text-blue-100 leading-relaxed">
-            Rejoignez plus de 2 500 professionnels formÃ©s sur SAP FI, CO, MM, SD
-            et HANA. AccÃ©dez Ã  des formations certifiantes, un tuteur IA et une
-            communautÃ© active.
+            Rejoignez plus de 2 500 professionnels formés sur SAP FI, CO, MM,
+            SD et HANA. Accédez à des formations certifiantes, un tuteur IA et
+            une communauté active.
           </p>
         </div>
+
         <div className="relative z-10 space-y-6">
           <div className="flex items-center gap-4">
             <div className="flex -space-x-2">
@@ -560,13 +564,14 @@ export default function AuthPage() {
               )}
             </div>
             <p className="text-sm text-blue-100">
-              <strong className="text-white">+2 500</strong> apprenants nous font
-              confiance
+              <strong className="text-white">+2 500</strong> apprenants nous
+              font confiance
             </p>
           </div>
+
           <div className="grid grid-cols-3 gap-4">
             {[
-              { value: "95%", label: "Taux de rÃ©ussite" },
+              { value: "95%", label: "Taux de réussite" },
               { value: "12+", label: "Modules SAP" },
               { value: "24/7", label: "Support IA" },
             ].map((stat) => (
@@ -591,7 +596,7 @@ export default function AuthPage() {
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900">
-                A.SAP AcadÃ©mie
+                A.SAP Académie
               </span>
             </button>
           </div>
@@ -600,7 +605,7 @@ export default function AuthPage() {
             <CardHeader className="pb-4">
               <CardTitle className="text-center text-xl">Bienvenue</CardTitle>
               <p className="text-center text-sm text-gray-500">
-                Connectez-vous ou crÃ©ez votre compte pour accÃ©der Ã  vos
+                Connectez-vous ou créez votre compte pour accéder à vos
                 formations
               </p>
             </CardHeader>
@@ -621,7 +626,8 @@ export default function AuthPage() {
           </Card>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            ProtÃ©gÃ© par chiffrement SSL 256-bit. Vos donnÃ©es sont en sÃ©curitÃ©.
+            Protégé par chiffrement SSL 256-bit. Vos données sont en
+            sécurité.
           </p>
         </div>
       </div>
