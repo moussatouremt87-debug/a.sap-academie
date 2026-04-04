@@ -20,7 +20,17 @@ function getMockData(url: string): unknown | null {
   const match = url.match(/^\/api\/courses\/(\d+)$/);
   if (match) {
     const course = MOCK_COURSES.find((c: any) => c.id === match[1]);
-    if (!course) return null;
+    if (!course) 
+  // Formations routes (alias for courses)
+  if (url.includes('/api/formations/')) {
+    const id = url.split('/api/formations/')[1];
+    const course = MOCK_COURSES.find(c => c.id === parseInt(id));
+    if (course) return course;
+  }
+  if (url === '/api/formations' || url.endsWith('/api/formations')) {
+    return MOCK_COURSES;
+  }
+  return null;
     // Detail page expects price in centimes and duration in minutes
     return { ...course, price: course.price * 100, duration: course.duration * 60 };
   }
