@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -22,9 +28,17 @@ interface AuthContextType {
   signUp: (email: string, password: string, metadata: { firstName: string; lastName: string; role: string }) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+// Map frontend role labels to DB enum values
+const ROLE_MAP: Record<string, string> = {
+  etudiant: "student",
+  formateur: "instructor",
+  admin: "student", // never allow self-assign admin
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -33,33 +47,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+      if (error) {
+        console.error("Failed to fetch profile:", error.message);
+        setProfile(null);
+        return;
+      }
+      setProfile(data);
+    } catch (err) {
+      console.error("Unexpected error fetching profile:", err);
+      setProfile(null);
+    }
   }
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) fetchProfile(s.user.id);
       setLoading(false);
     });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, s) => {
-        setSession(s);
-        setUser(s?.user ?? null);
-        if (s?.user) fetchProfile(s.user.id);
-        else setProfile(null);
-      }
-    );
-
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) fetchProfile(s.user.id);
+      else setProfile(null);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
@@ -69,11 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    metadata: { firstName: string; lastName: string; role: string }
-  ) => {
+  const signUp = async (email: string, password: string, metadata: { firstName: string; lastName: string; role: string }) => {
+    const dbRole = ROLE_MAP[metadata.role] || "student";
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -82,8 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: metadata.firstName + " " + metadata.lastName,
           first_name: metadata.firstName,
           last_name: metadata.lastName,
-          role: metadata.role,
+          role: dbRole,
         },
+        emailRedirectTo: window.location.origin + "/auth",
       },
     });
     if (error) return { error: error.message };
@@ -104,10 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/auth?reset=true",
+    });
+    if (error) return { error: error.message };
+    return { error: null };
+  };
+
   return (
-    <AuthContext.Provider
-      value={{ user, profile, session, loading, signIn, signUp, signOut, signInWithGoogle }}
-    >
+    <AuthContext.Provider value={{ user, profile, session, loading, signIn, signUp, signOut, signInWithGoogle, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
