@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useLanguage } from "../lib/i18n";
+import { useTranslation } from "../lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ interface CrmStats {
 }
 
 export default function CRM() {
-  const { language } = useLanguage();
+  const { language } = useTranslation();
   const t = language === "fr";
 
   const [leads, setLeads] = useState<Lead[]>([]);
