@@ -344,7 +344,7 @@ const GlossaryCard: React.FC<GlossaryCardProps> = ({ entry }) => {
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{entry.term}</CardTitle>
           {entry.module && (
-            <Badge className={getModuleColor(entry.module)} className="flex-shrink-0">
+            <Badge className={getModuleColor(entry.module) + " flex-shrink-0"}>
               {entry.module}
             </Badge>
           )}
