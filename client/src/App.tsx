@@ -52,6 +52,12 @@ import AuthPage from "@/pages/auth";
 import AdminDashboard from "@/pages/admin-dashboard";
 import SeoPerformancePage from "@/pages/seo-performance";
 
+// ── Scale, Analytics & Lancement (Sprint 6) ────────────
+import AnalyticsDashboard from "@/pages/analytics-dashboard";
+import NotificationsPage from "@/pages/notifications";
+import PaymentBillingPage from "@/pages/payment-billing";
+import LaunchPage from "@/pages/launch";
+
 function Router() {
   return (
     <Switch>
@@ -99,7 +105,13 @@ function Router() {
       <Route path="/admin-dashboard" component={AdminDashboard} />
       <Route path="/seo-performance" component={SeoPerformancePage} />
 
-      <Route component={NotFound} />
+      {/* ── Scale, Analytics & Lancement (Sprint 6) ──────── */}
+          <Route path="/analytics" component={AnalyticsDashboard} />
+          <Route path="/notifications" component={NotificationsPage} />
+          <Route path="/payment-billing" component={PaymentBillingPage} />
+          <Route path="/launch" component={LaunchPage} />
+
+          <Route component={NotFound} />
     </Switch>
   );
 }
@@ -123,8 +135,12 @@ function AppLayout() {
   const isAuthPage = location === "/auth";
   const isAdminDashboard = location === "/admin-dashboard";
   const isSeoPerformance = location === "/seo-performance";
+  const isAnalytics = location === "/analytics";
+  const isNotifications = location === "/notifications";
+  const isPaymentBilling = location === "/payment-billing";
+  const isLaunch = location === "/launch";
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing || isAuthPage || isAdminDashboard || isSeoPerformance) {
+  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing || isAuthPage || isAdminDashboard || isSeoPerformance || isAnalytics || isNotifications || isPaymentBilling || isLaunch) {
     return (
       <>
         <Router />
