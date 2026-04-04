@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { I18nProvider } from "@/lib/i18n";
+import { AuthProvider } from "@/hooks/use-auth";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -166,12 +167,14 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="asap-ui-theme">
       <I18nProvider>
         <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <TooltipProvider>
             <AppLayout />
             <BackToTop />
             <Toaster />
           </TooltipProvider>
-        </QueryClientProvider>
+          </AuthProvider>
+      </QueryClientProvider>
       </I18nProvider>
     </ThemeProvider>
   );
