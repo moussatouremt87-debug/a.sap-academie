@@ -14,26 +14,27 @@ const MOCK_COURSES = [
 ];
 
 function getMockData(url: string): unknown | null {
-  if (url === "/api/courses") {
+  // List all courses/formations
+  if (url === "/api/courses" || url === "/api/formations" || url.endsWith("/formations")) {
     return MOCK_COURSES;
   }
-  const match = url.match(/^\/api\/courses\/(\d+)$/);
-  if (match) {
-    const course = MOCK_COURSES.find((c: any) => c.id === match[1]);
-    if (!course) 
-  // Formations routes (alias for courses)
-  if (url.includes('/api/formations/')) {
-    const id = url.split('/api/formations/')[1];
-    const course = MOCK_COURSES.find(c => c.id === parseInt(id));
-    if (course) return course;
-  }
-  if (url === '/api/formations' || url.endsWith('/api/formations')) {
-    return MOCK_COURSES;
-  }
-  return null;
-    // Detail page expects price in centimes and duration in minutes
+
+  // Single course by id
+  const courseMatch = url.match(/\/api\/courses\/(\d+)$/);
+  if (courseMatch) {
+    const course = MOCK_COURSES.find((c: any) => c.id === courseMatch[1]);
+    if (!course) return null;
     return { ...course, price: course.price * 100, duration: course.duration * 60 };
   }
+
+  // Single formation by id
+  const formationMatch = url.match(/\/api\/formations\/(\d+)$/);
+  if (formationMatch) {
+    const course = MOCK_COURSES.find((c: any) => c.id === formationMatch[1]);
+    if (!course) return null;
+    return course;
+  }
+
   return null;
 }
 
