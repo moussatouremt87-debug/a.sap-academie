@@ -7,10 +7,12 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/components/protected-route";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { BackToTop } from "@/components/back-to-top";
+
 import Home from "@/pages/home";
 import Agent from "@/pages/agent";
 import Expertises from "@/pages/expertises";
@@ -49,7 +51,7 @@ import BlogPage from "@/pages/blog";
 import ParrainagePage from "@/pages/parrainage";
 import EmailNurturingPage from "@/pages/email-nurturing";
 
-// ── Infrastructure & Sécurité (Sprint 5) ────────────
+// ── Infrastructure & Sécurité (Sprint 5) ─────────────
 import AuthPage from "@/pages/auth";
 import AdminDashboard from "@/pages/admin-dashboard";
 import SeoPerformancePage from "@/pages/seo-performance";
@@ -113,7 +115,6 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
-
   const isCrmPage =
     location === "/crm" ||
     location === "/nurturing" ||
@@ -179,19 +180,21 @@ function AppLayout() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="asap-ui-theme">
-      <I18nProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
-              <AppLayout />
-              <BackToTop />
-              <Toaster />
-            </TooltipProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </I18nProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="light" storageKey="asap-ui-theme">
+        <I18nProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <TooltipProvider>
+                <AppLayout />
+                <BackToTop />
+                <Toaster />
+              </TooltipProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
