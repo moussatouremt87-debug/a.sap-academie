@@ -410,13 +410,7 @@ ${t("agent.booking.seeYouSoon")}`
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isStreaming) return;
-
-    // Create conversation on first message
-    let currentConvId = conversationId;
-    if (!currentConvId) {
-      currentConvId = await createConversation();
-    }
+    if (!content.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -424,105 +418,41 @@ ${t("agent.booking.seeYouSoon")}`
       content: content.trim(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setMessages(prev => [...prev, userMessage]);
     setIsStreaming(true);
 
-    // Save user message to database
-    if (currentConvId) {
-      saveMessage(currentConvId, "user", content.trim());
-    }
+    // Simulate typing delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
-    if (checkForMeetingRequest(content)) {
-      const assistantContent = `${t("agent.booking.invite")}
+    const lowerContent = content.toLowerCase();
+    let response = "";
 
-**${t("agent.booking.chooseSlot")}**`;
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: assistantContent,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      
-      // Save assistant message
-      if (currentConvId) {
-        saveMessage(currentConvId, "assistant", assistantContent);
-      }
-      
-      setIsStreaming(false);
-      showCalendar();
-      return;
+    if (lowerContent.includes("formation") || lowerContent.includes("cours") || lowerContent.includes("apprendre") || lowerContent.includes("training")) {
+      response = "Nous proposons des formations SAP certifiantes couvrant les modules FI, MM, SD, ABAP, Basis, PP et QM. Nos formations sont disponibles en ligne, en pr\u00e9sentiel ou en hybride. Consultez notre page Formations pour d\u00e9couvrir notre catalogue complet, ou contactez-nous par email \u00e0 contact@asap-consulting.sn pour un programme personnalis\u00e9.";
+    } else if (lowerContent.includes("prix") || lowerContent.includes("tarif") || lowerContent.includes("co\u00fbt") || lowerContent.includes("combien") || lowerContent.includes("price")) {
+      response = "Nos tarifs sont personnalis\u00e9s en fonction de vos besoins sp\u00e9cifiques (p\u00e9rim\u00e8tre, dur\u00e9e, nombre de participants). Pour obtenir un devis gratuit et d\u00e9taill\u00e9, envoyez-nous un email \u00e0 contact@asap-consulting.sn ou appelez le +221 XX XXX XX XX.";
+    } else if (lowerContent.includes("sap") || lowerContent.includes("erp") || lowerContent.includes("module")) {
+      response = "A.SAP est sp\u00e9cialis\u00e9 dans l'int\u00e9gration SAP et la transformation digitale en Afrique de l'Ouest. Nous couvrons les modules SAP FI (Finance), MM (Achats), SD (Ventes), ABAP (D\u00e9veloppement), Basis (Administration), PP (Production) et QM (Qualit\u00e9). Notre \u00e9quipe de consultants certifi\u00e9s vous accompagne de la strat\u00e9gie \u00e0 l'impl\u00e9mentation.";
+    } else if (lowerContent.includes("contact") || lowerContent.includes("email") || lowerContent.includes("t\u00e9l\u00e9phone") || lowerContent.includes("appeler") || lowerContent.includes("joindre")) {
+      response = "Vous pouvez nous contacter par :\n\n\u2022 Email : contact@asap-consulting.sn\n\u2022 T\u00e9l\u00e9phone : +221 XX XXX XX XX\n\u2022 Adresse : Dakar, S\u00e9n\u00e9gal\n\nNotre \u00e9quipe vous r\u00e9pond sous 24h ouvr\u00e9es.";
+    } else if (lowerContent.includes("rdv") || lowerContent.includes("rendez-vous") || lowerContent.includes("rencontre") || lowerContent.includes("meeting")) {
+      response = "Pour planifier un rendez-vous avec notre \u00e9quipe commerciale, envoyez-nous un email \u00e0 contact@asap-consulting.sn en pr\u00e9cisant vos disponibilit\u00e9s et le sujet de la rencontre. Nous vous proposerons un cr\u00e9neau rapidement.";
+    } else if (lowerContent.includes("bonjour") || lowerContent.includes("salut") || lowerContent.includes("hello") || lowerContent.includes("hi") || lowerContent.includes("bonsoir")) {
+      response = "Bonjour et bienvenue chez A.SAP Consulting ! \ud83d\ude0a Je suis Mbaye, votre conseiller commercial d\u00e9di\u00e9. Comment puis-je vous aider aujourd'hui ? Je peux vous renseigner sur nos formations SAP, nos services de conseil, ou vous aider \u00e0 planifier un rendez-vous.";
+    } else if (lowerContent.includes("merci") || lowerContent.includes("thank")) {
+      response = "Merci \u00e0 vous ! N'h\u00e9sitez pas si vous avez d'autres questions. Notre \u00e9quipe est disponible par email \u00e0 contact@asap-consulting.sn pour tout besoin suppl\u00e9mentaire. \u00c0 bient\u00f4t !";
+    } else {
+      response = "Merci pour votre message ! Je suis Mbaye, conseiller commercial A.SAP. Pour mieux r\u00e9pondre \u00e0 votre demande, je vous invite \u00e0 :\n\n\u2022 Consulter nos formations : page Formations\n\u2022 D\u00e9couvrir nos expertises : page Nos Expertises\n\u2022 Nous \u00e9crire : contact@asap-consulting.sn\n\nPosez-moi une question sur nos formations SAP, nos tarifs, ou nos services !";
     }
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: "assistant",
-      content: "",
+      content: response,
     };
-    setMessages((prev) => [...prev, assistantMessage]);
 
-    let fullAssistantResponse = "";
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content.trim(), messages }),
-      });
-
-      if (!response.ok) throw new Error("Failed to send message");
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.content) {
-                  fullAssistantResponse += data.content;
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    const lastMessage = updated[updated.length - 1];
-                    if (lastMessage.role === "assistant") {
-                      lastMessage.content += data.content;
-                    }
-                    return updated;
-                  });
-                }
-              } catch (e) {
-              }
-            }
-          }
-        }
-      }
-
-      // Save assistant response to database
-      if (currentConvId && fullAssistantResponse) {
-        saveMessage(currentConvId, "assistant", fullAssistantResponse);
-      }
-    } catch (error) {
-      console.error("Chat error:", error);
-      setMessages((prev) => {
-        const updated = [...prev];
-        const lastMessage = updated[updated.length - 1];
-        if (lastMessage.role === "assistant" && !lastMessage.content) {
-          lastMessage.content = language === "fr" ? "Désolé, une erreur s'est produite. Veuillez réessayer." : "Sorry, an error occurred. Please try again.";
-        }
-        return updated;
-      });
-    } finally {
-      setIsStreaming(false);
-    }
+    setMessages(prev => [...prev, assistantMessage]);
+    setIsStreaming(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
