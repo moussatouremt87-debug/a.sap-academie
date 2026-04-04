@@ -105,7 +105,7 @@ function LoginForm() {
         <div className="flex items-center justify-between">
           <Label htmlFor="login-password">Mot de passe</Label>
           <button type="button" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
-            Mot de passe oublie ?
+            Mot de passe oublié ?
           </button>
         </div>
         <div className="relative">
@@ -194,7 +194,7 @@ function RegisterForm() {
     if (score <= 1) return { score, label: "Faible", color: "bg-red-500" };
     if (score === 2) return { score, label: "Moyen", color: "bg-yellow-500" };
     if (score === 3) return { score, label: "Fort", color: "bg-green-400" };
-    return { score, label: "Tres fort", color: "bg-green-600" };
+    return { score, label: "Très fort", color: "bg-green-600" };
   };
 
   const strength = passwordStrength(formData.password || "");
@@ -258,10 +258,10 @@ function RegisterForm() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="reg-firstname">Prenom</Label>
+              <Label htmlFor="reg-firstname">Prénom</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input id="reg-firstname" placeholder="Prenom" className="pl-10" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
+                <Input id="reg-firstname" placeholder="Prénom" className="pl-10" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
               </div>
             </div>
             <div className="space-y-2">
@@ -272,9 +272,9 @@ function RegisterForm() {
           <div className="space-y-2">
             <Label htmlFor="reg-role">Je suis</Label>
             <Select value={formData.role} onValueChange={(v: UserRole) => setFormData({ ...formData, role: v })}>
-              <SelectTrigger><SelectValue placeholder="Selectionnez votre profil" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Sélectionnez votre profil" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="etudiant"><div className="flex items-center gap-2"><GraduationCap className="w-4 h-4" />Etudiant / Apprenant</div></SelectItem>
+                <SelectItem value="etudiant"><div className="flex items-center gap-2"><GraduationCap className="w-4 h-4" />Étudiant / Apprenant</div></SelectItem>
                 <SelectItem value="formateur"><div className="flex items-center gap-2"><User className="w-4 h-4" />Formateur / Consultant</div></SelectItem>
                 <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="w-4 h-4" />Administrateur</div></SelectItem>
               </SelectContent>
@@ -326,16 +326,16 @@ function RegisterForm() {
           </div>
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
             <Shield className="w-4 h-4 shrink-0 mt-0.5" />
-            <p>En creant un compte, vous acceptez nos conditions d'utilisation et notre politique de confidentialite. Vos donnees sont protegees.</p>
+            <p>En créant un compte, vous acceptez nos conditions d'utilisation et notre politique de confidentialité. Vos données sont protégées.</p>
           </div>
           <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Creation en cours...
+                Création en cours...
               </div>
             ) : (
-              "Creer mon compte"
+              "Créer mon compte"
             )}
           </Button>
         </>
@@ -358,10 +358,10 @@ export default function AuthPage() {
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
               <GraduationCap className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold">A.SAP Academie</span>
+            <span className="text-xl font-bold">A.SAP Académie</span>
           </button>
-          <h1 className="text-4xl font-bold leading-tight mb-6">Formez-vous aux metiers SAP les plus demandes en Afrique</h1>
-          <p className="text-lg text-blue-100 leading-relaxed">Rejoignez plus de 2 500 professionnels formes sur SAP FI, CO, MM, SD et HANA. Accedez a des formations certifiantes, un tuteur IA et une communaute active.</p>
+          <h1 className="text-4xl font-bold leading-tight mb-6">Formez-vous aux métiers SAP les plus demandés en Afrique</h1>
+          <p className="text-lg text-blue-100 leading-relaxed">Rejoignez plus de 2 500 professionnels formés sur SAP FI, CO, MM, SD et HANA. Accédez à des formations certifiantes, un tuteur IA et une communauté active.</p>
         </div>
         <div className="relative z-10 space-y-6">
           <div className="flex items-center gap-4">
@@ -376,7 +376,7 @@ export default function AuthPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             {[
-              { value: "95%", label: "Taux de reussite" },
+              { value: "95%", label: "Taux de réussite" },
               { value: "12+", label: "Modules SAP" },
               { value: "24/7", label: "Support IA" },
             ].map((stat) => (
@@ -395,13 +395,13 @@ export default function AuthPage() {
               <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">A.SAP Academie</span>
+              <span className="text-xl font-bold text-gray-900">A.SAP Académie</span>
             </button>
           </div>
           <Card className="border-0 shadow-xl">
             <CardHeader className="pb-4">
               <CardTitle className="text-center text-xl">Bienvenue</CardTitle>
-              <p className="text-center text-sm text-gray-500">Connectez-vous ou creez votre compte pour acceder a vos formations</p>
+              <p className="text-center text-sm text-gray-500">Connectez-vous ou créez votre compte pour accéder à vos formations</p>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
@@ -414,7 +414,7 @@ export default function AuthPage() {
               </Tabs>
             </CardContent>
           </Card>
-          <p className="text-center text-xs text-gray-400 mt-6">Protege par chiffrement SSL 256-bit. Vos donnees sont en securite.</p>
+          <p className="text-center text-xs text-gray-400 mt-6">Protégé par chiffrement SSL 256-bit. Vos données sont en sécurité.</p>
         </div>
       </div>
     </div>
