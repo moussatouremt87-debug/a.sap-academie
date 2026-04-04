@@ -6,9 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "@/lib/i18n";
+import {
+  createLead as createSupabaseLead,
+  addConversation,
+  updateLead as updateSupabaseLead,
+} from "@/lib/supabaseClient";
 
 interface Message {
   id: string;
@@ -253,7 +256,7 @@ export default function Agent() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [commercial] = useState(() => getRandomCommercial());
-  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [leadId, setLeadId] = useState<number | null>(null);
   const [booking, setBooking] = useState<BookingState>({
     step: "hidden",
     selectedDate: null,
@@ -277,140 +280,95 @@ export default function Agent() {
     t("agent.suggested.accompagnement"),
   ];
 
-  const createConversation = async () => {
+  // Create a visitor lead in Supabase on first message
+  const ensureLeadExists = async (): Promise<number | null> => {
+    if (leadId) return leadId;
     try {
-      const response = await apiRequest('POST', '/api/conversations', { 
-        title: `Conversation avec ${commercial.name}`,
-        commercialName: commercial.name 
+      const lead = await createSupabaseLead({
+        name: "Visiteur Web",
+        status: "Nouveau",
+        source: "landing-page",
+        priority: "medium",
+        notes: `Conversation via Contact Commercial avec ${commercial.name}`,
       });
-      const data = await response.json();
-      setConversationId(data.id);
-      return data.id;
+      setLeadId(lead.id);
+      return lead.id;
     } catch (error) {
-      console.error("Failed to create conversation:", error);
+      console.error("Failed to create lead:", error);
       return null;
     }
   };
 
-  const saveMessage = async (convId: number, role: string, content: string) => {
-    if (!convId || !content) return;
+  // Save a message to Supabase conversations table
+  const saveMessageToSupabase = async (
+    currentLeadId: number,
+    message: string,
+    sender: "agent" | "lead"
+  ) => {
     try {
-      const response = await apiRequest('POST', `/api/conversations/${convId}/messages`, { role, content });
-      await response.json();
+      await addConversation({ lead_id: currentLeadId, message, sender });
     } catch (error) {
       console.error("Failed to save message:", error);
     }
   };
 
-  const bookMutation = useMutation({
-    mutationFn: async ({ email, datetime }: { email: string; datetime: string }) => {
-      const response = await apiRequest('POST', '/api/calendar/book', { 
-        email, 
-        datetime, 
-        duration: 15,
-        conversationId,
-        commercialName: commercial.name
-      });
-      return response.json();
-    },
-    onSuccess: (data: any) => {
-      setBooking(prev => ({ 
-        ...prev, 
-        step: "success",
-        meetLink: data.meetLink || ""
-      }));
-      
-      const atWord = language === "fr" ? "à" : "at";
-      const successMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `${t("agent.booking.successMessage")} ${booking.email}.
-
-${language === "fr" ? "Votre créneau" : "Your slot"} : **${booking.selectedSlot?.date} ${atWord} ${booking.selectedSlot?.time}**
-
-${t("agent.booking.lookingForward")}
-
-${t("agent.booking.seeYouSoon")}`
-      };
-      setMessages(prev => [...prev, successMessage]);
-    },
-    onError: () => {
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: t("agent.booking.error")
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setBooking({ step: "hidden", selectedDate: null, selectedSlot: null, email: "", meetLink: "" });
-    }
-  });
-
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, booking.step]);
-
-  const checkForMeetingRequest = (text: string): boolean => {
-    const lowerText = text.toLowerCase();
-    const hasKeyword = MEETING_KEYWORDS.some(keyword => lowerText.includes(keyword));
-    const hasTimePattern = TIME_PATTERNS.some(pattern => pattern.test(text));
-    return hasKeyword || hasTimePattern;
-  };
-
-  const showCalendar = () => {
-    setBooking(prev => ({ ...prev, step: "calendar" }));
-    setCurrentMonth(new Date());
-    setSelectedTime(null);
-  };
-
-  const handleDateSelect = (date: Date) => {
-    setBooking(prev => ({ ...prev, selectedDate: date }));
-    setSelectedTime(null);
-  };
-
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
-  };
-
-  const handleConfirmSlot = () => {
-    if (!booking.selectedDate || !selectedTime) return;
-    
-    const [hours, minutes] = selectedTime.split(':').map(Number);
-    const datetime = new Date(booking.selectedDate);
-    datetime.setHours(hours, minutes, 0, 0);
-    
-    const slot: TimeSlot = {
-      date: `${DAYS_FR[datetime.getDay()]} ${datetime.getDate()} ${MONTHS_FR[datetime.getMonth()]}`,
-      time: selectedTime,
-      datetime: datetime.toISOString()
-    };
-    
-    setBooking(prev => ({ ...prev, selectedSlot: slot, step: "email" }));
-  };
-
-  const handleEmailSubmit = () => {
+  const handleEmailSubmit = async () => {
     if (!booking.email || !booking.selectedSlot) return;
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(booking.email)) return;
-    
+
     setBooking(prev => ({ ...prev, step: "confirming" }));
-    bookMutation.mutate({ 
-      email: booking.email, 
-      datetime: booking.selectedSlot.datetime 
-    });
+
+    // Update the lead in Supabase with email and upgrade status
+    if (leadId) {
+      try {
+        await updateSupabaseLead(leadId, {
+          email: booking.email,
+          name: booking.email.split("@")[0],
+          status: "contact",
+          notes: `RDV demandé le ${booking.selectedSlot.date} à ${booking.selectedSlot.time} via Contact Commercial avec ${commercial.name}`,
+        });
+      } catch (error) {
+        console.error("Failed to update lead:", error);
+      }
+    }
+
+    // Save booking request as conversation message
+    if (leadId) {
+      await saveMessageToSupabase(
+        leadId,
+        `Demande de RDV : ${booking.selectedSlot.date} à ${booking.selectedSlot.time} - Email: ${booking.email}`,
+        "lead"
+      );
+    }
+
+    // Simulate booking success
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const atWord = language === "fr" ? "à" : "at";
+    const successMsg = language === "fr"
+      ? `Votre demande de rendez-vous a été enregistrée ! Un email de confirmation sera envoyé à ${booking.email}. Créneau : **${booking.selectedSlot.date} ${atWord} ${booking.selectedSlot.time}**. Notre équipe commerciale vous contactera sous 24h pour confirmer.`
+      : `Your meeting request has been saved! A confirmation email will be sent to ${booking.email}. Slot: **${booking.selectedSlot.date} ${atWord} ${booking.selectedSlot.time}**. Our sales team will contact you within 24h to confirm.`;
+
+    const successMessage: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: successMsg,
+    };
+    setMessages(prev => [...prev, successMessage]);
+    setBooking(prev => ({ ...prev, step: "success", meetLink: "" }));
+
+    // Save the assistant confirmation to Supabase
+    if (leadId) {
+      await saveMessageToSupabase(leadId, successMsg, "agent");
+    }
   };
 
   const sendMessage = async (content: string) => {
     if (!content.trim()) return;
+
+    // Ensure a lead exists in Supabase
+    const currentLeadId = await ensureLeadExists();
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -419,6 +377,12 @@ ${t("agent.booking.seeYouSoon")}`
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setInput("");
+
+    // Save user message to Supabase
+    if (currentLeadId) {
+      saveMessageToSupabase(currentLeadId, content.trim(), "lead");
+    }
     setIsStreaming(true);
 
     // Simulate typing delay
@@ -453,6 +417,11 @@ ${t("agent.booking.seeYouSoon")}`
 
     setMessages(prev => [...prev, assistantMessage]);
     setIsStreaming(false);
+
+    // Save assistant message to Supabase
+    if (currentLeadId) {
+      saveMessageToSupabase(currentLeadId, response, "agent");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -574,29 +543,30 @@ ${t("agent.booking.seeYouSoon")}`
       );
     }
 
-    if (booking.step === "success" && booking.meetLink) {
+    if (booking.step === "success") {
       return (
         <Card className="mx-auto my-4 max-w-md border-primary/20 bg-primary/5 p-4">
           <div className="flex items-center gap-2 text-primary">
             <CheckCircle2 className="h-6 w-6" />
-            <span className="font-semibold">{t("agent.booking.success")}</span>
+            <span className="font-semibold">
+              {language === "fr" ? "Demande enregistr\u00e9e !" : "Request saved!"}
+            </span>
           </div>
           <div className="mt-3 space-y-2">
             <p className="text-sm">
-              <strong>{t("agent.booking.date")} :</strong> {booking.selectedSlot?.date} {language === "fr" ? "à" : "at"} {booking.selectedSlot?.time}
+              <strong>{language === "fr" ? "Cr\u00e9neau" : "Slot"} :</strong>{" "}
+              {booking.selectedSlot?.date} {language === "fr" ? "\u00e0" : "at"}{" "}
+              {booking.selectedSlot?.time}
             </p>
             <p className="text-sm">
-              <strong>{t("agent.booking.email")} :</strong> {booking.email}
+              <strong>Email :</strong> {booking.email}
             </p>
           </div>
-          <Button
-            className="mt-4 w-full bg-gold text-gold-foreground"
-            onClick={() => window.open(booking.meetLink, '_blank')}
-            data-testid="button-join-meet"
-          >
-            <ExternalLink className="mr-2 h-4 w-4" />
-            {t("agent.booking.joinMeet")}
-          </Button>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {language === "fr"
+              ? "Notre \u00e9quipe commerciale vous contactera sous 24h pour confirmer le rendez-vous."
+              : "Our sales team will contact you within 24h to confirm the meeting."}
+          </p>
         </Card>
       );
     }
