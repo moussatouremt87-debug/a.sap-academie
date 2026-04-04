@@ -66,7 +66,7 @@ type UnauthorizedBehavior = "returnNull" | "throw";
 
 export function getQueryFn({ on401 }: { on401?: UnauthorizedBehavior } = {}) {
   return async ({ queryKey }: { queryKey: string[] }) => {
-    const url = queryKey[0];
+    const url = queryKey.filter(k => typeof k === "string").join("/");
     const mock = getMockData(url);
     if (mock) return mock;
     const res = await fetch(url, { credentials: "include" });
