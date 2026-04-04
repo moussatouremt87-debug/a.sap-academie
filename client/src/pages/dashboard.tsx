@@ -291,14 +291,14 @@ function XpRow({ event }: { event: XpEvent }) {
    DASHBOARD PAGE
    ════════════════════════════════════════════════════════════ */
 export default function DashboardPage() {
-  const { user, profile, loading } = useAuth();
+  const { user: authUser, profile, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [user, loading, navigate]);
+    if (!authLoading && !authUser) navigate("/auth");
+  }, [authUser, authLoading, navigate]);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -306,9 +306,9 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user) return null;
+  if (!authUser) return null;
 
-  const userName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Apprenant";
+  const userName = profile?.full_name || authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Apprenant";
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
