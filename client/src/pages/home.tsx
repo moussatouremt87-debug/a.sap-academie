@@ -107,7 +107,7 @@ export default function Home() {
                   {t("common.getStarted")} <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link href="/agent">
                 <Button variant="outline" size="lg" data-testid="cta-secondary">
                   {t("common.contact")}
                 </Button>
@@ -209,7 +209,7 @@ export default function Home() {
                 {t("common.getStarted")} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-            <Link href="/contact">
+            <Link href="/agent">
               <Button size="lg" variant="ghost" className="text-white hover:bg-white/20" data-testid="cta-contact-button">
                 {t("common.contact")}
               </Button>
