@@ -22,6 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.hero.subtitle": "A.SAP Consulting accompagne votre transformation digitale avec expertise et innovation. Nos commerciaux vous guident vers les solutions adaptées à vos besoins.",
     "home.hero.cta": "Parler à un commercial",
     "home.hero.discover": "Découvrir nos expertises",
+    "home.hero.badge": "Académie SAP #1 en Afrique de l'Ouest",
     
     "home.problems.title": "Quel est votre besoin ?",
     "home.problems.subtitle": "Sélectionnez votre problématique pour être orienté vers la meilleure solution.",
@@ -41,7 +42,10 @@ const translations: Record<Language, Record<string, string>> = {
     
     "home.cta.title": "Prêt à transformer votre entreprise ?",
     "home.cta.subtitle": "Notre équipe commerciale est disponible pour analyser votre besoin et vous proposer les meilleures solutions. Commencez la conversation dès maintenant.",
+    "home.cta.description": "Notre équipe commerciale est disponible pour analyser votre besoin et vous proposer les meilleures solutions. Commencez la conversation dès maintenant.",
     "home.cta.button": "Contacter un commercial",
+
+    "home.partners.title": "Nos Partenaires",
     
     "home.services.title": "Nos Domaines d'Expertise",
     "home.services.subtitle": "Des solutions complètes pour accompagner votre transformation",
@@ -439,6 +443,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     "common.learnMore": "En savoir plus",
     "common.getStarted": "Commencer",
+    "common.contact": "Nous contacter",
     "common.back": "Retour",
     "common.scrollTop": "Retour en haut",
   },
@@ -455,6 +460,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.hero.subtitle": "A.SAP Consulting supports your digital transformation with expertise and innovation. Our sales team guides you to solutions tailored to your needs.",
     "home.hero.cta": "Talk to Sales",
     "home.hero.discover": "Discover our expertise",
+    "home.hero.badge": "SAP Academy #1 in West Africa",
     
     "home.problems.title": "What's your need?",
     "home.problems.subtitle": "Select your challenge to be directed to the best solution.",
@@ -474,7 +480,10 @@ const translations: Record<Language, Record<string, string>> = {
     
     "home.cta.title": "Ready to transform your business?",
     "home.cta.subtitle": "Our sales team is available to analyze your needs and offer you the best solutions. Start the conversation now.",
+    "home.cta.description": "Our sales team is available to analyze your needs and offer the best solutions. Start the conversation now.",
     "home.cta.button": "Contact Sales",
+
+    "home.partners.title": "Our Partners",
     
     "home.services.title": "Our Areas of Expertise",
     "home.services.subtitle": "Complete solutions to support your transformation",
@@ -872,6 +881,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     "common.learnMore": "Learn more",
     "common.getStarted": "Get started",
+    "common.contact": "Contact Us",
     "common.back": "Back",
     "common.scrollTop": "Back to top",
   }
