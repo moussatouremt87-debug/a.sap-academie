@@ -1,507 +1,318 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'wouter';
+import { useState, useRef, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import {
-  Menu,
-  X,
+  Bot,
   Send,
+  User,
+  BookOpen,
+  Lightbulb,
   ArrowLeft,
   Sparkles,
-  ChevronDown,
-  Dot,
-} from 'lucide-react';
-import { AI_TUTOR_PROMPTS, SAP_MODULES } from '@/data/sap-modules-db';
+  MessageCircle,
+  GraduationCap,
+  Brain,
+} from "lucide-react";
 
-// Types
 interface ChatMessage {
   id: string;
-  role: 'user' | 'ai';
+  role: "user" | "ai";
   content: string;
-  source?: string;
   timestamp: Date;
 }
 
-interface PromptCategory {
-  [key: string]: string[];
-}
+const sapModules = [
+  { code: "FI", name: "Finance", icon: BookOpen, color: "bg-blue-600" },
+  { code: "CO", name: "Controlling", icon: Brain, color: "bg-purple-600" },
+  { code: "MM", name: "Materials Management", icon: Lightbulb, color: "bg-green-600" },
+  { code: "SD", name: "Sales & Distribution", icon: MessageCircle, color: "bg-orange-600" },
+];
 
-// Mock AI Response Generator
-function generateMockAIResponse(userMessage: string): string {
-  const lowerMessage = userMessage.toLowerCase();
+// Mock AI Response generator
+function generateAIResponse(message: string): string {
+  const lowerMessage = message.toLowerCase();
 
-  // Financial Accounting - FB50
-  if (lowerMessage.includes('fb50') || lowerMessage.includes('écriture')) {
-    return `**FB50 - Création d'une Écriture Comptable**
-
-La transaction FB50 permet de créer manuellement des écritures comptables dans le grand livre.
-
-**Caractéristiques principales:**
-• Société: Saisissez la société cible
-• Date de comptabilisation: La date de l'écriture
-• Devise: Devise de la société
-• Montant débit/crédit: Doit être équilibré
-• Texte: Description de l'écriture
-
-**Processus:**
-1. Accédez à FB50
-2. Saisissez les paramètres de la société
-3. Entrez les lignes de débit et crédit
-4. Vérifiez que le total débit = total crédit
-5. Enregistrez l'écriture
-
-**Sources: Module FI - Leçon 3 | Comptabilité Financière Avancée`;
+  // Financial Accounting responses
+  if (lowerMessage.includes("fb50") || lowerMessage.includes("ecriture") || lowerMessage.includes("comptab")) {
+    return "**FB50 - Saisie d'ecritures comptables**\n\nLa transaction FB50 est utilisee pour saisir des ecritures comptables dans SAP FI.\n\n**Caracteristiques principales:**\n- Societe: Saisie obligatoire\n- Date de comptabilisation: Date du jour par defaut\n- Devise: Devise de la societe\n- Montant debit = Montant credit\n- Texte: Description de l'ecriture\n\n**Etapes:**\n1. Accedez a la transaction FB50\n2. Renseignez la societe et la date\n3. Saisissez les lignes debit/credit\n4. Verifiez l'equilibre\n5. Enregistrez le document\n\n**Sources: Module FI - Comptabilite Financiere SAP ERP**";
   }
 
-  // Procurement - ME21N
-  if (lowerMessage.includes('commande') || lowerMessage.includes('me21n')) {
-    return `**ME21N - Création de Commande d'Achat**
-
-La transaction ME21N permet de créer une nouvelle commande d'achat (PO) avec tous les paramètres nécessaires.
-
-**Informations obligatoires:**
-• Fournisseur: Numéro ou nom du fournisseur
-• Société acheteur: La société qui achète
-• Lieu de livraison: Où les articles seront livrés
-• Articles: Code article et quantité
-• Prix unitaire: Validation contre le référentiel fournisseur
-
-**Étapes clés:**
-1. Accédez à ME21N
-2. Saisissez le fournisseur et la société
-3. Ajoutez les articles et quantités
-4. Vérifiez les conditions de paiement
-5. Créez la commande
-
-**Sources: Module MM - Leçon 2 | Gestion des Achats`;
+  // Materials Management responses
+  if (lowerMessage.includes("me21n") || lowerMessage.includes("commande") || lowerMessage.includes("achat")) {
+    return "**ME21N - Creation de commande d'achat**\n\nLa transaction ME21N permet de creer des commandes d'achat dans SAP MM.\n\n**Caracteristiques principales:**\n- Type de commande: NB (standard)\n- Organisation d'achats: Obligatoire\n- Groupe d'acheteurs: Responsable\n- Fournisseur: Partenaire commercial\n- Conditions de prix: Automatiques ou manuelles\n\n**Etapes:**\n1. Lancez ME21N\n2. Selectionnez le type de commande\n3. Renseignez le fournisseur\n4. Ajoutez les postes (articles)\n5. Verifiez les conditions\n6. Enregistrez\n\n**Sources: Module MM - Gestion des Articles SAP ERP**";
   }
 
-  // Sales - VA01
-  if (lowerMessage.includes('va01') || lowerMessage.includes('vente') || lowerMessage.includes('commande client')) {
-    return `**VA01 - Création d'une Commande Client**
-
-La transaction VA01 permet de créer une nouvelle commande de vente (SO) pour les clients.
-
-**Données essentielles:**
-• Client: Numéro de compte du client
-• Langue de la commande: Sélectionnez la langue appropriée
-• Type de commande: Standard, contrat, etc.
-• Articles: Articles à vendre avec quantités
-• Conditions commerciales: Prix, remises, conditions de paiement
-
-**Processus:**
-1. Lancez VA01
-2. Saisissez le type et le client
-3. Entrez la date et les conditions
-4. Ajoutez les articles avec quantités
-5. Validez et enregistrez
-
-**Conseil:** Assurez-vous que les articles existent en stock et que les conditions tarifaires sont à jour.
-
-**Sources: Module SD - Leçon 1 | Ventes et Distribution`;
+  // Sales & Distribution responses
+  if (lowerMessage.includes("va01") || lowerMessage.includes("vente") || lowerMessage.includes("client")) {
+    return "**VA01 - Creation de commande de vente**\n\nLa transaction VA01 permet de creer des commandes de vente dans SAP SD.\n\n**Caracteristiques principales:**\n- Type de commande: OR (standard)\n- Organisation commerciale: Structure de vente\n- Canal de distribution: Mode de vente\n- Secteur d'activite: Categorie produit\n- Donneur d'ordre: Client qui commande\n\n**Etapes:**\n1. Accedez a VA01\n2. Selectionnez le type de commande\n3. Renseignez le donneur d'ordre\n4. Ajoutez les postes de vente\n5. Verifiez la disponibilite\n6. Enregistrez le document\n\n**Sources: Module SD - Administration des Ventes SAP ERP**";
   }
 
-  // Cost Centers - KS01
-  if (lowerMessage.includes('centre de coûts') || lowerMessage.includes('ks01') || lowerMessage.includes('cost center')) {
-    return `**KS01 - Création d'un Centre de Coûts**
-
-La transaction KS01 permet de créer et configurer des centres de coûts pour la comptabilité analytique.
-
-**Informations requises:**
-• Société: La société propriétaire du centre de coûts
-• Centre de coûts: Code unique du centre (ex: 1100)
-• Dénomination: Nom descriptif (ex: "Ventes - Région Ouest")
-• Responsable: Utilisateur responsable
-• Devise: Devise par défaut
-
-**Configuration avancée:**
-• Hiérarchie: Positionnement dans l'arborescence
-• Validité: Date de début/fin d'utilisation
-• Paramètres de reporting: Lignes analytiques
-• Contrôles budgétaires: Si applicable
-
-**Validation:**
-Après création, le centre de coûts peut être utilisé dans les imputations analytiques.
-
-**Sources: Module CO - Leçon 2 | Comptabilité Analytique`;
+  // Controlling responses
+  if (lowerMessage.includes("ks01") || lowerMessage.includes("centre") || lowerMessage.includes("cout") || lowerMessage.includes("controlling")) {
+    return "**KS01 - Creation de centre de couts**\n\nLa transaction KS01 permet de creer des centres de couts dans SAP CO.\n\n**Caracteristiques principales:**\n- Perimetre analytique: Obligatoire\n- Centre de couts: Code unique\n- Designation: Nom descriptif\n- Responsable: Personne en charge\n- Categorie: Type de centre (production, admin, etc.)\n\n**Etapes:**\n1. Accedez a KS01\n2. Selectionnez le perimetre analytique\n3. Renseignez le code du centre de couts\n4. Completez les donnees de base\n5. Affectez la hierarchie\n6. Enregistrez\n\n**Sources: Module CO - Le Controlling SAP ERP**";
   }
 
   // Default response
-  return `**Tuteur IA SAP**
-
-Merci pour votre question ! Je suis spécialisé dans le traitement des transactions SAP principales.
-
-**Je peux vous aider avec:**
-• **FB50** - Écritures comptables
-• **ME21N** - Commandes d'achat
-• **VA01** - Commandes clients
-• **KS01** - Centres de coûts
-• Questions générales sur SAP
-
-**Conseil utile:**
-Mentionnez le code de transaction (comme FB50) ou le domaine métier (ventes, achats, finance) pour obtenir une réponse plus précise.
-
-**Sources: Module Général - Introduction à SAP ERP `;
+  return "**Tuteur IA SAP**\n\nMerci pour votre question ! Je suis specialise dans la formation SAP ERP pour l'Afrique de l'Ouest.\n\n**Je peux vous aider avec:**\n- **FB50** - Ecritures comptables (Module FI)\n- **ME21N** - Commandes d'achat (Module MM)\n- **VA01** - Commandes de vente (Module SD)\n- **KS01** - Centres de couts (Module CO)\n- Questions generales sur SAP ERP\n\n**Conseil utile:**\nMentionnez le code de transaction ou le module SAP pour obtenir une reponse plus precise et detaillee.\n\n**Sources: Module General - Formation SAP ERP**";
 }
 
-// Components
-const ChatMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
-  const isUser = message.role === 'user';
-
+// Simple markdown renderer component
+function MarkdownContent({ content }: { content: string }) {
+  const lines = content.split("\n");
   return (
-    <div className={"flex " + (isUser ? "justify-end" : "justify-start") + " mb-4"}>
-        <div className={"max-w-[85%] rounded-lg p-4 " + (isUser ? "bg-blue-600 text-white rounded-br-none" : "bg-gradient-to-br from-slate-800 to-slate-900 text-slate-50 rounded-bl-none")}>
-        <div className="text-sm whitespace-pre-wrap break-words">
-          {message.role === 'ai' ? (
-            <MarkdownContent content={message.content} />
-          ) : (
-            message.content
-          )}
-        </div>
-        {message.source && message.role === 'ai' && (
-          <div className="text-xs mt-2 pt-2 border-t border-slate-600 text-slate-400">
-            {message.source}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
-  const lines = content.split('\n');
-
-  return (
-    <>
-      {lines.map((line, idx) => {
-        // Bold headings (**, ###, etc.)
-        if (line.startsWith('**') && line.endsWith('**')) {
-          return (
-            <div key={idx} className="font-bold mb-2">
-              {line.replace(/\*\*/g, '')}
-            </div>
-          );
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        if (line.startsWith("**") && line.endsWith("**")) {
+          return <p key={i} className="font-bold text-sm">{line.replace(/\*\*/g, "")}</p>;
         }
-
-        // Bullet points
-        if (line.trim().startsWith('•')) {
-          return (
-            <div key={idx} className="ml-4 mb-1">
-              {line}
-            </div>
-          );
+        if (line.startsWith("- ")) {
+          return <p key={i} className="text-sm pl-4">{line}</p>;
         }
-
-        // Numbered items
-        if (/^\d+\./.test(line.trim())) {
-          return (
-            <div key={idx} className="ml-4 mb-1">
-              {line}
-            </div>
-          );
+        if (line.match(/^\d+\./)) {
+          return <p key={i} className="text-sm pl-4">{line}</p>;
         }
-
-        // Source footer
-        if (line.trim().startsWith('**Sources:')) {
-          return (
-            <div key={idx} className="text-xs mt-3 pt-2 border-t border-slate-600 text-slate-400">
-              {line.replace(/\*\*/g, '')}
-            </div>
-          );
+        if (line.trim() === "") {
+          return <div key={i} className="h-1" />;
         }
-
+        // Handle inline bold
+        const parts = line.split(/(\*\*[^*]+\*\*)/g);
         return (
-          <div key={idx} className="mb-1">
-            {line}
-          </div>
+          <p key={i} className="text-sm">
+            {parts.map((part, j) => {
+              if (part.startsWith("**") && part.endsWith("**")) {
+                return <strong key={j}>{part.replace(/\*\*/g, "")}</strong>;
+              }
+              return <span key={j}>{part}</span>;
+            })}
+          </p>
         );
       })}
-    </>
-  );
-};
-
-const TypingIndicator: React.FC = () => (
-  <div className="flex items-center gap-1 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg rounded-bl-none w-fit">
-    <span className="text-slate-50">Tuteur IA réfléchit</span>
-    <span className="flex gap-1">
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></span>
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-    </span>
-  </div>
-);
-
-const WelcomeScreen: React.FC<{
-  onSelectPrompt: (prompt: string) => void;
-}> = ({ onSelectPrompt }) => {
-  const starterQuestions = [
-    'Qu\'est-ce que FB50 et comment l\'utiliser ?',
-    'Comment créer une commande d\'achat avec ME21N ?',
-    'Expliquez-moi VA01 pour les ventes',
-    'Que sont les centres de coûts en SAP ?',
-  ];
-
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-8 py-12 px-4">
-      <div className="text-6xl">
-        <Sparkles className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-      </div>
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">
-          Bonjour ! Je suis votre tuteur IA SAP
-        </h1>
-        <p className="text-slate-600">
-          Posez vos questions sur SAP ERP et je vous aiderai
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
-        {starterQuestions.map((question, idx) => (
-          <Card
-            key={idx}
-            className="cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all"
-            onClick={() => onSelectPrompt(question)}
-          >
-            <CardContent className="p-4">
-              <p className="text-sm text-slate-700">{question}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </div>
   );
-};
+}
 
-const SuggestedPrompts: React.FC<{
-  onSelectPrompt: (prompt: string) => void;
-}> = ({ onSelectPrompt }) => {
-  const categorized: PromptCategory = {
-    'Débutant': [],
-    'Intermédiaire': [],
-    'Avancé': [],
-    'Pratique': [],
-  };
-
-  // Group prompts by category from AI_TUTOR_PROMPTS
-  AI_TUTOR_PROMPTS.forEach((prompt) => {
-    const category = prompt.category || 'Débutant';
-    if (category in categorized) {
-      categorized[category].push(prompt.text);
-    }
-  });
-
-  return (
-    <div className="bg-slate-50 border-t border-slate-200 p-4 max-h-64 overflow-y-auto">
-      <h3 className="font-semibold text-slate-900 mb-3 text-sm">
-        Questions suggérées
-      </h3>
-      <div className="space-y-3">
-        {Object.entries(categorized).map(([category, prompts]) => (
-          <div key={category}>
-            <h4 className="text-xs font-semibold text-slate-600 mb-2 uppercase">
-              {category}
-            </h4>
-            <div className="space-y-1 ml-2">
-              {prompts.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => onSelectPrompt(prompt)}
-                  className="block w-full text-left text-sm p-2 rounded hover:bg-blue-100 text-slate-700 hover:text-blue-900 transition-colors"
-                >
-                  • {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Main Component
-export const AiTutorPage: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
+export default function AITutorPage() {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: "welcome",
+      role: "ai",
+      content:
+        "**Bienvenue sur le Tuteur IA SAP !**\n\nJe suis votre assistant intelligent specialise dans la formation SAP ERP.\n\n**Comment puis-je vous aider ?**\n- Posez une question sur un module SAP\n- Demandez de l'aide sur une transaction\n- Explorez les concepts SAP\n\nEssayez par exemple: \"Comment utiliser FB50 ?\" ou \"Expliquez ME21N\"",
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModule, setSelectedModule] = useState('Tous les modules');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
-  const handleSendMessage = async (text?: string) => {
-    const messageText = text || input.trim();
+  const sendMessage = async () => {
+    const messageText = inputMessage.trim();
     if (!messageText) return;
 
     // Add user message
     const userMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      role: 'user',
+      id: "msg-" + Date.now(),
+      role: "user",
       content: messageText,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInputMessage("");
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiContent = generateMockAIResponse(messageText);
+    // Simulate AI thinking delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const aiMessage: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        role: 'ai',
-        content: aiContent,
-        timestamp: new Date(),
-      };
+    // Generate AI response
+    const aiResponse: ChatMessage = {
+      id: "ai-" + Date.now(),
+      role: "ai",
+      content: generateAIResponse(messageText),
+      timestamp: new Date(),
+    };
 
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1000);
+    setMessages((prev) => [...prev, aiResponse]);
+    setIsTyping(false);
   };
 
-  const handleSelectSuggestion = (prompt: string) => {
-    setInput(prompt);
-    setTimeout(() => handleSendMessage(prompt), 100);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const quickQuestions = [
+    "Comment utiliser FB50 ?",
+    "Expliquez ME21N",
+    "Qu'est-ce que VA01 ?",
+    "Centre de couts KS01",
+  ];
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="md:hidden p-1 hover:bg-slate-700 rounded"
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <div className="flex items-center gap-2">
-            <Sparkles size={24} className="text-blue-400" />
-            <span className="font-bold">SAP Tuteur IA</span>
+      <div className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Bot className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-white">Tuteur IA SAP</h1>
+              <p className="text-xs text-slate-400">Assistant intelligent de formation</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Dot className="text-green-400 fill-green-400" size={12} />
-            <span className="text-xs text-slate-400">En ligne</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Badge variant="outline" className="text-green-400 border-green-400/30">
+              <Sparkles className="h-3 w-3 mr-1" />
+              En ligne
+            </Badge>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary" className="hidden sm:block">
-            {selectedModule}
-          </Badge>
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="hover:bg-slate-700">
-              <ArrowLeft size={16} className="mr-2" />
-              <span className="hidden sm:inline">Retour</span>
-            </Button>
-          </Link>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        {sidebarOpen && (
-          <div className="w-64 border-r border-slate-200 bg-white flex flex-col overflow-hidden">
-            {/* Module Selector */}
-            <div className="p-4 border-b border-slate-200">
-              <label className="text-xs font-semibold text-slate-600 mb-2 block">
-                Module
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedModule}
-                  onChange={(e) => setSelectedModule(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded text-sm appearance-none bg-white cursor-pointer"
+      <div className="max-w-5xl mx-auto px-4 py-6 flex gap-6 h-[calc(100vh-80px)]">
+        {/* Sidebar - SAP Modules */}
+        <div className="hidden lg:block w-64 space-y-4">
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Modules SAP
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {sapModules.map((mod) => (
+                <button
+                  key={mod.code}
+                  onClick={() => setInputMessage("Expliquez le module " + mod.code + " - " + mod.name)}
+                  className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/50 transition-colors text-left"
                 >
-                  <option>Tous les modules</option>
-                  {SAP_MODULES.map((module) => (
-                    <option key={module.id} value={module.name}>
-                      {module.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={16}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-                />
-              </div>
-            </div>
+                  <div className={"h-8 w-8 rounded-lg flex items-center justify-center " + mod.color}>
+                    <mod.icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{mod.code}</p>
+                    <p className="text-xs text-slate-400">{mod.name}</p>
+                  </div>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
 
-            {/* Suggested Prompts */}
-            <SuggestedPrompts onSelectPrompt={handleSelectSuggestion} />
-          </div>
-        )}
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Questions rapides
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {quickQuestions.map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setInputMessage(q);
+                    inputRef.current?.focus();
+                  }}
+                  className="w-full text-left text-xs p-2 rounded-lg bg-slate-800/30 hover:bg-slate-800/60 text-slate-300 transition-colors"
+                >
+                  {q}
+                </button>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {messages.length === 0 ? (
-              <WelcomeScreen onSelectPrompt={handleSelectSuggestion} />
-            ) : (
-              <>
-                {messages.map((message) => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
+        <div className="flex-1 flex flex-col">
+          <Card className="flex-1 flex flex-col bg-slate-900/50 border-slate-800 overflow-hidden">
+            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+              <div className="space-y-4">
+                {messages.map((message) => {
+                  const isUser = message.role === "user";
+                  return (
+                    <div key={message.id} className={"flex " + (isUser ? "justify-end" : "justify-start") + " mb-4"}>
+                      <div className={"max-w-[85%] rounded-lg p-4 " + (isUser ? "bg-blue-600 text-white rounded-br-none" : "bg-gradient-to-br from-slate-800 to-slate-900 text-slate-50 rounded-bl-none")}>
+                        <div className="text-sm whitespace-pre-wrap break-words">
+                          {message.role === "ai" ? (
+                            <MarkdownContent content={message.content} />
+                          ) : (
+                            message.content
+                          )}
+                        </div>
+                        <p className={"text-xs mt-2 " + (isUser ? "text-blue-200" : "text-slate-500")}>
+                          {message.timestamp.toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+
                 {isTyping && (
-                  <div className="mb-4">
-                    <TypingIndicator />
+                  <div className="flex justify-start">
+                    <div className="bg-slate-800 rounded-lg p-4 rounded-bl-none">
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-blue-400 animate-pulse" />
+                        <span className="text-sm text-slate-300">Le tuteur IA reflechit...</span>
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </div>
+              </div>
+            </ScrollArea>
 
-          {/* Input Area */}
-          <div className="border-t border-slate-200 bg-white p-4">
-            <div className="flex gap-2 max-w-4xl mx-auto">
-              <Input
-                type="text"
-                placeholder="Posez votre question sur SAP..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                disabled={isTyping}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => handleSendMessage()}
-                disabled={isTyping || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Send size={16} />
-              </Button>
+            {/* Input Area */}
+            <div className="p-4 border-t border-slate-800">
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder="Posez votre question sur SAP..."
+                  className="flex-1 bg-slate-800/50 border-slate-700 text-white placeholder-slate-500"
+                  disabled={isTyping}
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={isTyping || !inputMessage.trim()}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-slate-500 mt-2 text-center">
+                Tuteur IA SAP - Formation SAP ERP pour l'Afrique de l'Ouest
+              </p>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>
   );
-};
-
-export default AiTutorPage;
+}
