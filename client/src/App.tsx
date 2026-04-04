@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { I18nProvider } from "@/lib/i18n";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/components/protected-route";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollToTop } from "@/components/scroll-to-top";
@@ -53,7 +54,7 @@ import AuthPage from "@/pages/auth";
 import AdminDashboard from "@/pages/admin-dashboard";
 import SeoPerformancePage from "@/pages/seo-performance";
 
-// ── Scale, Analytics & Lancement (Sprint 6) ────────────
+// ── Scale, Analytics & Lancement (Sprint 6) ──────────
 import AnalyticsDashboard from "@/pages/analytics-dashboard";
 import NotificationsPage from "@/pages/notifications";
 import PaymentBillingPage from "@/pages/payment-billing";
@@ -62,6 +63,7 @@ import LaunchPage from "@/pages/launch";
 function Router() {
   return (
     <Switch>
+      {/* ── Public Routes ──────────────────────────── */}
       <Route path="/" component={Home} />
       <Route path="/agent" component={Agent} />
       <Route path="/expertises" component={Expertises} />
@@ -69,50 +71,41 @@ function Router() {
       <Route path="/formation/:id" component={FormationDetail} />
       <Route path="/faq" component={FaqPage} />
       <Route path="/pourquoi-asap" component={PourquoiAsap} />
-      <Route path="/crm" component={CRM} />
-      <Route path="/nurturing" component={Nurturing} />
       <Route path="/mentions-legales" component={MentionsLegales} />
       <Route path="/espace-apprenant" component={StudentPortal} />
       <Route path="/e-learning">{() => <Redirect to="/espace-apprenant" />}</Route>
       <Route path="/inscription" component={Inscription} />
-      <Route path="/documents" component={Documents} />
       <Route path="/shared/:token" component={SharedDocument} />
-      <Route path="/admin/elearning" component={AdminElearning} />
-
-      {/* ── E-Learning Routes (Sprint 1) ──────────── */}
       <Route path="/courses" component={Courses} />
       <Route path="/courses/:id" component={CourseDetail} />
-
-      {/* ── E-Learning Routes (Sprint 2) ──────────── */}
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/courses/:id/learn/:lessonId" component={LessonViewer} />
-      <Route path="/quiz/:quizId" component={Quiz} />
-      <Route path="/certificates" component={Certificates} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route path="/forum" component={Forum} />
-
-      {/* ── Agent IA & Modules SAP (Sprint 3) ─────── */}
-      <Route path="/ai-tutor" component={AiTutor} />
       <Route path="/sap-modules" component={SapModules} />
-
-      {/* ── Growth Engine & Nurturing (Sprint 4) ──── */}
       <Route path="/blog" component={BlogPage} />
-      <Route path="/parrainage" component={ParrainagePage} />
-      <Route path="/email-nurturing" component={EmailNurturingPage} />
-
-
-      {/* ── Infrastructure & Sécurité (Sprint 5) ──────── */}
       <Route path="/auth" component={AuthPage} />
-      <Route path="/admin-dashboard" component={AdminDashboard} />
-      <Route path="/seo-performance" component={SeoPerformancePage} />
+      <Route path="/launch" component={LaunchPage} />
 
-      {/* ── Scale, Analytics & Lancement (Sprint 6) ──────── */}
-          <Route path="/analytics" component={AnalyticsDashboard} />
-          <Route path="/notifications" component={NotificationsPage} />
-          <Route path="/payment-billing" component={PaymentBillingPage} />
-          <Route path="/launch" component={LaunchPage} />
+      {/* ── Protected Routes (require auth) ────────── */}
+      <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/courses/:id/learn/:lessonId">{() => <ProtectedRoute component={LessonViewer} />}</Route>
+      <Route path="/quiz/:quizId">{() => <ProtectedRoute component={Quiz} />}</Route>
+      <Route path="/certificates">{() => <ProtectedRoute component={Certificates} />}</Route>
+      <Route path="/leaderboard">{() => <ProtectedRoute component={Leaderboard} />}</Route>
+      <Route path="/forum">{() => <ProtectedRoute component={Forum} />}</Route>
+      <Route path="/ai-tutor">{() => <ProtectedRoute component={AiTutor} />}</Route>
+      <Route path="/parrainage">{() => <ProtectedRoute component={ParrainagePage} />}</Route>
+      <Route path="/notifications">{() => <ProtectedRoute component={NotificationsPage} />}</Route>
+      <Route path="/payment-billing">{() => <ProtectedRoute component={PaymentBillingPage} />}</Route>
+      <Route path="/documents">{() => <ProtectedRoute component={Documents} />}</Route>
 
-          <Route component={NotFound} />
+      {/* ── Admin Routes (require auth + admin) ────── */}
+      <Route path="/crm">{() => <ProtectedRoute component={CRM} />}</Route>
+      <Route path="/nurturing">{() => <ProtectedRoute component={Nurturing} />}</Route>
+      <Route path="/admin/elearning">{() => <ProtectedRoute component={AdminElearning} />}</Route>
+      <Route path="/admin-dashboard">{() => <ProtectedRoute component={AdminDashboard} />}</Route>
+      <Route path="/email-nurturing">{() => <ProtectedRoute component={EmailNurturingPage} />}</Route>
+      <Route path="/analytics">{() => <ProtectedRoute component={AnalyticsDashboard} />}</Route>
+      <Route path="/seo-performance">{() => <ProtectedRoute component={SeoPerformancePage} />}</Route>
+
+      <Route component={NotFound} />
     </Switch>
   );
 }
@@ -120,8 +113,14 @@ function Router() {
 function AppLayout() {
   const [location] = useLocation();
   const isAgentPage = location === "/agent";
-  const isCrmPage = location === "/crm" || location === "/nurturing" || location === "/documents" || location === "/admin/elearning";
-  const isStudentPortal = location === "/espace-apprenant" || location === "/e-learning";
+
+  const isCrmPage =
+    location === "/crm" ||
+    location === "/nurturing" ||
+    location === "/documents" ||
+    location === "/admin/elearning";
+  const isStudentPortal =
+    location === "/espace-apprenant" || location === "/e-learning";
   const isInscriptionPage = location.startsWith("/inscription");
 
   // E-learning pages with their own layout (no header/footer)
@@ -133,6 +132,7 @@ function AppLayout() {
 
   // Email nurturing dashboard has its own layout
   const isEmailNurturing = location === "/email-nurturing";
+
   const isAuthPage = location === "/auth";
   const isAdminDashboard = location === "/admin-dashboard";
   const isSeoPerformance = location === "/seo-performance";
@@ -141,7 +141,22 @@ function AppLayout() {
   const isPaymentBilling = location === "/payment-billing";
   const isLaunch = location === "/launch";
 
-  if (isCrmPage || isStudentPortal || isInscriptionPage || isLessonViewer || isQuizPage || isAiTutor || isEmailNurturing || isAuthPage || isAdminDashboard || isSeoPerformance || isAnalytics || isNotifications || isPaymentBilling || isLaunch) {
+  if (
+    isCrmPage ||
+    isStudentPortal ||
+    isInscriptionPage ||
+    isLessonViewer ||
+    isQuizPage ||
+    isAiTutor ||
+    isEmailNurturing ||
+    isAuthPage ||
+    isAdminDashboard ||
+    isSeoPerformance ||
+    isAnalytics ||
+    isNotifications ||
+    isPaymentBilling ||
+    isLaunch
+  ) {
     return (
       <>
         <Router />
@@ -167,14 +182,14 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="asap-ui-theme">
       <I18nProvider>
         <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <AppLayout />
-            <BackToTop />
-            <Toaster />
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <AppLayout />
+              <BackToTop />
+              <Toaster />
+            </TooltipProvider>
           </AuthProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
       </I18nProvider>
     </ThemeProvider>
   );
