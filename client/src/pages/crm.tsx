@@ -9,7 +9,7 @@ import {
   Users, UserPlus, TrendingUp, Phone, Mail, Building2,
   Search, Filter, ChevronRight, Clock, Star, MessageSquare,
   BarChart3, Target, ArrowUpRight, ArrowDownRight, Plus,
-  Edit2, Trash2, X, Check, Send,
+  Edit2, Trash2, X, Check, Send, MessageCircle,
 } from "lucide-react";
 import {
   getLeads, createLead, updateLead, deleteLead,
@@ -617,6 +617,43 @@ export default function CRM() {
                 </div>
               )}
 
+
+              {/* Historique des conversations */}
+              {conversations.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Historique des conversations
+                  </h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {conversations.map((conv) => (
+                      <div
+                        key={conv.id}
+                        className={`p-2 rounded-lg text-sm ${
+                          conv.sender === "agent"
+                            ? "bg-blue-50 text-blue-900 ml-4"
+                            : "bg-gray-50 text-gray-900 mr-4"
+                        }`}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium text-xs">
+                            {conv.sender === "agent" ? "Commercial" : "Prospect"}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(conv.created_at).toLocaleString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm">{conv.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Actions */}
               <div className="flex gap-2 pt-2">
                 <Button
