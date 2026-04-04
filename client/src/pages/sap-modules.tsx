@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'wouter';
+import { useLocation } from 'wouter';
 import {
   Card,
   CardContent,
@@ -385,7 +385,7 @@ const GlossaryCard: React.FC<GlossaryCardProps> = ({ entry }) => {
 // MAIN PAGE COMPONENT
 // ============================================================================
 const SapModulesPage: React.FC = () => {
-  const [, navigate] = useRouter();
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('modules');
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [expandedTcode, setExpandedTcode] = useState<string | null>(null);
