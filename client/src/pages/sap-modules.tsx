@@ -400,8 +400,8 @@ const SapModulesPage: React.FC = () => {
   const filteredModules = useMemo(() => {
     return SAP_MODULES.filter((module) => {
       const matchesSearch =
-        module.name.toLowerCase().includes(search.toLowerCase()) ||
-        module.code.toLowerCase().includes(search.toLowerCase());
+        (module.name || '').toLowerCase().includes((search || '').toLowerCase()) ||
+        (module.code || '').toLowerCase().includes((search || '').toLowerCase());
       return matchesSearch;
     });
   }, [search]);
@@ -412,8 +412,8 @@ const SapModulesPage: React.FC = () => {
   const filteredTransactions = useMemo(() => {
     return SAP_TRANSACTIONS.filter((tcode) => {
       const matchesSearch =
-        tcode.tcode.toLowerCase().includes(search.toLowerCase()) ||
-        tcode.name.toLowerCase().includes(search.toLowerCase());
+        (tcode.tcode || '').toLowerCase().includes((search || '').toLowerCase()) ||
+        (tcode.name || '').toLowerCase().includes((search || '').toLowerCase());
 
       const matchesModule =
         moduleFilter === 'Tous' || tcode.module === moduleFilter;
@@ -431,8 +431,8 @@ const SapModulesPage: React.FC = () => {
   const filteredGlossary = useMemo(() => {
     return SAP_GLOSSARY.filter((entry) => {
       const matchesSearch =
-        entry.term.toLowerCase().includes(glossarySearch.toLowerCase()) ||
-        entry.definition.toLowerCase().includes(glossarySearch.toLowerCase());
+        (entry.term || '').toLowerCase().includes((glossarySearch || '').toLowerCase()) ||
+        (entry.definition || '').toLowerCase().includes((glossarySearch || '').toLowerCase());
       return matchesSearch;
     }).sort((a, b) => a.term.localeCompare(b.term));
   }, [glossarySearch]);
