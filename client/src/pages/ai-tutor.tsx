@@ -148,7 +148,7 @@ Merci pour votre question ! Je suis spécialisé dans le traitement des transact
 **Conseil utile:**
 Mentionnez le code de transaction (comme FB50) ou le domaine métier (ventes, achats, finance) pour obtenir une réponse plus précise.
 
-**Sources: Module Général - Introduction à SAP ERP ;
+**Sources: Module Général - Introduction à SAP ERP `;
 }
 
 // Components
