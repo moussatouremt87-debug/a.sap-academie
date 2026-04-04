@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, MessageCircle, Home, Compass, GraduationCap, HelpCircle, Award } from "lucide-react";
+import { Menu, X, MessageCircle, Home, Compass, GraduationCap, HelpCircle, Award, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/hooks/use-auth";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/lib/i18n";
 import logoImage from "@assets/Gemini_Generated_Image_9c70nt9c70nt9c70_1766576410690.png";
@@ -11,6 +12,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { t } = useI18n();
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { href: "/", label: t("nav.home"), icon: Home },
@@ -53,7 +55,27 @@ export function Header() {
               {t("nav.contact")}
             </Button>
           </Link>
-          <LanguageSelector />
+          {user ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm">
+                    <User className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Déconnexion
+                </Button>
+              </>
+            ) : (
+              <Link href="/auth" className="hidden sm:block">
+                <Button variant="outline" size="sm">
+                  Connexion
+                </Button>
+              </Link>
+            )}
+            <LanguageSelector />
           <ThemeToggle />
           <Button
             variant="ghost"
