@@ -163,8 +163,21 @@ export default function Formations() {
     return map[fmt] || fmt;
   };
 
-  const { data: formations, isLoading } = useQuery<Formation[]>({
+  const staticFormations: Formation[] = [
+  { id: 1, title: "SAP FI - Finance et Comptabilit\u00e9", description: "Formation compl\u00e8te au module SAP FI pour ma\u00eetriser la gestion financi\u00e8re et comptable.", category: "FI", level: "Interm\u00e9diaire", format: "Hybride", duration: 40, price: 985000, badge: "Certifiant", objectives: ["Ma\u00eetriser la comptabilit\u00e9 g\u00e9n\u00e9rale SAP"], modules: ["Introduction SAP FI", "Comptabilit\u00e9 g\u00e9n\u00e9rale"], prerequisites: "Connaissances de base en comptabilit\u00e9", certification: "SAP Certified Application Associate", isPublished: true },
+  { id: 2, title: "SAP FI - Introduction et Structure Organisationnelle", description: "D\u00e9couvrez SAP et comprenez la structure organisationnelle du module Financial Accounting.", category: "FI", level: "Debutant", format: "Online", duration: 10, price: 985000, badge: "Nouveau", objectives: ["Comprendre SAP et son \u00e9cosyst\u00e8me"], modules: ["Introduction \u00e0 SAP ERP"], prerequisites: "Aucun", certification: null, isPublished: true },
+  { id: 3, title: "SAP MM - Gestion des Achats et Stocks", description: "Formation compl\u00e8te au module SAP MM pour optimiser la cha\u00eene d'approvisionnement.", category: "MM", level: "Interm\u00e9diaire", format: "Pr\u00e9sentiel", duration: 35, price: 890000, badge: "Populaire", objectives: ["G\u00e9rer les achats dans SAP"], modules: ["Gestion des achats", "Gestion des stocks"], prerequisites: "Notions de gestion des stocks", certification: "SAP MM Associate", isPublished: true },
+  { id: 4, title: "SAP SD - Administration des Ventes", description: "Ma\u00eetrisez le module SAP SD pour g\u00e9rer efficacement le cycle de vente.", category: "SD", level: "Interm\u00e9diaire", format: "Hybride", duration: 35, price: 890000, badge: "Certifiant", objectives: ["G\u00e9rer le cycle de vente SAP"], modules: ["Donn\u00e9es de base SD", "Processus de vente"], prerequisites: "Connaissances commerciales", certification: "SAP SD Associate", isPublished: true },
+  { id: 5, title: "SAP ABAP - D\u00e9veloppement", description: "Apprenez le langage de programmation ABAP pour personnaliser SAP.", category: "ABAP", level: "Avanc\u00e9", format: "En ligne", duration: 50, price: 1250000, badge: "Certifiant", objectives: ["Programmer en ABAP"], modules: ["Syntaxe ABAP", "Dictionnaire ABAP"], prerequisites: "Bases en programmation", certification: "SAP ABAP Developer", isPublished: true },
+  { id: 6, title: "SAP Basis - Administration Syst\u00e8me", description: "Formation compl\u00e8te pour administrer les syst\u00e8mes SAP.", category: "Basis", level: "Avanc\u00e9", format: "Pr\u00e9sentiel", duration: 40, price: 1100000, badge: "Populaire", objectives: ["Administrer un syst\u00e8me SAP"], modules: ["Architecture SAP", "Administration syst\u00e8me"], prerequisites: "Connaissances r\u00e9seau et Linux", certification: "SAP Basis Administrator", isPublished: true },
+  { id: 7, title: "SAP PP - Planification de Production", description: "G\u00e9rez la planification et le contr\u00f4le de production avec SAP PP.", category: "PP", level: "Interm\u00e9diaire", format: "Hybride", duration: 30, price: 850000, badge: "Nouveau", objectives: ["Planifier la production dans SAP"], modules: ["Donn\u00e9es de base PP", "MRP"], prerequisites: "Notions de gestion de production", certification: "SAP PP Associate", isPublished: true },
+  { id: 8, title: "SAP QM - Gestion de la Qualit\u00e9", description: "Ma\u00eetrisez le module SAP QM pour assurer la qualit\u00e9 dans vos processus.", category: "QM", level: "Interm\u00e9diaire", format: "En ligne", duration: 25, price: 750000, badge: "Certifiant", objectives: ["G\u00e9rer la qualit\u00e9 dans SAP"], modules: ["Contr\u00f4le qualit\u00e9", "Notifications qualit\u00e9"], prerequisites: "Connaissances en gestion qualit\u00e9", certification: "SAP QM Specialist", isPublished: true },
+];
+
+const { data: formations, isLoading } = useQuery<Formation[]>({
     queryKey: ["/api/formations"],
+    initialData: staticFormations,
+    retry: false,
   });
 
   const filteredFormations = formations?.filter((f) => {
