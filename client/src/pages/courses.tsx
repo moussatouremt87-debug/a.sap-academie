@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'wouter';
+import { useLocation } from 'wouter';
 import { SEO } from '@/components/seo';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -217,7 +217,7 @@ const FilterTabs: React.FC<{
 
 // Main component
 export const CoursesPage: React.FC = () => {
-  const [, navigate] = useRouter();
+  const [, navigate] = useLocation();
   const [selectedModule, setSelectedModule] = useState<SAPModule>('Tous');
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('Tous');
 
